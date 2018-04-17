@@ -1,7 +1,5 @@
 import math
 
-# import ee
-
 
 def _deg2rad(deg):
     return deg * math.pi / 180.0

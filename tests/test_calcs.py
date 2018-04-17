@@ -94,16 +94,18 @@ h_asce_args = {
 # hourly_args.update({'ref_type':'etr'})
 
 
-## Test ancillary functions with positional inputs
-def test_air_pressure(elev=s_args['elev'], pair=s_args['pair']):
+# Test ancillary functions with positional inputs
+def test_air_pressure_default(elev=s_args['elev'], pair=s_args['pair_asce']):
     assert float(calcs._air_pressure(
         ee.Number(elev)).getInfo()) == pytest.approx(pair)
-    assert float(calcs._air_pressure(
-        ee.Number(elev), method='refet').getInfo()) == pytest.approx(pair)
 
 def test_air_pressure_asce(elev=s_args['elev'], pair=s_args['pair_asce']):
     assert float(calcs._air_pressure(
         ee.Number(elev), method='asce').getInfo()) == pytest.approx(pair)
+
+def test_air_pressure_refet(elev=s_args['elev'], pair=s_args['pair']):
+    assert float(calcs._air_pressure(
+        ee.Number(elev), method='refet').getInfo()) == pytest.approx(pair)
 
 
 @pytest.mark.parametrize(
@@ -136,21 +138,22 @@ def test_vpd(es=d_args['es'], ea=d_args['ea']):
         ee.Number(es), ee.Number(es+1)).getInfo()) == pytest.approx(0)
 
 
-def test_es_slope_refet(tmin=d_args['tmin'], tmax=d_args['tmax'],
-                        es_slope=d_args['es_slope']):
-    tmean = 0.5 * (tmin + tmax)
+def test_es_slope_default(tmin=d_args['tmin'], tmax=d_args['tmax'],
+                          es_slope=d_asce_args['es_slope']):
     assert float(calcs._es_slope(
-        ee.Number(tmean)).getInfo()) == pytest.approx(float(es_slope))
-    assert float(calcs._es_slope(
-        ee.Number(tmean),
-        method='refet').getInfo() == pytest.approx(float(es_slope)))
-
+        ee.Number(0.5 * (tmin + tmax))).getInfo()) == pytest.approx(es_slope)
 
 def test_es_slope_asce(tmin=d_args['tmin'], tmax=d_args['tmax'],
                        es_slope=d_asce_args['es_slope']):
     assert float(calcs._es_slope(
         ee.Number(0.5 * (tmin + tmax)),
-        method='asce').getInfo()) == pytest.approx(float(es_slope))
+        method='asce').getInfo()) == pytest.approx(es_slope)
+
+def test_es_slope_refet(tmin=d_args['tmin'], tmax=d_args['tmax'],
+                        es_slope=d_args['es_slope']):
+    assert float(calcs._es_slope(
+        ee.Number(0.5 * (tmin + tmax)),
+        method='refet').getInfo() == pytest.approx(es_slope))
 
 
 def test_precipitable_water(pair=s_args['pair'], ea=d_args['ea'],
@@ -164,16 +167,17 @@ def test_doy_fraction(doy=d_args['doy'], expected=d_args['doy_frac']):
         ee.Number(doy)).getInfo()) == pytest.approx(expected)
 
 
-def test_delta_refet(doy=d_args['doy'], delta=d_args['delta']):
-    assert float(calcs._delta(ee.Number(doy)).getInfo()) == pytest.approx(delta)
+def test_delta_default(doy=d_args['doy'], delta=d_asce_args['delta']):
     assert float(calcs._delta(
-        ee.Number(doy), method='refet').getInfo()) == pytest.approx(delta)
-
+        ee.Number(doy)).getInfo()) == pytest.approx(delta)
 
 def test_delta_asce(doy=d_args['doy'], delta=d_asce_args['delta']):
     assert float(calcs._delta(
-        ee.Number(doy),
-        method='asce').getInfo()) == pytest.approx(d_asce_args['delta'])
+        ee.Number(doy), method='asce').getInfo()) == pytest.approx(delta)
+
+def test_delta_refet(doy=d_args['doy'], delta=d_args['delta']):
+    assert float(calcs._delta(
+        ee.Number(doy), method='refet').getInfo()) == pytest.approx(delta)
 
 
 def test_dr(doy=d_args['doy'], dr=d_args['dr']):
@@ -215,33 +219,45 @@ def test_omega_sunset(lat=s_args['lat'], delta=d_args['delta'],
         ee.Number(lat), ee.Number(delta)).getInfo()) == pytest.approx(omega_s)
 
 
-def test_ra_daily(lat=s_args['lat'], doy=d_args['doy'], ra=d_args['ra']):
+def test_ra_daily_default(lat=s_args['lat'], doy=d_args['doy'],
+                          ra=d_asce_args['ra']):
     assert float(calcs._ra_daily(
-        ee.Number(lat), ee.Number(doy)).getInfo()) == pytest.approx(ra)
+        ee.Number(lat),
+        ee.Number(doy)).getInfo()) == pytest.approx(ra)
 
-def test_ra_daily_asce(lat=s_args['lat'], doy=d_args['doy'], ra=d_args['ra']):
+def test_ra_daily_asce(lat=s_args['lat'], doy=d_args['doy'],
+                       ra=d_asce_args['ra']):
+    assert float(calcs._ra_daily(
+        ee.Number(lat), ee.Number(doy),
+        method='asce').getInfo()) == pytest.approx(ra)
+
+def test_ra_daily_refet(lat=s_args['lat'], doy=d_args['doy'],
+                        ra=d_args['ra']):
     assert float(calcs._ra_daily(
         ee.Number(lat), ee.Number(doy),
         method='refet').getInfo()) == pytest.approx(ra)
-    assert float(calcs._ra_daily(
-        ee.Number(lat), ee.Number(doy),
-        method='asce').getInfo()) == pytest.approx(d_asce_args['ra'])
 
 
-def test_ra_hourly(lat=s_args['lat'], lon=s_args['lon'], doy=h_args['doy'],
-                   time=h_args['time_mid'], ra=h_args['ra']):
+def test_ra_hourly_default(lat=s_args['lat'], lon=s_args['lon'],
+                           doy=h_args['doy'], time=h_args['time_mid'],
+                           ra=h_asce_args['ra']):
     assert float(calcs._ra_hourly(
         ee.Number(lat), ee.Number(lon), ee.Number(doy),
         ee.Number(time)).getInfo()) == pytest.approx(ra)
 
-def test_ra_hourly_asce(lat=s_args['lat'], lon=s_args['lon'], doy=h_args['doy'],
-                        time=h_args['time_mid'], ra=h_args['ra']):
+def test_ra_hourly_asce(lat=s_args['lat'], lon=s_args['lon'],
+                        doy=h_args['doy'], time=h_args['time_mid'],
+                        ra=h_asce_args['ra']):
     assert float(calcs._ra_hourly(
         ee.Number(lat), ee.Number(lon), ee.Number(doy), ee.Number(time),
-        method='refet').getInfo()) == pytest.approx(ra)
+        method='asce').getInfo()) == pytest.approx(ra)
+
+def test_ra_hourly_refet(lat=s_args['lat'], lon=s_args['lon'],
+                         doy=h_args['doy'], time=h_args['time_mid'],
+                         ra=h_args['ra']):
     assert float(calcs._ra_hourly(
-        ee.Number(lat), ee.Number(lon), ee.Number(doy), ee.Number(time),
-        method='asce').getInfo()) == pytest.approx(h_asce_args['ra'])
+        ee.Number(lat), ee.Number(lon), ee.Number(doy),
+        ee.Number(time), method='refet').getInfo()) == pytest.approx(ra)
 
 
 def test_rso_daily(ra=d_args['ra'], ea=d_args['ea'], pair=s_args['pair'],
@@ -251,26 +267,33 @@ def test_rso_daily(ra=d_args['ra'], ea=d_args['ea'], pair=s_args['pair'],
         ee.Number(lat)).getInfo()) == pytest.approx(rso)
 
 
-def test_rso_hourly(ra=h_args['ra'], ea=h_args['ea'], pair=s_args['pair'],
-                    doy=h_args['doy'], time=h_args['time_mid'],
-                    lat=s_args['lat'], lon=s_args['lon'], rso=h_args['rso']):
+def test_rso_hourly_default(ra=h_args['ra'], ea=h_args['ea'], pair=s_args['pair'],
+                            doy=h_args['doy'], time=h_args['time_mid'],
+                            lat=s_args['lat'], lon=s_args['lon'],
+                            rso=h_asce_args['rso']):
     assert float(calcs._rso_hourly(
-        ee.Number(ra), ee.Number(ea), ee.Number(pair),
-        ee.Number(doy), ee.Number(time),
-        ee.Number(lat), ee.Number(lon)).getInfo()) == pytest.approx(rso)
+        ee.Number(ra), ee.Number(ea), ee.Number(pair), ee.Number(doy),
+        ee.Number(time), ee.Number(lat),
+        ee.Number(lon)).getInfo()) == pytest.approx(rso)
 
 def test_rso_hourly_asce(ra=h_args['ra'], ea=h_args['ea'], pair=s_args['pair'],
                          doy=h_args['doy'], time=h_args['time_mid'],
                          lat=s_args['lat'], lon=s_args['lon'],
-                         rso=h_args['rso']):
+                         rso=h_asce_args['rso']):
     assert float(calcs._rso_hourly(
         ee.Number(ra), ee.Number(ea), ee.Number(pair), ee.Number(doy),
         ee.Number(time), ee.Number(lat), ee.Number(lon),
+        method='asce').getInfo()) == pytest.approx(rso)
+
+def test_rso_hourly_refet(ra=h_args['ra'], ea=h_args['ea'], pair=s_args['pair'],
+                          doy=h_args['doy'], time=h_args['time_mid'],
+                          lat=s_args['lat'], lon=s_args['lon'],
+                          rso=h_args['rso']):
+    assert float(calcs._rso_hourly(
+        ee.Number(ra), ee.Number(ea), ee.Number(pair),
+        ee.Number(doy), ee.Number(time),
+        ee.Number(lat), ee.Number(lon),
         method='refet').getInfo()) == pytest.approx(rso)
-    assert float(calcs._rso_hourly(
-        ee.Number(ra), ee.Number(ea), ee.Number(pair), ee.Number(doy),
-        ee.Number(time), ee.Number(lat), ee.Number(lon),
-        method='asce').getInfo()) == pytest.approx(h_asce_args['rso'])
 
 
 @pytest.mark.parametrize(
@@ -287,35 +310,39 @@ def test_fcd_daily(rs=d_args['rs'], rso=d_args['rso'], fcd=d_args['fcd']):
         ee.Number(rs), ee.Number(rso)).getInfo()) == pytest.approx(fcd)
 
 
-def test_fcd_hourly(rs=h_args['rs'], rso=h_args['rso'], doy=h_args['doy'],
-                    time=h_args['time_mid'], lat=s_args['lat'],
-                    lon=s_args['lon'], fcd=h_args['fcd']):
+def test_fcd_hourly_default(rs=h_args['rs'], rso=h_args['rso'],
+                            doy=h_args['doy'], time=h_args['time_mid'],
+                            lat=s_args['lat'], lon=s_args['lon'],
+                            fcd=h_asce_args['fcd']):
     assert float(calcs._fcd_hourly(
         ee.Number(rs), ee.Number(rso), ee.Number(doy), ee.Number(time),
         ee.Number(lat), ee.Number(lon)).getInfo()) == pytest.approx(fcd)
 
-def test_fcd_hourly_asce(rs=h_args['rs'], rso=h_args['rso'], doy=h_args['doy'],
-                         time=h_args['time_mid'], lat=s_args['lat'],
-                         lon=s_args['lon'], fcd=h_args['fcd']):
+def test_fcd_hourly_asce(rs=h_args['rs'], rso=h_args['rso'],
+                         doy=h_args['doy'], time=h_args['time_mid'],
+                         lat=s_args['lat'], lon=s_args['lon'],
+                         fcd=h_asce_args['fcd']):
+    assert float(calcs._fcd_hourly(
+        ee.Number(rs), ee.Number(rso), ee.Number(doy), ee.Number(time),
+        ee.Number(lat), ee.Number(lon),
+        method='asce').getInfo()) == pytest.approx(fcd)
+
+def test_fcd_hourly_refet(rs=h_args['rs'], rso=h_args['rso'],
+                          doy=h_args['doy'], time=h_args['time_mid'],
+                          lat=s_args['lat'], lon=s_args['lon'],
+                          fcd=h_args['fcd']):
     assert float(calcs._fcd_hourly(
         ee.Number(rs), ee.Number(rso), ee.Number(doy), ee.Number(time),
         ee.Number(lat), ee.Number(lon),
         method='refet').getInfo()) == pytest.approx(fcd)
-    assert float(calcs._fcd_hourly(
-        ee.Number(rs), ee.Number(rso), ee.Number(doy), ee.Number(time),
-        ee.Number(lat), ee.Number(lon),
-        method='asce').getInfo()) == pytest.approx(h_asce_args['fcd'])
 
 def test_fcd_hourly_night(rs=h_args['rs'], rso=h_args['rso'], doy=h_args['doy'],
                           time=6, lat=s_args['lat'], lon=s_args['lon'], fcd=1):
     # For now, check that nighttime fcd values are set to 1
     assert float(calcs._fcd_hourly(
         ee.Number(rs), ee.Number(rso), ee.Number(doy), ee.Number(time),
-        ee.Number(lat), ee.Number(lon)).getInfo()) == pytest.approx(fcd)
-
-# Test function when rs/rso have different shapes than lat/lon/doy/time
-# def test_fcd_hourly_broadcasting():
-#     assert False
+        ee.Number(lat), ee.Number(lon),
+        method='refet').getInfo()) == pytest.approx(fcd)
 
 
 def test_rnl_daily(tmin=d_args['tmin'], tmax=d_args['tmax'], ea=d_args['ea'],

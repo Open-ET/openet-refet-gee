@@ -3,17 +3,17 @@ import math
 import ee
 
 
-def _air_pressure(elev, method='refet'):
+def _air_pressure(elev, method='asce'):
     """Mean atmospheric pressure at station elevation (Eqs. 3 & 34)
 
     Parameters
     ----------
     elev : ee.Image or ee.Number
         Elevation [m].
-    method : {'refet', 'asce'}, optional
+    method : {'asce' (default), 'refet'}, optional
         Calculation method:
-        * 'refet' -- Calculations will follow RefET software (default).
         * 'asce' -- Calculations will follow ASCE-EWRI 2005 [1] equations.
+        * 'refet' -- Calculations will follow RefET software.
 
     Returns
     -------
@@ -62,17 +62,17 @@ def _sat_vapor_pressure(temperature):
     #     .multiply(0.6108)
 
 
-def _es_slope(tmean, method='refet'):
+def _es_slope(tmean, method='asce'):
     """Slope of the saturation vapor pressure-temperature curve (Eq. 5)
 
     Parameters
     ----------
     tmean : ee.Image or ee.Number
         Mean air temperature [C].
-    method : {'refet', 'asce'}, optional
+    method : {'asce' (default), 'refet'}, optional
         Calculation method:
-        * 'refet' -- Calculations will follow RefET software (default).
         * 'asce' -- Calculations will follow ASCE-EWRI 2005 [1] equations.
+        * 'refet' -- Calculations will follow RefET software.
 
     Returns
     -------
@@ -199,17 +199,17 @@ def _doy_fraction(doy):
     return doy.multiply(2.0 * math.pi / 365)
 
 
-def _delta(doy, method='refet'):
+def _delta(doy, method='asce'):
     """Earth declination (Eq. 51)
 
     Parameters
     ----------
     doy : ee.Image or ee.Number
         Day of year.
-    method : {'refet', 'asce'}, optional
+    method : {'asce' (default), 'refet'}, optional
         Calculation method:
-        * 'refet' -- Calculations will follow RefET software (default).
         * 'asce' -- Calculations will follow ASCE-EWRI 2005 [1] equations.
+        * 'refet' -- Calculations will follow RefET software.
 
     Returns
     -------
@@ -380,7 +380,7 @@ def _omega_sunset(lat, delta):
     return lat.tan().multiply(-1).multiply(delta.tan()).acos()
 
 
-def _ra_daily(lat, doy, method='refet'):
+def _ra_daily(lat, doy, method='asce'):
     """Daily extraterrestrial radiation (Eq. 21)
 
     Parameters
@@ -389,10 +389,10 @@ def _ra_daily(lat, doy, method='refet'):
         latitude [radians].
     doy : ee.Image or ee.Number
         Day of year.
-    method : {'refet', 'asce'}, optional
+    method : {'asce' (default), 'refet'}, optional
         Calculation method:
-        * 'refet' -- Calculations will follow RefET software (default).
         * 'asce' -- Calculations will follow ASCE-EWRI 2005 [1] equations.
+        * 'refet' -- Calculations will follow RefET software.
 
     Returns
     -------
@@ -419,7 +419,7 @@ def _ra_daily(lat, doy, method='refet'):
     return ra
 
 
-def _ra_hourly(lat, lon, doy, time_mid, method='refet'):
+def _ra_hourly(lat, lon, doy, time_mid, method='asce'):
     """Hourly extraterrestrial radiation (Eq. 48)
 
     Parameters
@@ -432,10 +432,10 @@ def _ra_hourly(lat, lon, doy, time_mid, method='refet'):
         Day of year.
     time_mid : ee.Image or ee.Number
         UTC time at midpoint of period [hours].
-    method : {'refet', 'asce'}, optional
+    method : {'asce' (default), 'refet'}, optional
         Calculation method:
-        * 'refet' -- Calculations will follow RefET software (default).
         * 'asce' -- Calculations will follow ASCE-EWRI 2005 [1] equations.
+        * 'refet' -- Calculations will follow RefET software.
 
     Returns
     -------
@@ -520,7 +520,7 @@ def _rso_daily(ra, ea, pair, doy, lat):
     return rso
 
 
-def _rso_hourly(ra, ea, pair, doy, time_mid, lat, lon, method='refet'):
+def _rso_hourly(ra, ea, pair, doy, time_mid, lat, lon, method='asce'):
     """Full hourly clear sky solar radiation formulation (Appendix D)
 
     Parameters
@@ -539,10 +539,10 @@ def _rso_hourly(ra, ea, pair, doy, time_mid, lat, lon, method='refet'):
         Latitude [rad].
     lon : ee.Image or ee.Number
         Longitude [rad].
-    method : {'refet', 'asce'}, optional
+    method : {'asce' (default), 'refet'}, optional
         Calculation method:
-        * 'refet' -- Calculations will follow RefET software (default).
         * 'asce' -- Calculations will follow ASCE-EWRI 2005 [1] equations.
+        * 'refet' -- Calculations will follow RefET software.
         Passed through to declination calculation (_delta()).
 
     Returns
@@ -624,7 +624,7 @@ def _fcd_daily(rs, rso):
     return rs.divide(rso).max(0.3).min(1.0).multiply(1.35).subtract(0.35)
 
 
-def _fcd_hourly(rs, rso, doy, time_mid, lat, lon, method='refet'):
+def _fcd_hourly(rs, rso, doy, time_mid, lat, lon, method='asce'):
     """Cloudiness fraction (Eq. 45)
 
     Parameters
@@ -641,10 +641,10 @@ def _fcd_hourly(rs, rso, doy, time_mid, lat, lon, method='refet'):
         Latitude [rad].
     lon : ee.Image or ee.Number
         Longitude [rad].
-    method : {'refet', 'asce'}, optional
+    method : {'asce' (default), 'refet'}, optional
         Calculation method:
-        * 'refet' -- Calculations will follow RefET software (default).
         * 'asce' -- Calculations will follow ASCE-EWRI 2005 [1] equations.
+        * 'refet' -- Calculations will follow RefET software.
         Passed through to declination calculation (_delta()).
 
     Returns
