@@ -34,7 +34,7 @@ setup(
     author_email='charles.g.morton@gmail.com',
     url='https://github.com/cgmorton/RefET-GEE',
     download_url='https://github.com/cgmorton/RefET-GEE/archive/v{}.tar.gz'.format(version),
-    install_requires=['numpy'],
+    install_requires=['earthengine-api'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pandas', 'pytz'],
     packages=['eerefet'],
