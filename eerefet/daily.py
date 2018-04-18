@@ -168,7 +168,7 @@ class Daily():
         #     (es_slope + psy * (cd * u2 + 1)))
 
     @classmethod
-    def gridmet(cls, gridmet_img,
+    def gridmet(cls, gridmet_img, zw=10,
                 elev=ee.Image('projects/climate-engine/gridmet/elevation'),
                 lat=ee.Image.pixelLonLat().select('latitude'),
                 method='asce', rso_type=None):
@@ -178,6 +178,8 @@ class Daily():
         ----------
         gridmet_img : ee.Image
             GRIDMET image from the collection IDAHO_EPSCOR/GRIDMET.
+        zw : ee.Number or float
+            Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
             Elevation image [m].  The standard GRIDMET elevation image will be
             used if not set.
@@ -208,7 +210,7 @@ class Daily():
                 calcs._air_pressure(elev), gridmet_img.select(['q'])),
             rs=gridmet_img.select(['srad']).multiply(0.0864),
             uz=gridmet_img.select(['vs']),
-            zw=10,
+            zw=zw,
             elev=elev,
             lat=lat,
             doy=ee.Number(ee.Date(gridmet_img.get('system:time_start'))
