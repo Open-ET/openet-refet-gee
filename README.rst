@@ -1,12 +1,8 @@
-.. image:: https://travis-ci.org/cgmorton/RefET-GEE.svg?branch=master
-   :target: https://travis-ci.org/cgmorton/RefET-GEE
-
-.. image:: https://badge.fury.io/py/geerefet.svg
-   :target: https://badge.fury.io/py/geerefet
-
 =======================================================================
 Google Earth Engine ASCE Standardized Reference Evapotranspiration (ET)
 =======================================================================
+
+|version| |build|
 
 Google Earth Engine (GEE) functions for computing daily and hourly reference ET.
 
@@ -87,7 +83,7 @@ Input Parameters
 ================
 
 Required Parameters (hourly & daily)
------------------------------------
+------------------------------------
 
 ========  ===================  =================================================
 Variable  Type                 Description [units]
@@ -125,20 +121,26 @@ time      ee.Image, ee.Number  UTC hour at start of time period
 Optional Parameters
 -------------------
 
-========  =========  ====================================================
-Variable  Type       Description [units]
-========  =========  ====================================================
-method    str        | Calculation method
-                     * 'asce' -- Calculations will follow ASCE-EWRI 2005 (default)
-                     * 'refet' -- Calculations will follow RefET software
-rso_type  str        | Clear sky solar radiation (Rso) model
-                     * 'full' -- Full clear sky solar formulation (default)
-                     * 'simple' -- Simplified clear sky solar formulation (Eq. 19)
-                     * 'array' -- Read Rso values from "rso" function parameter
-rso       ee.Image   | Clear sky solar radiation [MJ m-2 day-1]
-          ee.Number  * Only needed if rso_type is 'array'
-                     * Defaults to None if not set
-========  =========  ====================================================
+========  ===================  ====================================================
+Variable  Type                 Description [units]
+========  ===================  ====================================================
+method    str                  | Calculation method
+
+                               * 'asce' -- Calculations will follow ASCE-EWRI 2005 (default)
+                               * 'refet' -- Calculations will follow RefET software
+
+rso_type  str                  | Clear sky solar radiation (Rso) model
+
+                               * 'full' -- Full clear sky solar formulation (default)
+                               * 'simple' -- Simplified clear sky solar formulation (Eq. 19)
+                               * 'array' -- Read Rso values from "rso" function parameter
+
+rso       ee.Image, ee.Number  | Clear sky solar radiation [MJ m-2 day-1]
+
+                               * Only needed if rso_type is 'array'
+                               * Defaults to None if not set
+
+========  ===================  ====================================================
 
 ASCE vs. RefET
 ==============
@@ -189,3 +191,10 @@ ASCE-EWRI Standardized Reference Evapotranspiration Equation (2005)
 
  * `Report <http://www.kimberly.uidaho.edu/water/asceewri/ascestzdetmain2005.pdf>`__
  * `Appendix <http://www.kimberly.uidaho.edu/water/asceewri/appendix.pdf>`__
+
+.. |build| image:: https://travis-ci.org/cgmorton/RefET-GEE.svg?branch=master
+   :alt: Build status
+   :target: https://travis-ci.org/cgmorton/RefET-GEE
+.. |version| image:: https://badge.fury.io/py/geerefet.svg
+   :alt: Latest version on PyPI
+   :target: https://badge.fury.io/py/geerefet
