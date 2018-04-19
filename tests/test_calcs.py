@@ -1,8 +1,8 @@
 import ee
 import pytest
 
-import eerefet.calcs as calcs
-import eerefet.units as units
+import geerefet.calcs as calcs
+import geerefet.units as units
 
 ee.Initialize()
 

@@ -23,10 +23,10 @@ def find_version(*file_paths):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
-version = find_version("eerefet", "__init__.py")
+version = find_version("geerefet", "__init__.py")
 
 setup(
-    name='eerefet',
+    name='geerefet',
     version=version,
     description='Google Earth Engine ASCE Standardized Reference Evapotranspiration Functions',
     license='Apache',
@@ -37,7 +37,7 @@ setup(
     install_requires=['earthengine-api'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pandas', 'pytz'],
-    packages=['eerefet'],
+    packages=['geerefet'],
     keywords='RefET Evapotranspiration GEE',
     classifiers = [
         'License :: OSI Approved :: Apache Software License',

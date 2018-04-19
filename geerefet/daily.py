@@ -8,16 +8,16 @@ ee.Initialize()
 class Daily():
     """"""
 
-    def __init__(self, tmin, tmax, ea, rs, uz, zw, elev, lat, doy,
+    def __init__(self, tmax, tmin, ea, rs, uz, zw, elev, lat, doy,
                  method='asce', rso_type=None, rso=None):
         """ASCE Daily Standardized Reference Evapotranspiration (ET)
 
         Arguments
         ---------
-        tmin : ee.Image or ee.Number
-            Minimum daily temperature [C].
         tmax : ee.Image or ee.Number
             Maximum daily temperature [C].
+        tmin : ee.Image or ee.Number
+            Minimum daily temperature [C].
         ea : ee.Image or ee.Number
             Actual vapor pressure [kPa].
         rs : ee.Image or ee.Number
@@ -168,10 +168,8 @@ class Daily():
         #     (es_slope + psy * (cd * u2 + 1)))
 
     @classmethod
-    def gridmet(cls, gridmet_img, zw=10,
-                elev=ee.Image('projects/climate-engine/gridmet/elevation'),
-                lat=ee.Image.pixelLonLat().select('latitude'),
-                method='asce', rso_type=None):
+    def gridmet(cls, gridmet_img, zw=10, elev=None, lat=None, method='asce',
+                rso_type=None):
         """Initialize daily RefET from a GRIDMET image
 
         Parameters
@@ -181,8 +179,8 @@ class Daily():
         zw : ee.Number or float
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  The standard GRIDMET elevation image will be
-            used if not set.
+            Elevation image [m].  The standard GRIDMET elevation image
+            (projects/climate-engine/gridmet/elevtion) will be used if not set.
         lat : ee.Image or ee.Number
             Latitude image [degrees].  The latitude will be computed
             dynamically using ee.Image.pixelLonLat() if not set.
@@ -200,17 +198,25 @@ class Daily():
         -----
         Temperatures are converted from K to C.
         Solar radiation is converted from W m-2 to MJ m-2 day-1.
-        Actual vapor pressure is computed from specific humidity (q) and air
-            pressure (via elevation).
+        Actual vapor pressure is computed from specific humidity (GRIDMET sph)
+            and air pressure (from elevation).
 
         """
-        cls(tmin=gridmet_img.select(['tmmn']).subtract(273.15),
+
+        if elev is None:
+            elev = ee.Image('projects/climate-engine/gridmet/elevation')
+        if lat is None:
+            lat = ee.Image.pixelLonLat().select('latitude')
+
+        return cls(
+            tmin=gridmet_img.select(['tmmn']).subtract(273.15),
             tmax=gridmet_img.select(['tmmx']).subtract(273.15),
             ea=calcs._actual_vapor_pressure(
-                calcs._air_pressure(elev), gridmet_img.select(['q'])),
+                pair=calcs._air_pressure(elev, method),
+                q=gridmet_img.select(['sph'])),
             rs=gridmet_img.select(['srad']).multiply(0.0864),
             uz=gridmet_img.select(['vs']),
-            zw=zw,
+            zw=ee.Number(zw),
             elev=elev,
             lat=lat,
             doy=ee.Number(ee.Date(gridmet_img.get('system:time_start'))

@@ -24,7 +24,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/daily.pl?stat
 
     import math
     import ee
-    import eerefet
+    import geerefet
 
     # Unit conversions
     tmin_c = (66.65 - 32) * (5.0 / 9)                          # F -> C
@@ -35,7 +35,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/daily.pl?stat
     uz = 4.80 * 0.44704                                        # mpg -> m s-1
     lat_radians = (39.4575 * math.pi / 180)                    # degrees -> radians
 
-    etr = eerefet.Daily(
+    etr = geerefet.Daily(
         tmin=tmin_c, tmax=tmax_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
         lat=lat_radians, doy=182).etr().getInfo()
 
@@ -52,7 +52,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/instant.pl?st
 
     import math
     import ee
-    import eerefet
+    import geerefet
 
     # Unit conversions
     tmean_c = (91.80 - 32) * (5.0 / 9)           # F -> C
@@ -62,7 +62,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/instant.pl?st
     lat_radians = (39.4575 * math.pi / 180)      # degrees -> radians
     lon_radians = (-118.77388 * math.pi / 180)   # degrees -> radians
 
-    etr = eerefet.Hourly(
+    etr = geerefet.Hourly(
         tmean=tmean_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
         lat=lat_radians, lon=lon_radians, doy=182, time=18).etr().getInfo()
 
@@ -71,12 +71,14 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/instant.pl?st
 GRIDMET
 -------
 
+A helper function for computing daily ETo and ETr for `GRIDMET <http://www.climatologylab.org/gridmet.html>`__ images is available.
+
 .. code-block:: console
     import ee
-    import eerefet
+    import geerefet
 
     gridmet_img = ee.Image(ee.ImageCollection('IDAHO_EPSCOR/GRIDMET').first())
-    etr = eerefet.Daily.gridmet(gridmet_img).etr().getInfo()
+    etr = geerefet.Daily.gridmet(gridmet_img).etr().getInfo()
 
     print('ETr: {:.2f} mm'.format(float(etr)))
 
@@ -92,7 +94,7 @@ Variable  Type                 Description [units]
 ea        ee.Image, ee.Number  Actual vapor pressure [kPa]
 rs        ee.Image, ee.Number  Incoming shortwave solar radiation [MJ m-2 day-1]
 uz        ee.Image, ee.Number  Wind speed [m/s]
-zw        ee.Number              Wind speed height [m]
+zw        ee.Number            Wind speed height [m]
 elev      ee.Image, ee.Number  Elevation [m]
 lat       ee.Image, ee.Number  Latitude [radians]
 doy       ee.Image, ee.Number  Day of year
@@ -137,6 +139,10 @@ rso       ee.Image   | Clear sky solar radiation [MJ m-2 day-1]
                        * Defaults to None if not set
 ========  =========  ====================================================
 
+ASCE vs. RefET
+==============
+
+TODO Discuss differences between "asce" and "refet" methods.
 
 Limitations
 ===========
@@ -155,7 +161,7 @@ To install the RefET-GEE python module:
 
 .. code-block:: console
 
-   pip install eerefet
+   pip install geerefet
 
 Validation
 ==========

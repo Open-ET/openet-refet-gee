@@ -8,8 +8,8 @@ import pandas as pd
 import pytest
 import pytz
 
-from eerefet.hourly import Hourly
-import eerefet.units as units
+from geerefet.hourly import Hourly
+import geerefet.units as units
 
 ee.Initialize()
 
