@@ -23,8 +23,6 @@ s_args = {
     # DEADBEEF
     # 'lat': units._deg2rad(39.4575),
     # 'lon': units._deg2rad(-118.77388),
-    'pair': 87.81876435813037,
-    'pair_asce': 87.80710537212929,
     'zw': 3.0,
 }
 # Daily test parameters for 2015-07-01
@@ -34,7 +32,7 @@ d_args = {
     'ea_asce': 1.2205053588697359,
     'eto': 7.9422320475712835,
     'etr': 10.571314344056955,
-    'etr_asce': 10.626087665395694,
+    'etr_asce': 10.62628103954038,
     'etr_rso_simple': 10.628137858930051,
     'q': 0.008691370735727117,
     'rs': 674.07 * 0.041868,  # Conversion from Langleys to MJ m-2
@@ -124,7 +122,7 @@ def test_refet_daily_rso_type_exception():
 def test_refet_daily_asce():
     etr = Daily(
         tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
-        ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
+        ea=ee.Number(d_args['ea_asce']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
         doy=ee.Number(d_args['doy']), method='asce').etr().getInfo()
@@ -132,23 +130,21 @@ def test_refet_daily_asce():
 
 
 def test_refet_daily_gridmet():
-    # Convert test values to GRIDMET units
-    # MJ m-2 d-1 -> W m-2 and C -> K
-    #
+    # Convert input units to GRIDMET units
+    # Overriding GRIDMET windspeed height from 10m to 3m
     gridmet_img = ee.Image.constant([
-            d_args['tmax'] + 273.15, d_args['tmin'] + 273.15, d_args['q'],
-            d_args['rs'] / 0.0864, d_args['uz']])\
+            d_args['tmax'] + 273.15, d_args['tmin'] + 273.15,
+            d_args['q'], d_args['rs'] / 0.0864, d_args['uz']])\
         .rename(['tmmx', 'tmmn', 'sph', 'srad', 'vs'])\
         .set('system:time_start', ee.Date('2015-07-01').millis())
     refet = Daily.gridmet(
         ee.Image(gridmet_img), elev=ee.Number(s_args['elev']),
-        lat=ee.Number(s_args['lat']), method='asce')
+        lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']), method='asce')
     # Output bands are not currently being renamed, defaults to 'vs'
     etr = refet.etr().reduceRegion(
         reducer=ee.Reducer.first(),
         geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
         scale=1).getInfo()['vs']
-    print(etr)
     assert float(etr) == pytest.approx(d_args['etr_asce'])
 
 

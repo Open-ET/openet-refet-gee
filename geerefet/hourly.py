@@ -24,7 +24,7 @@ class Hourly():
             Shortwave solar radiation [MJ m-2 hr-1].
         uz : ee.Image or ee.Number
             Wind speed [m/s].
-        zw : ee.Number or float
+        zw : ee.Number
             Wind speed measurement/estimated height [m].
         elev : ee.Image or ee.Number
             Elevation [m]

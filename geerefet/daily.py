@@ -26,7 +26,7 @@ class Daily():
             Incoming shortwave solar radiation [MJ m-2 day-1].
         uz : ee.Image or ee.Number
             Wind speed [m/s].
-        zw : ee.Number or float
+        zw : ee.Number
             Wind speed height [m].
         elev : ee.Image or ee.Number
             Elevation [m].
@@ -174,7 +174,7 @@ class Daily():
         #     (es_slope + psy * (cd * u2 + 1)))
 
     @classmethod
-    def gridmet(cls, gridmet_img, zw=10, elev=None, lat=None, method='asce',
+    def gridmet(cls, gridmet_img, zw=None, elev=None, lat=None, method='asce',
                 rso_type=None):
         """Initialize daily RefET from a GRIDMET image
 
@@ -182,7 +182,7 @@ class Daily():
         ----------
         gridmet_img : ee.Image
             GRIDMET image from the collection IDAHO_EPSCOR/GRIDMET.
-        zw : ee.Number or float
+        zw : ee.Number
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
             Elevation image [m].  The standard GRIDMET elevation image
@@ -209,6 +209,8 @@ class Daily():
 
         """
 
+        if zw is None:
+            zw = ee.Number(10)
         if elev is None:
             elev = ee.Image('projects/climate-engine/gridmet/elevation')
         if lat is None:
@@ -222,7 +224,7 @@ class Daily():
                 q=gridmet_img.select(['sph'])),
             rs=gridmet_img.select(['srad']).multiply(0.0864),
             uz=gridmet_img.select(['vs']),
-            zw=ee.Number(zw),
+            zw=zw,
             elev=elev,
             lat=lat,
             doy=ee.Number(ee.Date(gridmet_img.get('system:time_start'))
