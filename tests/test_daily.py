@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 from geerefet.daily import Daily
+import geerefet.calcs as calcs
 import geerefet.units as units
 
 ee.Initialize()
@@ -17,14 +18,20 @@ ee.Initialize()
 # Fallon AgriMet site parameters
 s_args = {
     'elev': 1208.5,
-    'lat': units._deg2rad(39.4575),
-    'lon': units._deg2rad(-118.77388),
+    'lat': 39.4575,
+    'lon': -118.77388,
+    # DEADBEEF
+    # 'lat': units._deg2rad(39.4575),
+    # 'lon': units._deg2rad(-118.77388),
+    'pair': 87.81876435813037,
+    'pair_asce': 87.80710537212929,
     'zw': 3.0,
 }
 # Daily test parameters for 2015-07-01
 d_args = {
     'doy': 182,
     'ea': 1.2206674169951346,
+    'ea_asce': 1.2205053588697359,
     'eto': 7.9422320475712835,
     'etr': 10.571314344056955,
     'etr_asce': 10.626087665395694,
@@ -50,7 +57,7 @@ d_args = {
 # Test full daily functions with positional inputs
 def test_refet_daily_input_positions():
     etr = Daily(
-        ee.Number(d_args['tmin']), ee.Number(d_args['tmax']),
+        ee.Number(d_args['tmax']), ee.Number(d_args['tmin']),
         ee.Number(d_args['ea']), ee.Number(d_args['rs']),
         ee.Number(d_args['uz']), ee.Number(s_args['zw']),
         ee.Number(s_args['elev']), ee.Number(s_args['lat']),
@@ -62,7 +69,7 @@ def test_refet_daily_input_positions():
 # Test surface, rso_type, and rso inputs
 def test_refet_daily_surface_etr():
     etr = Daily(
-        tmin=ee.Number(d_args['tmin']), tmax=ee.Number(d_args['tmax']),
+        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
         ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -72,7 +79,7 @@ def test_refet_daily_surface_etr():
 
 def test_refet_daily_surface_eto():
     eto = Daily(
-        tmin=ee.Number(d_args['tmin']), tmax=ee.Number(d_args['tmax']),
+        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
         ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -82,7 +89,7 @@ def test_refet_daily_surface_eto():
 
 def test_refet_daily_rso_type_simple():
     etr = Daily(
-        tmin=ee.Number(d_args['tmin']), tmax=ee.Number(d_args['tmax']),
+        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
         ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -93,7 +100,7 @@ def test_refet_daily_rso_type_simple():
 
 def test_refet_daily_rso_type_array():
     etr = Daily(
-        tmin=ee.Number(d_args['tmin']), tmax=ee.Number(d_args['tmax']),
+        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
         ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -105,7 +112,7 @@ def test_refet_daily_rso_type_array():
 def test_refet_daily_rso_type_exception():
     with pytest.raises(ValueError):
         etr = Daily(
-            tmin=ee.Number(d_args['tmin']), tmax=ee.Number(d_args['tmax']),
+            tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
             ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
             uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
             elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -116,7 +123,7 @@ def test_refet_daily_rso_type_exception():
 
 def test_refet_daily_asce():
     etr = Daily(
-        tmin=ee.Number(d_args['tmin']), tmax=ee.Number(d_args['tmax']),
+        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
         ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -127,8 +134,9 @@ def test_refet_daily_asce():
 def test_refet_daily_gridmet():
     # Convert test values to GRIDMET units
     # MJ m-2 d-1 -> W m-2 and C -> K
+    #
     gridmet_img = ee.Image.constant([
-            d_args['tmax']+273.15, d_args['tmin']+273.15, d_args['q'],
+            d_args['tmax'] + 273.15, d_args['tmin'] + 273.15, d_args['q'],
             d_args['rs'] / 0.0864, d_args['uz']])\
         .rename(['tmmx', 'tmmn', 'sph', 'srad', 'vs'])\
         .set('system:time_start', ee.Date('2015-07-01').millis())
@@ -244,7 +252,9 @@ class DailyData():
                     dt.datetime.strptime(test_date, '%Y-%m-%d').strftime('%j')),
                 'zw': zw,
                 'elev': elev,
-                'lat': lat * math.pi / 180,
+                'lat': lat,
+                # DEADBEEF
+                # 'lat': lat * math.pi / 180,
                 'rso_type': 'full'})
             values.append(date_values)
             ids.append('{}-{}'.format(test_date, surface))

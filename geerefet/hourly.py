@@ -1,3 +1,5 @@
+import math
+
 import ee
 
 from . import calcs
@@ -27,9 +29,9 @@ class Hourly():
         elev : ee.Image or ee.Number
             Elevation [m]
         lat : ee.Image or ee.Number
-            Latitude [radians]
+            Latitude [degrees]
         lon : ee.Image or ee.Number
-            Longitude [radians].
+            Longitude [degrees].
         doy : ee.Number
             Day of year.
         time : ee.Number
@@ -46,7 +48,8 @@ class Hourly():
 
         Notes
         -----
-        Divide solar radiation values by 0.0036 to convert MJ m-2 hr-1 to W m-2
+        Divide solar radiation values by 0.0036 to convert MJ m-2 hr-1 to W m-2.
+        Latitude & longitude units are degress, not radians.
 
         References
         ----------
@@ -67,8 +70,8 @@ class Hourly():
         self.uz = uz
         self.zw = zw
         self.elev = elev
-        self.lat = lat
-        self.lon = lon
+        self.lat = lat.multiply(math.pi / 180)
+        self.lon = lon.multiply(math.pi / 180)
         self.doy = doy
         self.time = time
 

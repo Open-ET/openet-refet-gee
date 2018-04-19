@@ -117,7 +117,7 @@ Required Hourly Parameters
 Variable  Type                 Description [units]
 ========  ===================  =================================================
 tmean     ee.Image, ee.Number  Average hourly temperature [C]
-lon       ee.Image, ee.Number  Longitude [radians]
+lon       ee.Image, ee.Number  Longitude [degrees]
 time      ee.Image, ee.Number  UTC hour at start of time period
 ========  ===================  =================================================
 
@@ -128,15 +128,15 @@ Optional Parameters
 Variable  Type       Description [units]
 ========  =========  ====================================================
 method    str        | Calculation method
-                       * 'refet' -- Calculations will follow RefET software (default)
-                       * 'asce' -- Calculations will follow ASCE-EWRI 2005 equations
+                     * 'asce' -- Calculations will follow ASCE-EWRI 2005 (default)
+                     * 'refet' -- Calculations will follow RefET software
 rso_type  str        | Clear sky solar radiation (Rso) model
-                       * 'full' -- Full clear sky solar formulation (default)
-                       * 'simple' -- Simplified clear sky solar formulation (Eq. 19)
-                       * 'array' -- Read Rso values from "rso" function parameter
+                     * 'full' -- Full clear sky solar formulation (default)
+                     * 'simple' -- Simplified clear sky solar formulation (Eq. 19)
+                     * 'array' -- Read Rso values from "rso" function parameter
 rso       ee.Image   | Clear sky solar radiation [MJ m-2 day-1]
-          ee.Number    * Only needed if rso_type is 'array'
-                       * Defaults to None if not set
+          ee.Number  * Only needed if rso_type is 'array'
+                     * Defaults to None if not set
 ========  =========  ====================================================
 
 ASCE vs. RefET
@@ -144,10 +144,12 @@ ASCE vs. RefET
 
 TODO Discuss differences between "asce" and "refet" methods.
 
-Limitations
-===========
+Issues
+======
 
 Currently the user must handle all of the file I/O and unit conversions.
+
+The latitude/longitude units are in degrees, not radians (this is different than the python RefET modules).
 
 Cloudiness Fraction (hourly)
 ----------------------------

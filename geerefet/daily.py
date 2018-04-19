@@ -1,3 +1,5 @@
+import math
+
 import ee
 
 from . import calcs
@@ -29,7 +31,7 @@ class Daily():
         elev : ee.Image or ee.Number
             Elevation [m].
         lat : ee.Image or ee.Number
-            Latitude [radians].
+            Latitude [degrees].
         doy : ee.Number
             Day of year.
         method : {'asce' (default), 'refet'}, optional
@@ -50,6 +52,10 @@ class Daily():
         ------
         ValueError
             If 'method' or 'rso_type' parameter is invalid.
+
+        Notes
+        -----
+        Latitude units are degress, not radians.
 
         References
         ----------
@@ -80,7 +86,7 @@ class Daily():
         self.uz = uz
         self.zw = zw
         self.elev = elev
-        self.lat = lat
+        self.lat = lat.multiply(math.pi / 180)
         self.doy = doy
 
         # To match standardized form, pair is calculated from elevation
@@ -209,8 +215,8 @@ class Daily():
             lat = ee.Image.pixelLonLat().select('latitude')
 
         return cls(
-            tmin=gridmet_img.select(['tmmn']).subtract(273.15),
             tmax=gridmet_img.select(['tmmx']).subtract(273.15),
+            tmin=gridmet_img.select(['tmmn']).subtract(273.15),
             ea=calcs._actual_vapor_pressure(
                 pair=calcs._air_pressure(elev, method),
                 q=gridmet_img.select(['sph'])),

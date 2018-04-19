@@ -18,8 +18,11 @@ ee.Initialize()
 # Fallon AgriMet site parameters
 s_args = {
     'elev': 1208.5,
-    'lat': units._deg2rad(39.4575),
-    'lon': units._deg2rad(-118.77388),
+    'lat': 39.4575,
+    'lon': -118.77388,
+    # DEADBEEF
+    # 'lat': units._deg2rad(39.4575),
+    # 'lon': units._deg2rad(-118.77388),
     'zw': 3.0,
 }
 
@@ -200,8 +203,12 @@ class HourlyData():
                 'time': test_dt.hour,
                 'zw': zw,
                 'elev': elev,
-                'lat': lat * math.pi / 180,
-                'lon': lon * math.pi / 180})
+                'lat': lat,
+                'lon': lon
+                # DEADBEEF
+                # 'lat': lat * math.pi / 180,
+                # 'lon': lon * math.pi / 180
+            })
             values.append(date_values)
             ids.append('{}-{}'.format(test_date, surface))
 

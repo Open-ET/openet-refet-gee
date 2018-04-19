@@ -73,6 +73,7 @@ h_args = {
 # Additional arguments for testing "asce" method
 d_asce_args = {
     'delta': 0.4029517192078854,
+    'ea': 1.2205053588697359,
     'es_slope': 0.23488581814172638,
     'ra': 41.64824567735701,
 }
@@ -126,6 +127,11 @@ def test_specific_humidity(ea=d_args['ea'], pair=s_args['pair'],
 
 def test_actual_vapor_pressure(q=d_args['q'], pair=s_args['pair'],
                                ea=d_args['ea']):
+    assert float(calcs._actual_vapor_pressure(
+        ee.Number(q), ee.Number(pair)).getInfo()) == pytest.approx(ea)
+
+def test_actual_vapor_pressure_asce(q=d_args['q'], pair=s_args['pair_asce'],
+                                    ea=d_asce_args['ea']):
     assert float(calcs._actual_vapor_pressure(
         ee.Number(q), ee.Number(pair)).getInfo()) == pytest.approx(ea)
 
