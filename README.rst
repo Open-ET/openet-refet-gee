@@ -74,6 +74,7 @@ GRIDMET
 A helper function for computing daily ETo and ETr for `GRIDMET <http://www.climatologylab.org/gridmet.html>`__ images is available.
 
 .. code-block:: console
+
     import ee
     import geerefet
 
