@@ -1,8 +1,8 @@
 .. image:: https://travis-ci.org/cgmorton/RefET-GEE.svg?branch=master
    :target: https://travis-ci.org/cgmorton/RefET-GEE
 
-.. image:: https://badge.fury.io/py/RefET-GEE.svg
-   :target: https://badge.fury.io/py/RefET-GEE
+.. image:: https://badge.fury.io/py/geerefet.svg
+   :target: https://badge.fury.io/py/geerefet
 
 =======================================================================
 Google Earth Engine ASCE Standardized Reference Evapotranspiration (ET)

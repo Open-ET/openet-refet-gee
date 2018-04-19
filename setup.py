@@ -25,10 +25,15 @@ def find_version(*file_paths):
 
 version = find_version("geerefet", "__init__.py")
 
+def long_description():
+    with codecs.open('README.rst', encoding='utf8') as f:
+        return f.read()
+
 setup(
     name='geerefet',
     version=version,
     description='Google Earth Engine ASCE Standardized Reference Evapotranspiration Functions',
+    long_description=long_description(),
     license='Apache',
     author='Charles Morton',
     author_email='charles.g.morton@gmail.com',
