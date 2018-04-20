@@ -16,13 +16,13 @@ class Hourly():
 
         Arguments
         ---------
-        tmean : ee.Image or ee.Number
+        tmean : ee.Image
             Average hourly temperature [C].
-        ea : ee.Image or ee.Number
+        ea : ee.Image
             Actual vapor pressure [kPa].
-        rs : ee.Image or ee.Number
+        rs : ee.Image
             Shortwave solar radiation [MJ m-2 hr-1].
-        uz : ee.Image or ee.Number
+        uz : ee.Image
             Wind speed [m/s].
         zw : ee.Number
             Wind speed measurement/estimated height [m].
@@ -62,6 +62,11 @@ class Hourly():
         """
         if method.lower() not in ['asce', 'refet']:
             raise ValueError('method must be "asce" or "refet"')
+
+        # Get time_start from tmin
+        # Shoudl time_start be set in init?
+        self.time_start = ee.Image(tmean).get('system:time_start')
+        self.date = ee.Date(self.time_start)
 
         # Do these all need to be set onto self?
         self.tmean = tmean
@@ -105,7 +110,7 @@ class Hourly():
         #   but "SinBeta" is computed for the midpoint.
         # Beta (not SinBeta) is used for clamping fcd.
         self.fcd = calcs._fcd_hourly(
-        self.rs, self.rso, self.doy, self.time, self.lat, self.lon, method)
+            self.rs, self.rso, self.doy, self.time, self.lat, self.lon, method)
 
         # Net long-wave radiation
         self.rnl = calcs._rnl_hourly(self.tmean, self.ea, self.fcd)
@@ -115,73 +120,6 @@ class Hourly():
 
         # Wind speed
         self.u2 = calcs._wind_height_adjust(self.uz, self.zw)
-
-    def eto(self):
-        """Grass reference surface
-
-        Returns
-        -------
-
-        Notes
-        -----
-        Adjust coefficients for daytime/nighttime
-        Nighttime is defined as when Rn < 0 (pg 44)
-
-        """
-        self.cn = 37.0
-
-        # Day time values
-        self.cd = ee.Number(0.24)
-        self.g_rn = ee.Number(0.1)
-
-        # Night time values
-        # self.cd = 0.96
-        # self.g_rn = 0.5
-
-        # This is a screwy way of setting the night time values without
-        # using any image functions or if statements so that the calculation
-        # works for ee.Image and ee.Number inputs.
-        self.cd = self.cd.add(self.rn.lte(0).multiply(0.96 - 0.24))
-        self.g_rn = self.g_rn.add(self.rn.lte(0).multiply(0.5 - 0.1))
-
-        # Soil heat flux (Eqs. 65 and 66)
-        self.g = self.rn.multiply(self.g_rn)
-
-        return self._etsz()
-
-    def etr(self):
-        """Alfalfa reference surface
-
-        Returns
-        -------
-
-        Notes
-        -----
-        Adjust coefficients for daytime/nighttime
-        Nighttime is defined as when Rn < 0 (pg 44)
-
-        """
-        self.cn = 66.0
-
-        # Day time values
-        self.cd = ee.Number(0.25)
-        self.g_rn = ee.Number(0.04)
-
-        # Night time values
-        # self.cd = 1.7
-        # self.g_rn = 0.2
-
-        # This is a screwy way of setting the night time values without
-        # using any image functions or if statements so that the calculation
-        # works for ee.Image and ee.Number inputs.
-        # Actual cd and g_rn values
-        self.cd = self.cd.add(self.rn.lte(0).multiply(1.7 - 0.25))
-        self.g_rn = self.g_rn.add(self.rn.lte(0).multiply(0.2 - 0.04))
-
-        # Soil heat flux (Eqs. 65 and 66)
-        self.g = self.rn.multiply(self.g_rn)
-
-        return self._etsz()
 
     def _etsz(self):
         """Hourly reference ET (Eq. 1)
@@ -193,17 +131,60 @@ class Hourly():
             Standardized reference ET [mm].
 
         """
-        return self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy)\
-            .divide(self.tmean.add(273))\
-            .add(self.es_slope.multiply(self.rn.subtract(self.g)).multiply(0.408))\
-            .divide(self.u2.multiply(self.cd).add(1)\
-                        .multiply(self.psy).add(self.es_slope))
-        # return self.tmean.expression(
-        #     '(0.408 * es_slope * (rn - g) + (psy * cn * u2 * vpd / (tmean + 273))) / '
-        #     '(es_slope + psy * (cd * u2 + 1)))',
-        #     {'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
-        #      'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
-        #      'u2': self.u2, 'vpd': self.vpd})
-        # return (
-        #     (0.408 * es_slope * (rn - g) + (psy * cn * u2 * vpd / (tmean + 273))) /
-        #     (es_slope + psy * (cd * u2 + 1)))
+        # return self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy)\
+        #     .divide(self.tmean.add(273))\
+        #     .add(self.es_slope.multiply(self.rn.subtract(self.g)).multiply(0.408))\
+        #     .divide(self.u2.multiply(self.cd).add(1)\
+        #                 .multiply(self.psy).add(self.es_slope))
+
+        return self.tmean.expression(
+            '(0.408 * es_slope * (rn - g) + (psy * cn * u2 * vpd / (tmean + 273))) / '
+            '(es_slope + psy * (cd * u2 + 1))',
+            {'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
+             'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
+             'u2': self.u2, 'vpd': self.vpd})
+
+    def eto(self):
+        """Short (grass) reference surface"""
+        self.cn = ee.Number(37.0)
+        cd_day = 0.24
+        g_rn_day = 0.1
+        cd_night = 0.96
+        g_rn_night = 0.5
+
+        # Adjust coefficients for daytime/nighttime
+        # Nighttime is defined as when Rn < 0 (pg 44)
+        self.cd = self.rn.multiply(0).add(cd_day).where(self.rn.lt(0), cd_night)
+        self.g_rn = self.rn.multiply(0).add(g_rn_day)\
+            .where(self.rn.lt(0), g_rn_night)
+        # self.cd = ee.Image.constant(cd_day).where(self.rn.lt(0), cd_night)
+        # self.g_rn = ee.Image.constant(g_rn_day).where(self.rn.lt(0), g_rn_night)
+
+        # Soil heat flux (Eqs. 65 and 66)
+        self.g = self.rn.multiply(self.g_rn)
+
+        return ee.Image(self._etsz().rename(['eto'])
+            .set('system:time_start', self.time_start))
+
+    def etr(self):
+        """Tall (alfalfa) reference surface"""
+        self.cn = ee.Number(66.0)
+        cd_day = 0.25
+        g_rn_day = 0.04
+        cd_night = 1.7
+        g_rn_night = 0.2
+
+        # Adjust coefficients for daytime/nighttime
+        # Nighttime is defined as when Rn < 0 (pg 44)
+        self.cd = self.rn.multiply(0).add(cd_day).where(self.rn.lt(0), cd_night)
+        self.g_rn = self.rn.multiply(0).add(g_rn_day)\
+            .where(self.rn.lt(0), g_rn_night)
+        # self.cd = ee.Image.constant(cd_day).where(self.rn.lt(0), cd_night)
+        # self.g_rn = ee.Image.constant(g_rn_day).where(self.rn.lt(0), g_rn_night)
+
+        # Soil heat flux (Eqs. 65 and 66)
+        self.g = self.rn.multiply(self.g_rn)
+
+        return ee.Image(self._etsz().rename(['etr'])
+            .set('system:time_start', self.time_start))
+

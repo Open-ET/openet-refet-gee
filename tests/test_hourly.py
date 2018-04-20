@@ -31,9 +31,10 @@ h_args = {
     'doy': 182,
     'ea': 1.1990099614301906,
     'es': 5.09318785259078,
-    'eto': 0.6065255163817055,
-    'etr': 0.7201865213918281,
+    'eto_asce': 0.6063515410076268,
+    'eto_refet': 0.6065255163817055,
     'etr_asce': 0.7196369609713682,
+    'etr_refet': 0.7201865213918281,
     'ra': 4.30824147948541,
     'rnl': 0.22897874401150786,
     'rs': 61.16 * 0.041868,  # Conversion from Langleys to MJ m-2
@@ -54,27 +55,104 @@ h_args = {
 
 # Test full hourly functions with positional inputs
 def test_refet_hourly_input_positions():
-    etr = Hourly(
-        ee.Number(h_args['tmean']), ee.Number(h_args['ea']),
+    refet = Hourly(
+        ee.Image.constant(h_args['tmean']), ee.Number(h_args['ea']),
         ee.Number(h_args['rs']), ee.Number(h_args['uz']),
         ee.Number(s_args['zw']), ee.Number(s_args['elev']),
         ee.Number(s_args['lat']), ee.Number(s_args['lon']),
         ee.Number(h_args['doy']), ee.Number(h_args['time']),
         method='refet').etr().getInfo()
+    etr = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['etr']
     assert float(etr) == pytest.approx(h_args['etr'])
 
 
 # Test full hourly calculations with keyword inputs
-# Test surface, rso_type, and rso inputs
-def test_refet_hourly_asce():
+def test_refet_hourly_default_method_etr():
     etr = Hourly(
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Number(h_args['ea']),
+        rs=ee.Number(h_args['rs']), uz=ee.Number(h_args['uz']),
+        zw=ee.Number(s_args['zw']), elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
+        doy=ee.Number(h_args['doy']),
+        time=ee.Number(h_args['time'])).etr().getInfo()
+    etr = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['etr']
+    assert float(etr) == pytest.approx(h_args['etr_asce'])
+
+def test_refet_hourly_asce_method_etr():
+    refet = Hourly(
         tmean=ee.Number(h_args['tmean']), ea=ee.Number(h_args['ea']),
         rs=ee.Number(h_args['rs']), uz=ee.Number(h_args['uz']),
         zw=ee.Number(s_args['zw']), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
         method='asce').etr().getInfo()
+    etr = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['etr']
     assert float(etr) == pytest.approx(h_args['etr_asce'])
+
+def test_refet_hourly_refet_method_etr():
+    refet = Hourly(
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Number(h_args['ea']),
+        rs=ee.Number(h_args['rs']), uz=ee.Number(h_args['uz']),
+        zw=ee.Number(s_args['zw']), elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
+        method='refet').etr().getInfo()
+    etr = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['etr']
+    assert float(etr) == pytest.approx(h_args['eto_refet'])
+
+def test_refet_hourly_default_method_eto():
+    refet = Hourly(
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Number(h_args['ea']),
+        rs=ee.Number(h_args['rs']), uz=ee.Number(h_args['uz']),
+        zw=ee.Number(s_args['zw']), elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
+        doy=ee.Number(h_args['doy']),
+        time=ee.Number(h_args['time'])).eto().getInfo()
+    eto = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['eto']
+    assert float(eto) == pytest.approx(h_args['eto_asce'])
+
+def test_refet_hourly_asce_method_eto():
+    refet = Hourly(
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Number(h_args['ea']),
+        rs=ee.Number(h_args['rs']), uz=ee.Number(h_args['uz']),
+        zw=ee.Number(s_args['zw']), elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
+        method='asce').eto().getInfo()
+    eto = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['eto']
+    assert float(eto) == pytest.approx(h_args['eto_asce'])
+
+def test_refet_hourly_asce_method_eto():
+    refet = Hourly(
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Number(h_args['ea']),
+        rs=ee.Number(h_args['rs']), uz=ee.Number(h_args['uz']),
+        zw=ee.Number(s_args['zw']), elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
+        method='refet').eto().getInfo()
+    eto = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['eto']
+    assert float(eto) == pytest.approx(h_args['eto_refet'])
 
 
 # Test hourly functions using actual RefET input/output files
@@ -236,14 +314,22 @@ def test_refet_hourly_func_values(hourly_params):
     expected = inputs.pop('expected')
     # print('ETr: {}'.format(expected))
 
-    # Cast all numeric inputs to ee.Number type
-    inputs = {
-        k: ee.Number(v) if k != 'rso_type' else v
-        for k, v in inputs.items()}
+    # Cast all numeric inputs to ee.Number type except tmean (for now)
+    inputs = {}
+    for k, v in inputs.items():
+        if k == 'rso_type':
+            inputs[k] = v
+        elif k == 'tmean':
+            inputs[k] = ee.Image.constant(v)
+        else:
+            inputs[k] = ee.Number(v)
 
     if surface.lower() == 'etr':
-        assert float(Hourly(
-            **inputs).etr().getInfo()) == pytest.approx(expected, abs=0.01)
+        refet = Hourly(**inputs).etr()
     elif surface.lower() == 'eto':
-        assert float(Hourly(
-            **inputs).eto().getInfo()) == pytest.approx(expected, abs=0.01)
+        refet = Hourly(**inputs).eto()
+    output = refet.reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()
+    assert float(refet[surface.lower()]) == pytest.approx(expected, abs=0.01)

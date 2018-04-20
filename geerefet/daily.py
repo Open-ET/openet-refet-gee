@@ -16,15 +16,15 @@ class Daily():
 
         Arguments
         ---------
-        tmax : ee.Image or ee.Number
+        tmax : ee.Image
             Maximum daily temperature [C].
-        tmin : ee.Image or ee.Number
+        tmin : ee.Image
             Minimum daily temperature [C].
-        ea : ee.Image or ee.Number
+        ea : ee.Image
             Actual vapor pressure [kPa].
-        rs : ee.Image or ee.Number
+        rs : ee.Image
             Incoming shortwave solar radiation [MJ m-2 day-1].
-        uz : ee.Image or ee.Number
+        uz : ee.Image
             Wind speed [m/s].
         zw : ee.Number
             Wind speed height [m].
@@ -77,6 +77,11 @@ class Daily():
         elif rso_type.lower() in 'array':
             # Check that rso is an ee.Image or ee.Number?
             pass
+
+        # Get time_start from tmin
+        # Shoudl time_start be set in init?
+        self.time_start = ee.Image(tmin).get('system:time_start')
+        self.date = ee.Date(self.time_start)
 
         # Do these all need to be set onto self?
         self.tmin = tmin
@@ -137,41 +142,41 @@ class Daily():
         # Wind speed
         self.u2 = calcs._wind_height_adjust(self.uz, self.zw)
 
-    def eto(self):
-        """Grass reference surface"""
-        self.cn = 900
-        self.cd = 0.34
-        return self._etsz()
-
-    def etr(self):
-        """Alfalfa reference surface"""
-        self.cn = 1600
-        self.cd = 0.38
-        return self._etsz()
-
     def _etsz(self):
         """Daily reference ET (Eq. 1)
 
         Returns
         -------
-        etsz : ee.Image or ee.Number
+        etsz : ee.Image
             Standardized reference ET [mm].
 
         """
-        return self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy)\
-            .divide(self.tmean.add(273))\
+        return self.tmean.add(273).pow(-1).multiply(self.u2)\
+            .multiply(self.vpd).multiply(self.cn).multiply(self.psy)\
             .add(self.es_slope.multiply(self.rn).multiply(0.408))\
             .divide(self.u2.multiply(self.cd).add(1)\
                         .multiply(self.psy).add(self.es_slope))
-        # return self.tmean.expression(
+
+        # return self.tmin.expression(
         #     '(0.408 * es_slope * rn + (psy * cn * u2 * vpd / (tmean + 273))) / '
-        #     '(es_slope + psy * (cd * u2 + 1)))',
+        #     '(es_slope + psy * (cd * u2 + 1))',
         #     {'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
         #      'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
         #      'u2': self.u2, 'vpd': self.vpd})
-        # return (
-        #     (0.408 * es_slope * rn + (psy * cn * u2 * vpd / (tmean + 273))) /
-        #     (es_slope + psy * (cd * u2 + 1)))
+
+    def eto(self):
+        """Short (grass) reference surface"""
+        self.cn = 900
+        self.cd = 0.34
+        return ee.Image(self._etsz().rename(['eto'])
+            .set('system:time_start', self.time_start))
+
+    def etr(self):
+        """Tall (alfalfa) reference surface"""
+        self.cn = 1600
+        self.cd = 0.38
+        return ee.Image(self._etsz().rename(['etr'])
+            .set('system:time_start', self.time_start))
 
     @classmethod
     def gridmet(cls, gridmet_img, zw=None, elev=None, lat=None, method='asce',

@@ -54,78 +54,106 @@ d_args = {
 
 # Test full daily functions with positional inputs
 def test_refet_daily_input_positions():
-    etr = Daily(
-        ee.Number(d_args['tmax']), ee.Number(d_args['tmin']),
-        ee.Number(d_args['ea']), ee.Number(d_args['rs']),
-        ee.Number(d_args['uz']), ee.Number(s_args['zw']),
+    refet = Daily(
+        ee.Image.constant(d_args['tmax']), ee.Image.constant(d_args['tmin']),
+        ee.Image.constant(d_args['ea']), ee.Image.constant(d_args['rs']),
+        ee.Image.constant(d_args['uz']), ee.Number(s_args['zw']),
         ee.Number(s_args['elev']), ee.Number(s_args['lat']),
-        ee.Number(d_args['doy']), method='refet').etr().getInfo()
+        ee.Number(d_args['doy']), method='refet')
+    etr = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['etr']
     assert float(etr) == pytest.approx(d_args['etr'])
 
 
 # Test full daily calculations with keyword inputs
 # Test surface, rso_type, and rso inputs
 def test_refet_daily_surface_etr():
-    etr = Daily(
-        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
+    refet = Daily(
+        tmax=ee.Image.constant(d_args['tmax']),
+        tmin=ee.Image.constant(d_args['tmin']),
         ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
-        doy=ee.Number(d_args['doy']), method='refet').etr().getInfo()
+        doy=ee.Number(d_args['doy']), method='refet')
+    etr = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['etr']
     assert float(etr) == pytest.approx(d_args['etr'])
 
 
 def test_refet_daily_surface_eto():
-    eto = Daily(
-        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
+    refet = Daily(
+        tmax=ee.Image.constant(d_args['tmax']),
+        tmin=ee.Image.constant(d_args['tmin']),
         ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
-        doy=ee.Number(d_args['doy']), method='refet').eto().getInfo()
+        doy=ee.Number(d_args['doy']), method='refet')
+    eto = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['eto']
     assert float(eto) == pytest.approx(d_args['eto'])
 
 
 def test_refet_daily_rso_type_simple():
-    etr = Daily(
-        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
+    refet = Daily(
+        tmax=ee.Image.constant(d_args['tmax']),
+        tmin=ee.Image.constant(d_args['tmin']),
         ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
-        doy=ee.Number(d_args['doy']), method='refet',
-        rso_type='simple').etr().getInfo()
+        doy=ee.Number(d_args['doy']), method='refet', rso_type='simple')
+    etr = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['etr']
     assert float(etr) == pytest.approx(d_args['etr_rso_simple'])
 
 
 def test_refet_daily_rso_type_array():
-    etr = Daily(
-        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
+    refet = Daily(
+        tmax=ee.Image.constant(d_args['tmax']),
+        tmin=ee.Image.constant(d_args['tmin']),
         ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
         doy=ee.Number(d_args['doy']), method='refet',
-        rso_type='array', rso=ee.Number(d_args['rso'])).etr().getInfo()
+        rso_type='array', rso=ee.Number(d_args['rso']))
+    etr = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['etr']
     assert float(etr) == pytest.approx(d_args['etr'])
 
 
 def test_refet_daily_rso_type_exception():
     with pytest.raises(ValueError):
-        etr = Daily(
-            tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
+        refet = Daily(
+            tmax=ee.Image.constant(d_args['tmax']),
+            tmin=ee.Image.constant(d_args['tmin']),
             ea=ee.Number(d_args['ea']), rs=ee.Number(d_args['rs']),
             uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
             elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
-            doy=ee.Number(d_args['doy']), rso_type='nonsense',
-            method='refet')
+            doy=ee.Number(d_args['doy']), rso_type='nonsense', method='refet')
         # assert float(etr) == pytest.approx(d_args['etr'])
 
 
 def test_refet_daily_asce():
-    etr = Daily(
-        tmax=ee.Number(d_args['tmax']), tmin=ee.Number(d_args['tmin']),
+    refet = Daily(
+        tmax=ee.Image.constant(d_args['tmax']),
+        tmin=ee.Image.constant(d_args['tmin']),
         ea=ee.Number(d_args['ea_asce']), rs=ee.Number(d_args['rs']),
         uz=ee.Number(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
-        doy=ee.Number(d_args['doy']), method='asce').etr().getInfo()
+        doy=ee.Number(d_args['doy']), method='asce')
+    etr = refet.etr().reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()['etr']
     assert float(etr) == pytest.approx(d_args['etr_asce'])
 
 
@@ -140,11 +168,10 @@ def test_refet_daily_gridmet():
     refet = Daily.gridmet(
         ee.Image(gridmet_img), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']), method='asce')
-    # Output bands are not currently being renamed, defaults to 'vs'
     etr = refet.etr().reduceRegion(
         reducer=ee.Reducer.first(),
         geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
-        scale=1).getInfo()['vs']
+        scale=1).getInfo()['etr']
     assert float(etr) == pytest.approx(d_args['etr_asce'])
 
 
@@ -283,14 +310,21 @@ def test_refet_daily_values(daily_params):
     # Small number of days don't match if difference is set < 0.008
     diff = 0.05 if expected >= 10.0 else 0.008
 
-    # Cast all numeric inputs to ee.Number type
-    inputs = {
-        k: ee.Number(v) if k != 'rso_type' else v
-        for k, v in inputs.items()}
+    # Cast all numeric inputs to ee.Number type except tmin (for now)
+    for k, v in inputs.items():
+        if k == 'rso_type':
+            inputs[k] = v
+        elif k == 'tmin':
+            inputs[k] = ee.Image.constant(v)
+        else:
+            inputs[k] = ee.Number(v)
 
     if surface.lower() == 'etr':
-        assert float(Daily(
-            **inputs).etr().getInfo()) == pytest.approx(expected, abs=diff)
+        refet = Daily(**inputs).etr()
     elif surface.lower() == 'eto':
-        assert float(Daily(
-            **inputs).eto().getInfo()) == pytest.approx(expected, abs=diff)
+        refet = Daily(**inputs).eto()
+    output = refet.reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()
+    assert float(refet[surface.lower()]) == pytest.approx(expected, abs=diff)

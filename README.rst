@@ -88,9 +88,9 @@ Required Parameters (hourly & daily)
 ========  ===================  =================================================
 Variable  Type                 Description [units]
 ========  ===================  =================================================
-ea        ee.Image, ee.Number  Actual vapor pressure [kPa]
-rs        ee.Image, ee.Number  Incoming shortwave solar radiation [MJ m-2 day-1]
-uz        ee.Image, ee.Number  Wind speed [m/s]
+ea        ee.Image             Actual vapor pressure [kPa]
+rs        ee.Image             Incoming shortwave solar radiation [MJ m-2 day-1]
+uz        ee.Image             Wind speed [m/s]
 zw        ee.Number            Wind speed height [m]
 elev      ee.Image, ee.Number  Elevation [m]
 lat       ee.Image, ee.Number  Latitude [radians]
@@ -103,8 +103,8 @@ Required Daily Parameters
 ========  ===================  =================================================
 Variable  Type                 Description [units]
 ========  ===================  =================================================
-tmin      ee.Image, ee.Number  Minimum daily temperature [C]
-tmax      ee.Image, ee.Number  Maximum daily temperature [C]
+tmin      ee.Image             Minimum daily temperature [C]
+tmax      ee.Image             Maximum daily temperature [C]
 ========  ===================  =================================================
 
 Required Hourly Parameters
@@ -113,9 +113,9 @@ Required Hourly Parameters
 ========  ===================  =================================================
 Variable  Type                 Description [units]
 ========  ===================  =================================================
-tmean     ee.Image, ee.Number  Average hourly temperature [C]
+tmean     ee.Image             Average hourly temperature [C]
 lon       ee.Image, ee.Number  Longitude [degrees]
-time      ee.Image, ee.Number  UTC hour at start of time period
+time      ee.Number            UTC hour at start of time period
 ========  ===================  =================================================
 
 Optional Parameters
@@ -129,7 +129,8 @@ method    str                  | Calculation method
                                * 'asce' -- Calculations will follow ASCE-EWRI 2005 (default)
                                * 'refet' -- Calculations will follow RefET software
 
-rso_type  str                  | Clear sky solar radiation (Rso) model
+rso_type  str                  | Override default clear sky solar radiation (Rso) calculation
+                               | Defaults to None if not set
 
                                * 'full' -- Full clear sky solar formulation (default)
                                * 'simple' -- Simplified clear sky solar formulation (Eq. 19)
@@ -141,11 +142,6 @@ rso       ee.Image, ee.Number  | Clear sky solar radiation [MJ m-2 day-1]
                                * Defaults to None if not set
 
 ========  ===================  ====================================================
-
-ASCE vs. RefET
-==============
-
-TODO Discuss differences between "asce" and "refet" methods.
 
 Issues
 ======
@@ -159,6 +155,11 @@ Cloudiness Fraction (hourly)
 
 The hourly reference ET calculation is currently performed independently for each time step.  The cloudiness fraction (fcd) for very low sun angles (i.e. at night) is hard coded to 1 for very low sun angles instead of being derived from the .
 
+ASCE vs. RefET
+==============
+
+TODO Discuss differences between "asce" and "refet" methods.
+
 Installation
 ============
 
@@ -166,7 +167,7 @@ To install the RefET-GEE python module:
 
 .. code-block:: console
 
-   pip install geerefet
+    pip install geerefet
 
 Validation
 ==========
