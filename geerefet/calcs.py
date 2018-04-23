@@ -159,27 +159,28 @@ def _vpd(es, ea):
     return es.subtract(ea).max(0)
 
 
-def _precipitable_water(pair, ea):
+def _precipitable_water(ea, pair):
     """Precipitable water in the atmosphere (Eq. D.3)
 
     Parameters
     ----------
-    pair : ee.Image or ee.Number
-        Air pressure [kPa].
     ea : ee.Image
         Vapor pressure [kPa].
+    pair : ee.Image or ee.Number
+        Air pressure [kPa].
 
     Returns
     -------
     ee.Image or ee.Number
         Precipitable water [mm].
 
+
     Notes
     -----
     w = pair * 0.14 * ea + 2.1
 
     """
-    return pair.multiply(0.14).multiply(ea).add(2.1)
+    return ea.multiply(pair).multiply(0.14).add(2.1)
 
 
 def _doy_fraction(doy):
@@ -489,7 +490,8 @@ def _rso_daily(ra, ea, pair, doy, lat):
     Returns
     -------
     rso : ee.Image or ee.Number
-        Daily clear sky solar radiation [MJ m-2 d-1]
+        Daily clear sky solar radiation [MJ m-2 d-1].
+        Output data type will match "ra" data type.
 
     """
     # sin of the angle of the sun above the horizon (D.5 and Eq. 62)
@@ -497,15 +499,16 @@ def _rso_daily(ra, ea, pair, doy, lat):
         .add(0.85).subtract(lat.pow(2).multiply(0.42)).sin().max(0.1)
 
     # Precipitable water
-    w = _precipitable_water(pair, ea)
+    w = _precipitable_water(ea, pair)
 
     # Clearness index for direct beam radiation (Eq. D.2)
     # Limit sin_beta >= 0.01 so that KB does not go undefined
-    kb = pair.multiply(-0.00146).divide(sin_beta_24)\
-        .subtract(w.divide(sin_beta_24).pow(0.4).multiply(0.075))\
+    kb = w.divide(sin_beta_24).pow(0.4).multiply(-0.075)\
+        .add(pair.multiply(-0.00146).divide(sin_beta_24))\
         .exp().multiply(0.98)
-    # kb = pair.expression(
-    #     '0.98 * exp((-0.00146 * pair) / sin_beta_24 - 0.075 * (w / sin_beta_24) ** 0.4)',
+    # kb = ea.expression(
+    #     '0.98 * exp((-0.00146 * pair) / sin_beta_24 - '
+    #     '           0.075 * (w / sin_beta_24) ** 0.4)',
     #     {'pair': pair, 'sin_beta_24': sin_beta_24, 'w': w})
 
     # Transmissivity index for diffuse radiation (Eq. D.4)
@@ -549,6 +552,7 @@ def _rso_hourly(ra, ea, pair, doy, time_mid, lat, lon, method='asce'):
     -------
     rso : ee.Image or ee.Number
         Hourly clear sky solar radiation [MJ m-2 h-1].
+        Output data type will match "ra" data type.
 
     """
     sc = _seasonal_correction(doy)
@@ -560,16 +564,17 @@ def _rso_hourly(ra, ea, pair, doy, time_mid, lat, lon, method='asce'):
         .add(lat.cos().multiply(delta.cos()).multiply(omega.cos()))
 
     # Precipitable water
-    w = _precipitable_water(pair, ea)
+    w = _precipitable_water(ea, pair)
 
     # Clearness index for direct beam radiation (Eq. D.2)
     # Limit sin_beta >= 0.01 so that KB does not go undefined
     kt = 1.0
-    kb = pair.multiply(-0.00146).divide(sin_beta.max(0.01).multiply(kt))\
-        .subtract(sin_beta.max(0.01).pow(-1).multiply(w).pow(0.4).multiply(0.075))\
+    kb = w.divide(sin_beta.max(0.01)).pow(0.4).multiply(-0.075)\
+        .add(pair.multiply(-0.00146).divide(sin_beta.max(0.01).multiply(kt)))\
         .exp().multiply(0.98)
-    # kb = pair.expression(
-    #     '0.98 * exp((-0.00146 * pair) / (kt * sin_beta) - 0.075 * (w / sin_beta) ** 0.4))',
+    # kb = ea.expression(
+    #     '0.98 * exp((-0.00146 * pair) / (kt * sin_beta) - '
+    #     '           0.075 * (w / sin_beta) ** 0.4))',
     #     {'pair': pair, 'kt': kt, 'sin_beta': sin_beta.max(0.01), 'w': w})
 
     # Transmissivity index for diffuse radiation (Eq. D.4)
@@ -593,13 +598,14 @@ def _rso_simple(ra, elev):
     -------
     rso : ee.Image or ee.Number
         Clear sky solar radiation [MJ m-2 d-1 or MJ m-2 h-1].
+        Output data type will match "ra" data type.
 
     Notes
     -----
     rso = (0.75 + 2E-5 * elev) * ra
 
     """
-    return elev.multiply(2E-5).add(0.75).multiply(ra)
+    return ra.multiply(elev.multiply(2E-5).add(0.75))
 
 
 def _fcd_daily(rs, rso):
@@ -614,7 +620,8 @@ def _fcd_daily(rs, rso):
 
     Returns
     -------
-    ee.Image or ee.Number
+    fcd : ee.Image or ee.Number
+        Output data type will match "rs" data type.
 
     Notes
     -----
@@ -650,6 +657,7 @@ def _fcd_hourly(rs, rso, doy, time_mid, lat, lon, method='asce'):
     Returns
     -------
     fcd : ee.Image or ee.Number
+        Output data type will match "rs" data type.
 
     """
     # DEADBEEF - These values are only needed for identifying low sun angles
@@ -695,6 +703,7 @@ def _rnl_daily(tmax, tmin, ea, fcd):
     -------
     ee.Image or ee.Number
         Daily net long-wave radiation [MJ m-2 d-1].
+        Output data type will match "tmax" data type.
 
     Notes
     -----
@@ -702,8 +711,9 @@ def _rnl_daily(tmax, tmin, ea, fcd):
           0.5 * ((tmax + 273.16) ** 4 + (tmin + 273.16) ** 4))
 
     """
-    return fcd.multiply(4.901E-9).multiply(ea.sqrt().multiply(-0.14).add(0.34))\
-        .multiply(tmax.add(273.16).pow(4).add(tmin.add(273.16).pow(4)).multiply(0.5))
+    return tmax.add(273.16).pow(4).add(tmin.add(273.16).pow(4)).multiply(0.5)\
+        .multiply(ea.sqrt().multiply(-0.14).add(0.34))\
+        .multiply(fcd).multiply(4.901E-9)
 
 
 def _rnl_hourly(tmean, ea, fcd):
@@ -722,14 +732,16 @@ def _rnl_hourly(tmean, ea, fcd):
     -------
     ee.Image or ee.Number
         Hourly net long-wave radiation [MJ m-2 h-1].
+        Output data type will match "tmean" data type.
 
     Notes
     -----
     rnl = 2.042E-10 * fcd * (0.34 - 0.14 * sqrt(ea)) * ((tmean + 273.16) ** 4)
 
     """
-    return fcd.multiply(2.042E-10).multiply(ea.sqrt().multiply(-0.14).add(0.34))\
-        .multiply(tmean.add(273.16).pow(4))
+    return tmean.add(273.16).pow(4)\
+        .multiply(ea.sqrt().multiply(-0.14).add(0.34))\
+        .multiply(fcd).multiply(2.042E-10)
 
 
 def _wind_height_adjust(uz, zw):
