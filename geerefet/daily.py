@@ -107,40 +107,43 @@ class Daily():
             .multiply(0.5)
 
         # Vapor pressure deficit
-        self.vpd = calcs._vpd(self.es, self.ea)
+        self.vpd = calcs._vpd(es=self.es, ea=self.ea)
 
         # Extraterrestrial radiation
-        self.ra = calcs._ra_daily(self.lat, self.doy, method)
+        self.ra = calcs._ra_daily(lat=self.lat, doy=self.doy, method=method)
 
         # Clear sky solar radiation
         # If rso_type is not set, use the method
         # If rso_type is set, use rso_type directly
         if rso_type is None:
             if method.lower() == 'asce':
-                self.rso = calcs._rso_simple(self.ra, self.elev)
+                self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
             elif method.lower() == 'refet':
                 self.rso = calcs._rso_daily(
-                    self.ra, self.ea, self.pair, self.doy, self.lat)
+                    ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
+                    lat=self.lat)
         elif rso_type.lower() == 'simple':
-            self.rso = calcs._rso_simple(self.ra, self.elev)
+            self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
         elif rso_type.lower() == 'full':
             self.rso = calcs._rso_daily(
-                self.ra, self.ea, self.pair, self.doy, self.lat)
+                ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
+                lat=self.lat)
         elif rso_type.lower() == 'array':
             # Use rso array passed to function
             self.rso = rso
 
         # Cloudiness fraction
-        self.fcd = calcs._fcd_daily(self.rs, self.rso)
+        self.fcd = calcs._fcd_daily(rs=self.rs, rso=self.rso)
 
         # Net long-wave radiation
-        self.rnl = calcs._rnl_daily(self.tmax, self.tmin, self.ea, self.fcd)
+        self.rnl = calcs._rnl_daily(
+            tmax=self.tmax, tmin=self.tmin, ea=self.ea, fcd=self.fcd)
 
         # Net radiation (Eqs. 15 and 16)
-        self.rn = self.rs.multiply(0.77).subtract(self.rnl)
+        self.rn = calcs._rn(self.rs, self.rnl)
 
         # Wind speed
-        self.u2 = calcs._wind_height_adjust(self.uz, self.zw)
+        self.u2 = calcs._wind_height_adjust(uz=self.uz, zw=self.zw)
 
     def _etsz(self):
         """Daily reference ET (Eq. 1)

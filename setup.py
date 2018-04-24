@@ -27,7 +27,7 @@ version = find_version("geerefet", "__init__.py")
 
 # Get the long description from the README file
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(os.path.join(here, 'README.rst')) as f:
     long_description = f.read()
 
 setup(

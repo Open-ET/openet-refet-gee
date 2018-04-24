@@ -471,15 +471,15 @@ def _ra_hourly(lat, lon, doy, time_mid, method='asce'):
     return ra
 
 
-def _rso_daily(ra, ea, pair, doy, lat):
+def _rso_daily(ea, ra, pair, doy, lat):
     """Full daily clear sky solar radiation formulation (Appendix D)
 
     Parameters
     ----------
-    ra : ee.Image or ee.Number
-        Extraterrestrial radiation [MJ m-2 d-1].
     ea : ee.Image or ee.Number
         Actual vapor pressure [kPa].
+    ra : ee.Image or ee.Number
+        Extraterrestrial radiation [MJ m-2 d-1].
     pair : ee.Image or ee.Number
         Air pressure [kPa].
     doy : ee.Image or ee.Number
@@ -491,7 +491,7 @@ def _rso_daily(ra, ea, pair, doy, lat):
     -------
     rso : ee.Image or ee.Number
         Daily clear sky solar radiation [MJ m-2 d-1].
-        Output data type will match "ra" data type.
+        Output data type will match "ea" data type.
 
     """
     # sin of the angle of the sun above the horizon (D.5 and Eq. 62)
@@ -519,19 +519,19 @@ def _rso_daily(ra, ea, pair, doy, lat):
     # print('{:>10s}: {:>8.3f}'.format('kb', float(kb)))
     # print('{:>10s}: {:>8.3f}'.format('kd', float(kd)))
 
-    rso = ra.multiply(kb.add(kd))
+    rso = kb.add(kd).multiply(ra)
     return rso
 
 
-def _rso_hourly(ra, ea, pair, doy, time_mid, lat, lon, method='asce'):
+def _rso_hourly(ea, ra, pair, doy, time_mid, lat, lon, method='asce'):
     """Full hourly clear sky solar radiation formulation (Appendix D)
 
     Parameters
     ----------
-    ra : ee.Image or ee.Number
-        Extraterrestrial radiation [MJ m-2 h-1].
     ea : ee.Image or ee.Number
         Actual vapor pressure [kPa].
+    ra : ee.Image or ee.Number
+        Extraterrestrial radiation [MJ m-2 h-1].
     pair : ee.Image or ee.Number
         Air pressure [kPa].
     doy : ee.Image or ee.Number
@@ -580,7 +580,7 @@ def _rso_hourly(ra, ea, pair, doy, time_mid, lat, lon, method='asce'):
     # Transmissivity index for diffuse radiation (Eq. D.4)
     kd = kb.multiply(-0.36).add(0.35).min(kb.multiply(0.82).add(0.18))
 
-    rso = ra.multiply(kb.add(kd))
+    rso = kb.add(kd).multiply(ra)
     return rso
 
 
@@ -742,6 +742,32 @@ def _rnl_hourly(tmean, ea, fcd):
     return tmean.add(273.16).pow(4)\
         .multiply(ea.sqrt().multiply(-0.14).add(0.34))\
         .multiply(fcd).multiply(2.042E-10)
+
+
+def _rn(rs, rnl):
+    """Net daily/hourly radiation (Eqs. 15 & 16)
+
+    Parameters
+    ----------
+    rs : ee.Image or ee.Number
+        Measured solar radiation [MJ m-2 d-1 or MJ m-2 h-1].
+    rnl : ee.Image or ee.Number
+        Hourly net long-wave radiation [MJ m-2 d-1 or MJ m-2 h-1].
+
+    Returns
+    -------
+    ee.Image or ee.Number
+        Hourly net long-wave radiation [MJ m-2 d-1 or MJ m-2 h-1].
+        Output data type will match "rnl" data type.
+
+    Notes
+    -----
+    Switching calculation to work from rnl (which is computed from temperature)
+    rnl = 0.77 * rs - rnl
+
+    """
+    return rnl.multiply(-1).add(rs.multiply(0.77))
+    # return rs.multiply(0.77).subtract(rnl)
 
 
 def _wind_height_adjust(uz, zw):

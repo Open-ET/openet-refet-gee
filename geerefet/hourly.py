@@ -81,7 +81,7 @@ class Hourly():
         self.time = time
 
         # To match standardized form, psy is calculated from elevation based pair
-        self.pair = calcs._air_pressure(self.elev, method)
+        self.pair = calcs._air_pressure(self.elev, method=method)
         self.psy = self.pair.multiply(0.000665)
 
         self.es = calcs._sat_vapor_pressure(self.tmean)
@@ -89,20 +89,21 @@ class Hourly():
 
         # Vapor pressure deficit
         self.vpd = self.es.subtract(self.ea)
-        # self.vpd = calcs._vpd(self.es, self.ea)
+        # self.vpd = calcs._vpd(es=self.es, ea=self.ea)
 
         # Extraterrestrial radiation
         time_mid = self.time.add(0.5)
         self.ra = calcs._ra_hourly(
-            self.lat, self.lon, self.doy, time_mid, method)
+            lat=self.lat, lon=self.lon, doy=self.doy, time_mid=time_mid,
+            method=method)
 
         # Clear sky solar radiation
         if method == 'asce':
-            self.rso = calcs._rso_simple(self.ra, self.elev)
+            self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
         elif method == 'refet':
             self.rso = calcs._rso_hourly(
-                self.ra, self.ea, self.pair, self.doy, time_mid,
-                self.lat, self.lon, method)
+                ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
+                time_mid=time_mid, lat=self.lat, lon=self.lon, method=method)
 
         # Cloudiness fraction
         # Intentionally not using time_mid to match Beta value in IN2 file
@@ -110,16 +111,17 @@ class Hourly():
         #   but "SinBeta" is computed for the midpoint.
         # Beta (not SinBeta) is used for clamping fcd.
         self.fcd = calcs._fcd_hourly(
-            self.rs, self.rso, self.doy, self.time, self.lat, self.lon, method)
+            rs=self.rs, rso=self.rso, doy=self.doy, time_mid=self.time,
+            lat=self.lat, lon=self.lon, method=method)
 
         # Net long-wave radiation
-        self.rnl = calcs._rnl_hourly(self.tmean, self.ea, self.fcd)
+        self.rnl = calcs._rnl_hourly(tmean=self.tmean, ea=self.ea, fcd=self.fcd)
 
-        # Net radiation (Eqs. 42 and 43)
-        self.rn = self.rs.multiply(0.77).subtract(self.rnl)
+        # Net radiation
+        self.rn = calcs._rn(self.rs, self.rnl)
 
         # Wind speed
-        self.u2 = calcs._wind_height_adjust(self.uz, self.zw)
+        self.u2 = calcs._wind_height_adjust(uz=self.uz, zw=self.zw)
 
     def _etsz(self):
         """Hourly reference ET (Eq. 1)
