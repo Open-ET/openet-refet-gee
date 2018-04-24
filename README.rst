@@ -29,11 +29,11 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/daily.pl?stat
     ea = 0.6108 * math.exp(17.27 * tdew_c / (tdew_c + 237.3))  # kPa
     rs = (674.07 * 0.041868)                                   # Langleys -> MJ m-2 d-1
     uz = 4.80 * 0.44704                                        # mpg -> m s-1
-    lat_radians = (39.4575 * math.pi / 180)                    # degrees -> radians
+    lat = 39.4575                                              # degrees
 
     etr = geerefet.Daily(
         tmin=tmin_c, tmax=tmax_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
-        lat=lat_radians, doy=182).etr().getInfo()
+        lat=lat, doy=182).etr().getInfo()
 
     print('ETr: {:.2f} mm'.format(float(etr)))
 
@@ -55,12 +55,12 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/instant.pl?st
     ea = 1.20                                    # kPa
     rs = (61.16 * 0.041868)                      # Langleys -> MJ m-2 h-1
     uz = 3.33 * 0.44704                          # mph -> m s-1
-    lat_radians = (39.4575 * math.pi / 180)      # degrees -> radians
-    lon_radians = (-118.77388 * math.pi / 180)   # degrees -> radians
+    lat = 39.4575                                # degrees
+    lon = -118.77388                             # degrees
 
     etr = geerefet.Hourly(
         tmean=tmean_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
-        lat=lat_radians, lon=lon_radians, doy=182, time=18).etr().getInfo()
+        lat=lat, lon=lon_radians, doy=182, time=18).etr().getInfo()
 
     print('ETr: {:.2f} mm'.format(float(etr)))
 
@@ -93,7 +93,7 @@ rs        ee.Image             Incoming shortwave solar radiation [MJ m-2 day-1]
 uz        ee.Image             Wind speed [m/s]
 zw        ee.Number            Wind speed height [m]
 elev      ee.Image, ee.Number  Elevation [m]
-lat       ee.Image, ee.Number  Latitude [radians]
+lat       ee.Image, ee.Number  Latitude [degrees]
 doy       ee.Image, ee.Number  Day of year
 ========  ===================  =================================================
 
