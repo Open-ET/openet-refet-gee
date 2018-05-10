@@ -776,14 +776,14 @@ def _wind_height_adjust(uz, zw):
     Parameters
     ----------
     uz : ee.Image or ee.Number
-        Wind speed at measurement height [m/s].
+        Wind speed at measurement height [m s-1].
     zw : ee.Image or ee.Number
         Wind measurement height [m].
 
     Returns
     -------
     ee.Image or ee.Number
-        Wind speed at 2 m height [m/s].
+        Wind speed at 2 m height [m s-1].
 
     Notes
     -----

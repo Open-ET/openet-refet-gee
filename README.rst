@@ -90,7 +90,7 @@ Variable  Type                 Description [units]
 ========  ===================  =================================================
 ea        ee.Image             Actual vapor pressure [kPa]
 rs        ee.Image             Incoming shortwave solar radiation [MJ m-2 day-1]
-uz        ee.Image             Wind speed [m/s]
+uz        ee.Image             Wind speed [m s-1]
 zw        ee.Number            Wind speed height [m]
 elev      ee.Image, ee.Number  Elevation [m]
 lat       ee.Image, ee.Number  Latitude [degrees]
@@ -148,17 +148,17 @@ Issues
 
 Currently the user must handle all of the file I/O and unit conversions.
 
-The latitude/longitude units are in degrees, not radians (this is different than the python RefET modules).
-
 Cloudiness Fraction (hourly)
 ----------------------------
 
-The hourly reference ET calculation is currently performed independently for each time step.  The cloudiness fraction (fcd) for very low sun angles (i.e. at night) is hard coded to 1 for very low sun angles instead of being derived from the .
+The cloudiness fraction (fcd) is computed as the ratio of the measured solar radiation (Rs) to the theoretical clear sky solar radiation (Rso).  This ratio cannot be computed directly at night since Rso is 0.  ASCE-EWRI 2005 suggests computing a representative nighttime fcd based on the fcd at sunset and/or sunrise.
+
+In the RefET module fcd is hard coded to 1 for all time steps with very low sun angles since the hourly reference ET is computed independently for each time step.
 
 ASCE vs. RefET
 ==============
 
-TODO Discuss differences between "asce" and "refet" methods.
+TODO: Discuss the differences between "asce" and "refet" methods.
 
 Installation
 ============

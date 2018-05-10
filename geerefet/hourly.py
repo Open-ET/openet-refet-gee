@@ -12,7 +12,7 @@ class Hourly():
                  method='asce'):
         """ASCE Hourly Standardized Reference Evapotranspiration (ET)
 
-        .. warning:: Cloudiness fraction at night is not being computed correctly
+        .. warning:: Cloudiness fraction at night is not being computed per [1]_
 
         Arguments
         ---------
@@ -23,7 +23,7 @@ class Hourly():
         rs : ee.Image
             Shortwave solar radiation [MJ m-2 hr-1].
         uz : ee.Image
-            Wind speed [m/s].
+            Wind speed [m s-1].
         zw : ee.Number
             Wind speed measurement/estimated height [m].
         elev : ee.Image or ee.Number
@@ -82,6 +82,8 @@ class Hourly():
 
         # To match standardized form, psy is calculated from elevation based pair
         self.pair = calcs._air_pressure(self.elev, method=method)
+
+        # Psychrometric constant (Eq. 35)
         self.psy = self.pair.multiply(0.000665)
 
         self.es = calcs._sat_vapor_pressure(self.tmean)
@@ -123,28 +125,25 @@ class Hourly():
         # Wind speed
         self.u2 = calcs._wind_height_adjust(uz=self.uz, zw=self.zw)
 
-    def _etsz(self):
-        """Hourly reference ET (Eq. 1)
+    def etsz(self, surface):
+        """Standardized reference ET
 
+        Parameters
+        ----------
+        surface : {'alfalfa', 'etr', 'tall', 'grass', 'eto', 'short'}
+            Reference surface type.
 
         Returns
         -------
-        etsz : ee.Image
-            Standardized reference ET [mm].
+        ee.Image
 
         """
-        # return self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy)\
-        #     .divide(self.tmean.add(273))\
-        #     .add(self.es_slope.multiply(self.rn.subtract(self.g)).multiply(0.408))\
-        #     .divide(self.u2.multiply(self.cd).add(1)\
-        #                 .multiply(self.psy).add(self.es_slope))
-
-        return self.tmean.expression(
-            '(0.408 * es_slope * (rn - g) + (psy * cn * u2 * vpd / (tmean + 273))) / '
-            '(es_slope + psy * (cd * u2 + 1))',
-            {'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
-             'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
-             'u2': self.u2, 'vpd': self.vpd})
+        if surface.lower() in ['alfalfa', 'etr', 'tall']:
+            return self.etr()
+        elif surface.lower() in ['grass', 'eto', 'short']:
+            return self.eto()
+        else:
+            raise ValueError('unsupported surface type: {}'.format(surface))
 
     def eto(self):
         """Short (grass) reference surface"""
@@ -190,3 +189,25 @@ class Hourly():
         return ee.Image(self._etsz().rename(['etr'])
             .set('system:time_start', self.time_start))
 
+    def _etsz(self):
+        """Hourly reference ET (Eq. 1)
+
+
+        Returns
+        -------
+        etsz : ee.Image
+            Standardized reference ET [mm].
+
+        """
+        # return self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy)\
+        #     .divide(self.tmean.add(273))\
+        #     .add(self.es_slope.multiply(self.rn.subtract(self.g)).multiply(0.408))\
+        #     .divide(self.u2.multiply(self.cd).add(1)\
+        #                 .multiply(self.psy).add(self.es_slope))
+
+        return self.tmean.expression(
+            '(0.408 * es_slope * (rn - g) + (psy * cn * u2 * vpd / (tmean + 273))) / '
+            '(es_slope + psy * (cd * u2 + 1))',
+            {'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
+             'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
+             'u2': self.u2, 'vpd': self.vpd})

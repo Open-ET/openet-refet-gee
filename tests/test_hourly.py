@@ -13,9 +13,6 @@ s_args = {
     'elev': 1208.5,
     'lat': 39.4575,
     'lon': -118.77388,
-    # DEADBEEF
-    # 'lat': units._deg2rad(39.4575),
-    # 'lon': units._deg2rad(-118.77388),
     'zw': 3.0,
 }
 
@@ -141,3 +138,26 @@ def test_refet_hourly_asce_method_eto():
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['eto']) == pytest.approx(h_args['eto_refet'])
+
+@pytest.mark.parametrize(
+    'surface, expected',
+    [['etr', h_args['etr_refet']],
+     ['alfalfa', h_args['etr_refet']],
+     ['tall', h_args['etr_refet']],
+     ['eto', h_args['eto_refet']],
+     ['grass', h_args['eto_refet']],
+     ['short', h_args['eto_refet']]])
+def test_refet_daily_etsz(surface, expected):
+    refet = Hourly(
+        tmean=ee.Image.constant(h_args['tmean']),
+        ea=ee.Image.constant(h_args['ea']),
+        rs=ee.Image.constant(h_args['rs']), uz=ee.Image.constant(h_args['uz']),
+        zw=ee.Image.constant(s_args['zw']), elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
+        method='refet')
+    output = refet.etsz(surface).rename(['etsz']).reduceRegion(
+        reducer=ee.Reducer.first(),
+        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
+        scale=1).getInfo()
+    assert float(output['etsz']) == pytest.approx(expected)
