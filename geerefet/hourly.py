@@ -4,8 +4,6 @@ import ee
 
 from . import calcs
 
-ee.Initialize()
-
 
 class Hourly():
     def __init__(self, tmean, ea, rs, uz, zw, elev, lat, lon, doy, time,

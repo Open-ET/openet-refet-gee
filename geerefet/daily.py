@@ -4,8 +4,6 @@ import ee
 
 from . import calcs
 
-ee.Initialize()
-
 
 class Daily():
     """"""

@@ -4,8 +4,6 @@ import pytest
 from geerefet.daily import Daily
 import geerefet.units as units
 
-ee.Initialize()
-
 
 # Eventually move to conftest.py or a separate file
 # Fallon AgriMet site parameters
