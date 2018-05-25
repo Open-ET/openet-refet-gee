@@ -192,7 +192,6 @@ class Hourly():
     def _etsz(self):
         """Hourly reference ET (Eq. 1)
 
-
         Returns
         -------
         etsz : ee.Image
@@ -211,3 +210,74 @@ class Hourly():
             {'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
              'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
              'u2': self.u2, 'vpd': self.vpd})
+
+    @classmethod
+    def nldas(cls, nldas_img, zw=None, elev=None, lat=None, lon=None,
+              method='asce'):
+        """Initialize daily RefET from an NLDAS image collection
+
+        Parameters
+        ----------
+        nldas_img : ee.Image
+            NLDAS hourly images from the collection NASA/NLDAS/FORA0125_H002.
+        zw : ee.Number, optional
+            Wind speed height [m] (the default is 10).
+        elev : ee.Image or ee.Number, optional
+            Elevation image [m].  The standard GRIDMET elevation image
+            (projects/climate-engine/gridmet/elevtion) will be used if not set.
+        lat : ee.Image or ee.Number
+            Latitude image [degrees].  The latitude will be computed
+            dynamically using ee.Image.pixelLonLat() if not set.
+        lon : ee.Image or ee.Number
+            Longitude image [degrees].  The longitude will be computed
+            dynamically using ee.Image.pixelLonLat() if not set.
+        method : {'asce' (default), 'refet'}, optional
+            Specifies which calculation method to use.
+            * 'asce' -- Calculations will follow ASCE-EWRI 2005.
+            * 'refet' -- Calculations will follow RefET software.
+
+        Notes
+        -----
+        Solar radiation is converted from W m-2 to MJ m-2 day-1.
+        Actual vapor pressure is computed from specific humidity and air
+            pressure (from elevation).
+
+        """
+
+        if zw is None:
+            zw = ee.Number(10)
+        if elev is None:
+            # Reproject to the NLDAS grid
+            elev = ee.Image("CGIAR/SRTM90_V4") \
+                .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
+            elev = ee.Image('CGIAR/SRTM90_V4')
+        if lat is None:
+            # Reproject to the NLDAS grid
+            lat = ee.Image.pixelLonLat().select('latitude') \
+                .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
+            # lat = ee.Image.pixelLonLat().select('latitude')
+        if lon is None:
+            # Reproject to the NLDAS grid
+            lon = ee.Image.pixelLonLat().select('longitude')\
+                .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
+            # lon = ee.Image.pixelLonLat().select('longitude')
+        image_date = ee.Date(nldas_img.get('system:time_start'))
+
+        return cls(
+            tmean=nldas_img.select(['temperature']),
+            ea=calcs._actual_vapor_pressure(
+                pair=calcs._air_pressure(elev, method),
+                q=nldas_img.select(['specific_humidity'])),
+            rs=nldas_img.select(['shortwave_radiation']).multiply(0.0036),
+            uz=nldas_img.select(["wind_u"]).pow(2) \
+                .add(nldas_img.select(["wind_v"]).pow(2)) \
+                .sqrt().rename(['uz']),
+            zw=zw,
+            elev=elev,
+            lat=lat,
+            lon=lon,
+            doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
+            # time=ee.Number(image_date.getRelative('hour', 'day')),
+            time=ee.Number(image_date.get('hour')),
+            method=method,
+        )

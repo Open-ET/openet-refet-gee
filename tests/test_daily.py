@@ -13,26 +13,30 @@ s_args = {
     'elev': 1208.5,
     'lat': 39.4575,
     'lon': -118.77388,
+    'pair': 87.81876435813037,
+    'pair_asce': 87.80710537212929,
     'zw': 3.0,
 }
 
 # Daily test parameters for 2015-07-01
+# Ea was computed from q for both asce and refet methods
 d_args = {
     'doy': 182,
-    'ea_refet': 1.2206674169951346,
-    'ea_asce': 1.2205053588697359,
+    'ea': 1.2206674169951346,
+    'eto_asce': 7.9422320475712835,
     'eto_refet': 7.9422320475712835,
+    'etr_asce': 10.626087665395694,
     'etr_refet': 10.571314344056955,
-    'etr_asce': 10.62628103954038,
     'etr_rso_simple': 10.628137858930051,
-    'q': 0.008691370735727117,
-    'rs': 674.07 * 0.041868,  # Conversion from Langleys to MJ m-2
+    'q': 0.008691370735727117,          # Computed from Ea from Tdew
+    'q_asce': 0.008692530868140688,     # Computed from Ea from Tdew
+    'rs': 674.07 * 0.041868,            # Conversion from Langleys to MJ m-2
     'rso': 31.565939444861765,
     'tdew': units._f2c(49.84),
     'tmin': units._f2c(66.65),
     'tmax': units._f2c(102.80),
     # 'tmean': f2c(84.725),
-    'uz': 4.80 * 0.44704,  # Conversion from mph to m s-1
+    'uz': 4.80 * 0.44704,               # Conversion from mph to m s-1
     'u2': 1.976111757722194,
 }
 
@@ -59,7 +63,7 @@ def test_refet_daily_surface_etr():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
-        ea=ee.Image.constant(d_args['ea_refet']),
+        ea=ee.Image.constant(d_args['ea']),
         rs=ee.Image.constant(d_args['rs']),
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -74,7 +78,7 @@ def test_refet_daily_surface_eto():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
-        ea=ee.Image.constant(d_args['ea_refet']),
+        ea=ee.Image.constant(d_args['ea']),
         rs=ee.Image.constant(d_args['rs']),
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -89,7 +93,7 @@ def test_refet_daily_rso_type_simple():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
-        ea=ee.Image.constant(d_args['ea_refet']),
+        ea=ee.Image.constant(d_args['ea']),
         rs=ee.Image.constant(d_args['rs']),
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -104,7 +108,7 @@ def test_refet_daily_rso_type_array():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
-        ea=ee.Image.constant(d_args['ea_refet']),
+        ea=ee.Image.constant(d_args['ea']),
         rs=ee.Image.constant(d_args['rs']),
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -121,7 +125,7 @@ def test_refet_daily_rso_type_exception():
         refet = Daily(
             tmax=ee.Image.constant(d_args['tmax']),
             tmin=ee.Image.constant(d_args['tmin']),
-            ea=ee.Image.constant(d_args['ea_refet']),
+            ea=ee.Image.constant(d_args['ea']),
             rs=ee.Image.constant(d_args['rs']),
             uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
             elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -132,7 +136,7 @@ def test_refet_daily_asce():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
-        ea=ee.Image.constant(d_args['ea_asce']),
+        ea=ee.Image.constant(d_args['ea']),
         rs=ee.Image.constant(d_args['rs']),
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -156,7 +160,7 @@ def test_refet_daily_etsz(surface, expected):
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
-        ea=ee.Image.constant(d_args['ea_refet']),
+        ea=ee.Image.constant(d_args['ea']),
         rs=ee.Image.constant(d_args['rs']),
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
@@ -168,18 +172,72 @@ def test_refet_daily_etsz(surface, expected):
     assert float(output['etsz']) == pytest.approx(expected)
 
 
-def test_refet_daily_gridmet():
-    # Convert input units to GRIDMET units
-    # Overriding GRIDMET windspeed height from 10m to 3m
+def test_refet_daily_gridmet_etr():
+    """Generate a fake GRIDMET image from the test values"""
     gridmet_img = ee.Image.constant([
             d_args['tmax'] + 273.15, d_args['tmin'] + 273.15,
-            d_args['q'], d_args['rs'] / 0.0864, d_args['uz']])\
+            d_args['q_asce'], d_args['rs'] / 0.0864, d_args['uz']])\
         .rename(['tmmx', 'tmmn', 'sph', 'srad', 'vs'])\
         .set('system:time_start', ee.Date('2015-07-01').millis())
     refet = Daily.gridmet(
         ee.Image(gridmet_img), elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']),
+        method='asce')
+    output = refet.etr()\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+    assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
+
+
+def test_refet_daily_nldas_etr():
+    """Generate a fake NLDAS image from the test values
+
+    Convert the test Rs from MJ m-2 d-1 to W m-2, then allocate half to each image
+
+    """
+    wind_u = d_args['uz'] / (2 ** 0.5)
+    nldas_coll = ee.ImageCollection.fromImages([
+        ee.Image(ee.Image.constant([
+                d_args['tmin'], d_args['q_asce'], 0.0, wind_u, wind_u]) \
+            .double()\
+            .rename(['temperature', 'specific_humidity',
+                     'shortwave_radiation', 'wind_u', 'wind_v']) \
+            .set('system:time_start',
+                 ee.Date('2015-07-01T00:00:00', 'UTC').millis())
+        ),
+        ee.Image(ee.Image.constant([
+                d_args['tmax'], d_args['q_asce'], d_args['rs'] / 0.0036,
+                wind_u, wind_u]) \
+            .double()\
+            .rename(['temperature', 'specific_humidity',
+                     'shortwave_radiation', 'wind_u', 'wind_v']) \
+            .set('system:time_start',
+                 ee.Date('2015-07-01T12:00:00', 'UTC').millis())
+        )
+    ])
+
+    refet = Daily.nldas(
+        nldas_coll, elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']), method='asce')
     output = refet.etr()\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
+
+
+def test_refet_daily_nldas_eto():
+    """Compare values to previous calculations"""
+    test_point = ee.Geometry.Point(-120.113, 36.336)
+
+    nldas_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
+        .filterDate('2017-07-01T06:00:00', '2017-07-02T06:00:00')
+    output = Daily.nldas(nldas_coll, method='asce').eto() \
+        .reduceRegion(ee.Reducer.first(), geometry=test_point, scale=1)\
+        .getInfo()['eto']
+
+    expected = ee.Image('projects/eddi-noaa/nldas_eto_daily/20170701')\
+        .select(['ETo'])\
+        .reduceRegion(ee.Reducer.first(), geometry=test_point, scale=1)\
+        .getInfo()['ETo']
+
+    assert output == pytest.approx(expected, rel=0.001)

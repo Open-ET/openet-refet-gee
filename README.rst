@@ -79,6 +79,34 @@ A helper function for computing daily ETo and ETr for `GRIDMET <http://www.clima
 
     print('ETr: {:.2f} mm'.format(float(etr)))
 
+NLDAS
+-----
+
+Helper functions for computing daily/hourly ETo/ETr for `NLDAS <https://ldas.gsfc.nasa.gov/nldas/NLDAS2forcing.php>`__ images are available.
+
+For the daily function, the NLDAS collection must be filtered to a single 24 hour period.
+
+.. code-block:: console
+
+    import ee
+    import geerefet
+
+    nldas_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
+        .filterDate('2017-07-01', '2017-07-02)
+    etr = geerefet.Daily.nldas(nldas_coll).etr().getInfo()
+
+    print('ETr: {:.2f} mm'.format(float(etr)))
+
+.. code-block:: console
+
+    import ee
+    import geerefet
+
+    nldas_img = ee.Image(ee.ImageCollection('NASA/NLDAS/FORA0125_H002').first())
+    etr = geerefet.Hourly.nldas(nldas_img).etr().getInfo()
+
+    print('ETr: {:.2f} mm'.format(float(etr)))
+
 Input Parameters
 ================
 
