@@ -1,13 +1,12 @@
 language: python
 
 python:
-  - "2.7"
-  - "3.5"
   - "3.6"
 
 install:
   - pip install -r requirements.txt
-  - pip install pandas pytest pytz
+  - pip install -r requirements_test.txt
+  - pip install --upgrade pytest
 
 script:
   - python -m pytest
