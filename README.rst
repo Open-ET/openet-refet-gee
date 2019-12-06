@@ -4,7 +4,7 @@ Google Earth Engine ASCE Standardized Reference Evapotranspiration (ET)
 
 |version| |build|
 
-Google Earth Engine (GEE) functions for computing daily and hourly reference ET.
+Google Earth Engine (GEE) functions for computing daily and hourly reference ET following the ASCE Standardized Reference Evapotranspiration Equations (ASCE2005_).
 
 Usage
 =====
@@ -183,10 +183,10 @@ The cloudiness fraction (fcd) is computed as the ratio of the measured solar rad
 
 In the RefET module fcd is hard coded to 1 for all time steps with very low sun angles since the hourly reference ET is computed independently for each time step.
 
-ASCE vs. RefET
-==============
+Calculation Method - ASCE vs. RefET
+===================================
 
-TODO: Discuss the differences between "asce" and "refet" methods.
+The main difference between the two "methods" is that the "asce" method attempts to follow the equations in ASCE2005_, whereas the "refet" method attempts to follow the calculations of the `RefET Software <https://www.uidaho.edu/cals/kimberly-research-and-extension-center/research/water-resources/ref-et-software>`__ as closely as possible.  The difference in output between these methods is generally negligible (if not identical for realistic numbers of significant digits).  Note that the default is set to "asce" to best match the calculations a user would expect to have happen. The "refet" method was added in order to help validate this code to the RefET Software.
 
 Installation
 ============
@@ -216,10 +216,9 @@ Modules needed to run the test suite:
 References
 ==========
 
-ASCE-EWRI Standardized Reference Evapotranspiration Equation (2005)
-
- * `Report <http://www.kimberly.uidaho.edu/water/asceewri/ascestzdetmain2005.pdf>`__
- * `Appendix <http://www.kimberly.uidaho.edu/water/asceewri/appendix.pdf>`__
+.. [ASCE2005]
+ | ASCE-EWRI (2005). The ASCE standardized reference evapotranspiration equation.
+ | `https://ascelibrary.org/doi/book/10.1061/9780784408056 <https://ascelibrary.org/doi/book/10.1061/9780784408056>`__
 
 .. |build| image:: https://travis-ci.org/cgmorton/RefET-GEE.svg?branch=master
    :alt: Build status
