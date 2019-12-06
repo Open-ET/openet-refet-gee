@@ -9,8 +9,6 @@ import pytest
 from geerefet.daily import Daily
 import geerefet.units as units
 
-ee.Initialize()
-
 constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
 
 
@@ -122,20 +120,12 @@ class DailyData():
             ids.append('{}-{}'.format(test_date, surface))
 
 
-@pytest.fixture(scope='module')
-def daily_data():
-    _daily = DailyData()
-    return _daily
-
-
 def pytest_generate_tests(metafunc):
-    # Read in inputs for each daily timestep
-    # Set dictionary keys to input variable names
-    daily = daily_data()
-
-    if 'daily_params' in metafunc.fixturenames:
-        metafunc.parametrize('daily_params', daily.values, ids=daily.ids)
-
+    if 'daily_params' not in metafunc.fixturenames:
+        return
+    daily = DailyData()
+    metafunc.parametrize('daily_params', daily.values, ids=daily.ids,
+                         scope='module')
 
 def test_refet_daily_output(daily_params):
     """Test daily RefET calculation at a single point and time"""
