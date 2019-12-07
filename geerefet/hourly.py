@@ -210,19 +210,19 @@ class Hourly():
              'u2': self.u2, 'vpd': self.vpd})
 
     @classmethod
-    def nldas(cls, nldas_img, zw=None, elev=None, lat=None, lon=None,
+    def nldas(cls, input_img, zw=None, elev=None, lat=None, lon=None,
               method='asce'):
-        """Initialize daily RefET from an NLDAS image collection
+        """Initialize daily RefET from an NLDAS image
 
         Parameters
         ----------
-        nldas_img : ee.Image
-            NLDAS hourly images from the collection NASA/NLDAS/FORA0125_H002.
+        input_img : ee.Image
+            NLDAS hourly image from the collection NASA/NLDAS/FORA0125_H002.
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  The standard GRIDMET elevation image
-            (projects/climate-engine/gridmet/elevtion) will be used if not set.
+            Elevation image [m].  The SRTM elevation image (CGIAR/SRTM90_V4)
+            will be reprojected to the NLDAS grid if not set.
         lat : ee.Image or ee.Number
             Latitude image [degrees].  The latitude will be computed
             dynamically using ee.Image.pixelLonLat() if not set.
@@ -241,34 +241,40 @@ class Hourly():
             pressure (from elevation).
 
         """
+        image_date = ee.Date(input_img.get('system:time_start'))
 
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            # Reproject to the NLDAS grid
-            elev = ee.Image("CGIAR/SRTM90_V4") \
-                .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
-            elev = ee.Image('CGIAR/SRTM90_V4')
+            elev = ee.Image('projects/earthengine-legacy/assets/'
+                            'projects/eddi-noaa/nldas/elevation')
+            # elev = ee.Image('CGIAR/SRTM90_V4') \
+            #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
-            # Reproject to the NLDAS grid
-            lat = ee.Image.pixelLonLat().select('latitude') \
-                .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
-            # lat = ee.Image.pixelLonLat().select('latitude')
+            lat = ee.Image('projects/earthengine-legacy/assets/'
+                           'projects/eddi-noaa/nldas/elevation') \
+                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))
+            # lat = ee.Image.pixelLonLat().select('latitude') \
+            #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
+            # lat = nldas_img.select([0]).multiply(0)\
+            #     .add(ee.Image.pixelLonLat().select('latitude'))
         if lon is None:
-            # Reproject to the NLDAS grid
-            lon = ee.Image.pixelLonLat().select('longitude')\
-                .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
-            # lon = ee.Image.pixelLonLat().select('longitude')
-        image_date = ee.Date(nldas_img.get('system:time_start'))
+            lon = ee.Image('projects/earthengine-legacy/assets/'
+                           'projects/eddi-noaa/nldas/elevation') \
+                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))
+            # lon = ee.Image.pixelLonLat().select('longitude')\
+            #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
+            # lon = nldas_img.select([0]).multiply(0)\
+            #     .add(ee.Image.pixelLonLat().select('longitude'))
 
         return cls(
-            tmean=nldas_img.select(['temperature']),
+            tmean=input_img.select(['temperature']),
             ea=calcs._actual_vapor_pressure(
                 pair=calcs._air_pressure(elev, method),
-                q=nldas_img.select(['specific_humidity'])),
-            rs=nldas_img.select(['shortwave_radiation']).multiply(0.0036),
-            uz=nldas_img.select(["wind_u"]).pow(2) \
-                .add(nldas_img.select(["wind_v"]).pow(2)) \
+                q=input_img.select(['specific_humidity'])),
+            rs=input_img.select(['shortwave_radiation']).multiply(0.0036),
+            uz=input_img.select(['wind_u']).pow(2) \
+                .add(input_img.select(['wind_v']).pow(2)) \
                 .sqrt().rename(['uz']),
             zw=zw,
             elev=elev,

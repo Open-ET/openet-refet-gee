@@ -193,25 +193,19 @@ def test_refet_daily_nldas_etr():
     Convert the test Rs from MJ m-2 d-1 to W m-2, then allocate half to each image
 
     """
+    band_names = ['temperature', 'specific_humidity',
+                  'shortwave_radiation', 'wind_u', 'wind_v']
+
     wind_u = d_args['uz'] / (2 ** 0.5)
     nldas_coll = ee.ImageCollection.fromImages([
-        ee.Image(ee.Image.constant([
-                d_args['tmin'], d_args['q_asce'], 0.0, wind_u, wind_u]) \
-            .double()\
-            .rename(['temperature', 'specific_humidity',
-                     'shortwave_radiation', 'wind_u', 'wind_v']) \
-            .set('system:time_start',
-                 ee.Date('2015-07-01T00:00:00', 'UTC').millis())
-        ),
-        ee.Image(ee.Image.constant([
-                d_args['tmax'], d_args['q_asce'], d_args['rs'] / 0.0036,
-                wind_u, wind_u]) \
-            .double()\
-            .rename(['temperature', 'specific_humidity',
-                     'shortwave_radiation', 'wind_u', 'wind_v']) \
-            .set('system:time_start',
-                 ee.Date('2015-07-01T12:00:00', 'UTC').millis())
-        )
+        ee.Image.constant([d_args['tmin'], d_args['q_asce'],
+                           0.0, wind_u, wind_u]) \
+            .double().rename(band_names) \
+            .set({'system:time_start': ee.Date('2015-07-01T00:00:00', 'UTC').millis()}),
+        ee.Image.constant([d_args['tmax'], d_args['q_asce'],
+                           d_args['rs'] / 0.0036, wind_u, wind_u]) \
+            .double().rename(band_names) \
+            .set({'system:time_start': ee.Date('2015-07-01T12:00:00', 'UTC').millis()})
     ])
 
     refet = Daily.nldas(
@@ -233,9 +227,58 @@ def test_refet_daily_nldas_eto():
         .reduceRegion(ee.Reducer.first(), geometry=test_point, scale=1)\
         .getInfo()['eto']
 
-    expected = ee.Image('projects/eddi-noaa/nldas_eto_daily/20170701')\
+    expected = ee.Image('projects/eddi-noaa/nldas/daily/20170701')\
         .select(['ETo'])\
         .reduceRegion(ee.Reducer.first(), geometry=test_point, scale=1)\
         .getInfo()['ETo']
 
     assert output == pytest.approx(expected, rel=0.001)
+
+
+def test_refet_daily_cfsv2_etr():
+    """Generate a fake CFSv2 image from the test values
+
+    Convert the test Rs from MJ m-2 d-1 to W m-2
+
+    """
+    band_names = [
+        'Maximum_temperature_height_above_ground_6_Hour_Interval',
+        'Minimum_temperature_height_above_ground_6_Hour_Interval',
+        'Specific_humidity_height_above_ground',
+        'Downward_Short-Wave_Radiation_Flux_surface_6_Hour_Average',
+        'u-component_of_wind_height_above_ground',
+        'v-component_of_wind_height_above_ground',
+    ]
+
+    wind_u = d_args['uz'] / (2 ** 0.5)
+
+    cfsv2_coll = ee.ImageCollection.fromImages([
+        ee.Image.constant([d_args['tmax'] + 273.15, d_args['tmin'] + 273.15,
+                           d_args['q_asce'], d_args['rs'] / 0.0864,
+                           wind_u, wind_u]) \
+            .double().rename(band_names) \
+            .set({'system:time_start': ee.Date('2015-07-01T00:00:00', 'UTC').millis()}),
+        ee.Image.constant([d_args['tmax'] + 273.15, d_args['tmin'] + 273.15,
+                           d_args['q_asce'], d_args['rs'] / 0.0864,
+                           wind_u, wind_u]) \
+            .double().rename(band_names) \
+            .set({'system:time_start': ee.Date('2015-07-01T06:00:00', 'UTC').millis()}),
+        ee.Image.constant([d_args['tmax'] + 273.15, d_args['tmin'] + 273.15,
+                           d_args['q_asce'], d_args['rs'] / 0.0864,
+                           wind_u, wind_u]) \
+             .double().rename(band_names) \
+             .set({'system:time_start': ee.Date('2015-07-01T12:00:00', 'UTC').millis()}),
+        ee.Image.constant([d_args['tmax'] + 273.15, d_args['tmin'] + 273.15,
+                           d_args['q_asce'], d_args['rs'] / 0.0864,
+                           wind_u, wind_u]) \
+             .double().rename(band_names) \
+             .set({'system:time_start': ee.Date('2015-07-01T18:00:00', 'UTC').millis()}),
+    ])
+
+    refet = Daily.cfsv2(
+        cfsv2_coll, elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']), method='asce')
+    output = refet.etr()\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+    assert float(output['etr']) == pytest.approx(d_args['etr_asce'])

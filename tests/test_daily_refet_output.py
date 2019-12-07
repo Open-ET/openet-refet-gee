@@ -127,6 +127,7 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize('daily_params', daily.values, ids=daily.ids,
                          scope='module')
 
+
 def test_refet_daily_output(daily_params):
     """Test daily RefET calculation at a single point and time"""
     # If I don't copy, the pop changes the test values in daily_data()

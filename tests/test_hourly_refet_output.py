@@ -155,7 +155,7 @@ def pytest_generate_tests(metafunc):
     hourly = HourlyData()
     metafunc.parametrize('hourly_params', hourly.values, ids=hourly.ids,
                          scope='module')
-    
+
 
 def test_refet_hourly_func_output(hourly_params):
     """Test hourly RefET calculation at a single point and time"""
