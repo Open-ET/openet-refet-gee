@@ -220,9 +220,9 @@ References
  | ASCE-EWRI (2005). The ASCE standardized reference evapotranspiration equation.
  | `https://ascelibrary.org/doi/book/10.1061/9780784408056 <https://ascelibrary.org/doi/book/10.1061/9780784408056>`__
 
-.. |build| image:: https://travis-ci.org/cgmorton/RefET-GEE.svg?branch=master
+.. |build| image:: https://github.com/cgmorton/RefET-GEE/workflows/build/badge.svg
    :alt: Build status
-   :target: https://travis-ci.org/cgmorton/RefET-GEE
+   :target: https://github.com/cgmorton/RefET-GEE
 .. |version| image:: https://badge.fury.io/py/geerefet.svg
    :alt: Latest version on PyPI
    :target: https://badge.fury.io/py/geerefet
