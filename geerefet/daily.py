@@ -395,8 +395,12 @@ class Daily():
             ee.Image(input_coll.first()).get('system:time_start'))
 
         cfsv2_crs = 'EPSG:4326'
-        cfsv2_transform = [0.3124995757764987, 0, -180,
-                           0, -0.31221217943274454, 90]
+        # Transform for 2011 to Present
+        cfsv2_transform = [0.20454520376789903, 0., -180,
+                           0., -0.20442210122586923, 90]
+        # Transform for 1979 to 2010
+        # cfsv2_transform = [0.3124995757764987, 0, -180,
+        #                    0, -0.31221217943274454, 90]
 
         if zw is None:
             zw = ee.Number(10)
