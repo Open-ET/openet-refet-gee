@@ -60,7 +60,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/instant.pl?st
 
     etr = geerefet.Hourly(
         tmean=tmean_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
-        lat=lat, lon=lon_radians, doy=182, time=18).etr().getInfo()
+        lat=lat, lon=lon, doy=182, time=18).etr().getInfo()
 
     print('ETr: {:.2f} mm'.format(float(etr)))
 
