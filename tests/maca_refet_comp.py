@@ -1,4 +1,4 @@
-import daily
+import geerefet.daily
 import ee
 import math
 import refet
@@ -21,13 +21,13 @@ lon = -119.30
 test_pnt = ee.Geometry.Point(lon, lat)
 
 # gee_refet eto
-gee_eto = daily.Daily.maca(maca_img).eto()\
+gee_eto = geerefet.daily.Daily.maca(maca_img).eto()\
       .rename(['eto'])\
       .reduceRegion(ee.Reducer.mean(), test_pnt, crs=crs, crsTransform=geo)\
       .getInfo()['eto']
 
 # gee_refet etr
-gee_etr = daily.Daily.maca(maca_img).etr()\
+gee_etr = geerefet.daily.Daily.maca(maca_img).etr()\
       .rename(['etr'])\
       .reduceRegion(ee.Reducer.mean(), test_pnt, crs=crs, crsTransform=geo)\
       .getInfo()['etr']
