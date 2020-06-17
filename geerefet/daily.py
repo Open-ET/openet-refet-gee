@@ -2,7 +2,7 @@ import math
 
 import ee
 
-import calcs
+from . import calcs
 
 
 class Daily():
