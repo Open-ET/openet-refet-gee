@@ -300,10 +300,10 @@ def _solar_time_rad(lon, time_mid, sc):
     always called together (i.e. _omega(_solar_time_rad()).  It was built
     independently from _omega to eventually support having a separate
     solar_time functions for longitude in degrees.
-    time = time_mid + (lon * 24 / (2 * math.pi)) + sc - 12
+    time = (lon * 24 / (2 * math.pi)) + time_mid + sc - 12
 
     """
-    return time_mid.add(lon.multiply(24 / (2 * math.pi))).add(sc).subtract(12)
+    return lon.multiply(24 / (2 * math.pi)).add(time_mid).add(sc).subtract(12)
 
 
 def _omega(solar_time):

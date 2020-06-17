@@ -321,10 +321,21 @@ def test_solar_time_rad_number(lon=s_args['lon'], time_mid=h_args['time'],
         ee.Number(lon), ee.Number(time_mid),
         ee.Number(sc)).getInfo()) == pytest.approx(expected)
 
-# def test_solar_time_rad_image(lon=s_args['lon'], time_mid=h_args['time'],
-#                               sc=d_args['sc'], expected=h_args['solar_time']):
+
+def test_solar_time_rad_image(lon=s_args['lon'], time_mid=h_args['time'],
+                              sc=d_args['sc'], expected=h_args['solar_time']):
+    output = calcs._solar_time_rad(
+            ee.Image.constant(lon), ee.Number(time_mid), ee.Number(sc)) \
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
+        .getInfo()
+    assert float(output['constant']) == pytest.approx(expected)
+
+
+# # The code will fail if the lon is a number but the time_mid is an image
+# def test_solar_time_rad_image_fail(lon=s_args['lon'], time_mid=h_args['time'],
+#                                    sc=d_args['sc'], expected=h_args['solar_time']):
 #     output = calcs._solar_time_rad(
-#             ee.Number(lon), ee.Number(time_mid), ee.Number(sc)) \
+#             ee.Image.number(lon), ee.Image.constant(time_mid), ee.Number(sc)) \
 #         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
 #         .getInfo()
 #     assert float(output['constant']) == pytest.approx(expected)
