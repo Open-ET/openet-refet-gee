@@ -21,6 +21,6 @@ def pytest_configure():
         with open(GEE_KEY_FILE, 'w') as f:
             f.write(content)
         ee.Initialize(ee.ServiceAccountCredentials('', key_file=GEE_KEY_FILE),
-                      use_cloud_api=True)
+                      project='openet')
     else:
-        ee.Initialize(use_cloud_api=True)
+        ee.Initialize()
