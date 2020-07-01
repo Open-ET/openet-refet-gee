@@ -16,7 +16,8 @@ constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
 # DEADBEEF - This doesn't work if I move it to conftest.py
 class DailyData():
     """Setup daily validation data from Fallon AgriMet station"""
-    val_ws = os.path.join(os.getcwd(), 'tests', 'data')
+    val_ws = os.path.join(os.getcwd(), 'openet', 'refetgee', 'tests', 'data')
+    # val_ws = os.path.join(os.getcwd(), 'tests', 'data')
     # val_ws = os.path.join(os.path.dirname(os.getcwd()), 'tests', 'data')
 
     csv_path = os.path.join(val_ws, 'FALN_Agrimet_daily_raw_2015.csv')
