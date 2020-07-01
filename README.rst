@@ -20,7 +20,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/daily.pl?stat
 
     import math
     import ee
-    import refetgee
+    import openet.refetgee
 
     # Unit conversions
     tmin_c = (66.65 - 32) * (5.0 / 9)                          # F -> C
@@ -31,7 +31,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/daily.pl?stat
     uz = 4.80 * 0.44704                                        # mpg -> m s-1
     lat = 39.4575                                              # degrees
 
-    etr = refetgee.Daily(
+    etr = openet.refetgee.Daily(
         tmin=tmin_c, tmax=tmax_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
         lat=lat, doy=182).etr().getInfo()
 
@@ -48,7 +48,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/instant.pl?st
 
     import math
     import ee
-    import refetgee
+    import openet.refetgee
 
     # Unit conversions
     tmean_c = (91.80 - 32) * (5.0 / 9)           # F -> C
@@ -58,7 +58,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/instant.pl?st
     lat = 39.4575                                # degrees
     lon = -118.77388                             # degrees
 
-    etr = refetgee.Hourly(
+    etr = openet.refetgee.Hourly(
         tmean=tmean_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
         lat=lat, lon=lon, doy=182, time=18).etr().getInfo()
 
@@ -72,10 +72,10 @@ A helper function for computing daily ETo and ETr for `GRIDMET <http://www.clima
 .. code-block:: console
 
     import ee
-    import refetgee
+    import openet.refetgee
 
     gridmet_img = ee.Image(ee.ImageCollection('IDAHO_EPSCOR/GRIDMET').first())
-    etr = refetgee.Daily.gridmet(gridmet_img).etr()\
+    etr = openet.refetgee.Daily.gridmet(gridmet_img).etr()\
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
                       scale=1000)\
@@ -93,11 +93,11 @@ For the daily function, the NLDAS collection must be filtered to a single 24 hou
 .. code-block:: console
 
     import ee
-    import refetgee
+    import openet.refetgee
 
     nldas_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
         .filterDate('2015-07-01', '2015-07-02')
-    etr = refetgee.Daily.nldas(nldas_coll).etr()\
+    etr = openet.refetgee.Daily.nldas(nldas_coll).etr()\
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
                       scale=1000)\
@@ -108,10 +108,10 @@ For the daily function, the NLDAS collection must be filtered to a single 24 hou
 .. code-block:: console
 
     import ee
-    import refetgee
+    import openet.refetgee
 
     nldas_img = ee.Image(ee.ImageCollection('NASA/NLDAS/FORA0125_H002').first())
-    etr = refetgee.Hourly.nldas(nldas_img).etr()\
+    etr = openet.refetgee.Hourly.nldas(nldas_img).etr()\
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
                       scale=1000)\
