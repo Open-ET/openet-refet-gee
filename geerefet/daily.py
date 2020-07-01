@@ -60,8 +60,7 @@ class Daily():
         .. [1] ASCE-EWRI (2005). The ASCE standardized reference evapotranspiration
             equation. ASCE-EWRI Standardization of Reference Evapotranspiration
             Task Committee Rep., ASCE Reston, Va.
-            http://www.kimberly.uidaho.edu/water/asceewri/ascestzdetmain2005.pdf
-            http://www.kimberly.uidaho.edu/water/asceewri/appendix.pdf
+
         """
 
         if method.lower() not in ['asce', 'refet']:
@@ -279,6 +278,90 @@ class Daily():
         )
 
     @classmethod
+    def maca(cls, input_img, zw=None, elev=None, lat=None, method='asce',
+                rso_type=None):
+        """Initialize daily RefET from a MACA image
+
+        Parameters
+        ----------
+        input_img : ee.Image
+            MACA image from the collection IDAHO_EPSCOR/MACAv2_METDATA.
+        zw : ee.Number, optional
+            Wind speed height [m] (the default is 10).
+        elev : ee.Image or ee.Number, optional
+            Elevation image [m].  The standard GRIDMET elevation image
+            (projects/climate-engine/gridmet/elevtion) will be used if not set.
+        lat : ee.Image or ee.Number
+            Latitude image [degrees].  The latitude will be computed
+            dynamically using ee.Image.pixelLonLat() if not set.
+        method : {'asce' (default), 'refet'}, optional
+            Specifies which calculation method to use.
+            * 'asce' -- Calculations will follow ASCE-EWRI 2005.
+            * 'refet' -- Calculations will follow RefET software.
+        rso_type : {None (default), 'full' , 'simple'}, optional
+            Specifies which clear sky solar radiation (Rso) model to use.
+            * None -- Rso type will be determined from "method" parameter
+            * 'full' -- Full clear sky solar formulation
+            * 'simple' -- Simplified clear sky solar formulation
+
+        Notes
+        -----
+        Temperatures are converted from K to C.
+        Solar radiation is converted from W m-2 to MJ m-2 day-1.
+        Actual vapor pressure is computed from specific humidity (MACA huss)
+            and air pressure (from elevation).
+        Windspeed from east and north vector components m s-1.
+
+        """
+        image_date = ee.Date(input_img.get('system:time_start'))
+
+        # CHECK MACA transform (Why the difference?)
+        # maca_transform = [0.04163593073593073, 0, -124.7722,
+        #                       0, 0.04159470085470086, 25.0631]
+        # gridmet_transform = [0.041666666666666664, 0, -124.78749996666667,
+        #                      0, -0.041666666666666664, 49.42083333333334]
+
+        if zw is None:
+            zw = ee.Number(10)
+        if elev is None:
+            # should we use gridmet elev? maca grid is shifted
+            elev = ee.Image('projects/earthengine-legacy/assets/'
+                            'projects/climate-engine/gridmet/elevation')
+            # elev = ee.Image('CGIAR/SRTM90_V4') \
+            #     .reproject('EPSG:4326', gridmet_transform)
+        if lat is None:
+            lat = ee.Image('projects/earthengine-legacy/assets/'
+                           'projects/climate-engine/gridmet/elevation') \
+                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))
+            # lat = ee.Image.pixelLonLat().select('latitude') \
+            #     .reproject('EPSG:4326', gridmet_transform)
+            # lat = input_img.select([0]).multiply(0) \
+            #     .add(ee.Image.pixelLonLat().select('latitude'))
+
+        def wind_magnitude(input_img):
+            """Compute daily wind magnitude from vectors"""
+            return ee.Image(input_img.select(['uas'])).pow(2) \
+                .add(ee.Image(input_img.select(['vas'])).pow(2)) \
+                .sqrt().rename(['uz'])
+        wind_img = ee.Image(wind_magnitude(input_img))
+
+        return cls(
+            tmax=input_img.select(['tasmax']).subtract(273.15),
+            tmin=input_img.select(['tasmin']).subtract(273.15),
+            ea=calcs._actual_vapor_pressure(
+                pair=calcs._air_pressure(elev, method),
+                q=input_img.select(['huss'])),
+            rs=input_img.select(['rsds']).multiply(0.0864),
+            uz=wind_img.select(['uz']),
+            zw=zw,
+            elev=elev,
+            lat=lat,
+            doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
+            method=method,
+            rso_type=rso_type,
+        )
+
+    @classmethod
     def nldas(cls, input_coll, zw=None, elev=None, lat=None, method='asce',
               rso_type=None):
         """Initialize daily RefET from a hourly NLDAS image collection
@@ -291,8 +374,8 @@ class Daily():
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  The SRTM elevation image (CGIAR/SRTM90_V4)
-            will be reprojected to the NLDAS grid if not set.
+            Elevation image [m].  A custom NLDAS elevation image
+            (projects/eddi-noaa/nldas/elevation) will be used if not set.
         lat : ee.Image or ee.Number
             Latitude image [degrees].  The latitude will be computed
             dynamically using ee.Image.pixelLonLat() if not set.

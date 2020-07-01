@@ -187,6 +187,24 @@ def test_refet_daily_gridmet_etr():
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
 
+def test_refet_daily_maca_etr():
+    """Generate a fake MACA image from the test values"""
+    maca_img = ee.Image.constant([
+            d_args['tmax'] + 273.15, d_args['tmin'] + 273.15,
+            d_args['q_asce'], d_args['rs'] / 0.0864,
+            d_args['uz'] / (2 ** 0.5), d_args['uz'] / (2 ** 0.5)])\
+        .rename(['tasmax', 'tasmin', 'huss', 'rsds', 'uas', 'vas'])\
+        .set('system:time_start', ee.Date('2015-07-01').millis())
+    refet = Daily.maca(
+        ee.Image(maca_img), elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']),
+        method='asce')
+    output = refet.etr()\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+    assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
+
+
 def test_refet_daily_nldas_etr():
     """Generate a fake NLDAS image from the test values
 
