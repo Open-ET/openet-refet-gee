@@ -43,7 +43,7 @@ setup(
     download_url='https://github.com/Open-ET/openet-refet-gee/archive/v{}.tar.gz'.format(version),
     install_requires=['earthengine-api'],
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pytest-cov', 'pandas', 'pytz'],
+    tests_require=['pytest', 'pandas', 'pytz'],
     packages=['openet.refetgee'],
     keywords='RefET OpenET Evapotranspiration Earth Engine',
     classifiers = [

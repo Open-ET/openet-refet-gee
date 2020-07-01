@@ -23,3 +23,8 @@ def pytest_configure():
         ee.Initialize(ee.ServiceAccountCredentials('', key_file=GEE_KEY_FILE))
     else:
         ee.Initialize()
+
+@pytest.fixture(scope="session", autouse=True)
+def test_init():
+    # Make a simple EE request
+    ee.Number(1).getInfo()
