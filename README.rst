@@ -244,6 +244,6 @@ References
 .. |build| image:: https://github.com/Open-ET/openet-refet-gee/workflows/build/badge.svg
    :alt: Build status
    :target: https://github.com/Open-ET/openet-refet-gee
-.. |version| image:: https://badge.fury.io/py/refetgee.svg
+.. |version| image:: https://badge.fury.io/py/openet-refet-gee.svg
    :alt: Latest version on PyPI
-   :target: https://badge.fury.io/py/refetgee
+   :target: https://badge.fury.io/py/openet-refet-gee
