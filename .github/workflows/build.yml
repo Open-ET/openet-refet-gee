@@ -34,4 +34,4 @@ jobs:
       env:
         EE_PRIVATE_KEY_B64: ${{ secrets.EE_PRIVATE_KEY_B64 }}
       run: |
-        pytest -m pytest
+        python -m pytest
