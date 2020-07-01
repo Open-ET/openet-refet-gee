@@ -76,7 +76,7 @@ class Daily():
             pass
 
         # Get time_start from tmin
-        # Shoudl time_start be set in init?
+        # Should time_start be set in init?
         self.time_start = ee.Image(tmin).get('system:time_start')
         self.date = ee.Date(self.time_start)
 
@@ -88,8 +88,11 @@ class Daily():
         self.uz = uz
         self.zw = zw
         self.elev = elev
-        self.lat = lat.multiply(math.pi / 180)
+        self.lat = lat
         self.doy = doy
+
+        # Convert latitude to radians
+        self.lat = self.lat.multiply(math.pi / 180)
 
         # To match standardized form, pair is calculated from elevation
         self.pair = calcs._air_pressure(self.elev, method)
@@ -244,24 +247,26 @@ class Daily():
             zw = ee.Number(10)
         if elev is None:
             elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/climate-engine/gridmet/elevation')
-            # elev = ee.Image('CGIAR/SRTM90_V4') \
+                            'projects/climate-engine/gridmet/elevation')\
+                .rename(['elevation'])
+            # elev = ee.Image('CGIAR/SRTM90_V4')\
             #     .reproject('EPSG:4326', gridmet_transform)
         if lat is None:
             lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/climate-engine/gridmet/elevation') \
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))
-            # lat = ee.Image.pixelLonLat().select('latitude') \
+                           'projects/climate-engine/gridmet/elevation')\
+                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+                .rename(['latitude'])
+            # lat = ee.Image.pixelLonLat().select('latitude')\
             #     .reproject('EPSG:4326', gridmet_transform)
-            # lat = input_img.select([0]).multiply(0) \
+            # lat = input_img.select([0]).multiply(0)\
             #     .add(ee.Image.pixelLonLat().select('latitude'))
 
         return cls(
             tmax=input_img.select(['tmmx']).subtract(273.15),
             tmin=input_img.select(['tmmn']).subtract(273.15),
             ea=calcs._actual_vapor_pressure(
-                pair=calcs._air_pressure(elev, method),
-                q=input_img.select(['sph'])),
+                q=input_img.select(['sph']),
+                pair=calcs._air_pressure(elev, method)),
             rs=input_img.select(['srad']).multiply(0.0864),
             uz=input_img.select(['vs']),
             zw=zw,
@@ -399,22 +404,24 @@ class Daily():
             zw = ee.Number(10)
         if elev is None:
             elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/eddi-noaa/nldas/elevation')
-            # elev = ee.Image('CGIAR/SRTM90_V4') \
+                            'projects/eddi-noaa/nldas/elevation')\
+                .rename(['elevation'])
+            # elev = ee.Image('CGIAR/SRTM90_V4')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
             lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/nldas/elevation') \
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))
-            # lat = ee.Image.pixelLonLat().select('latitude') \
+                           'projects/eddi-noaa/nldas/elevation')\
+                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+                .rename(['latitude'])
+            # lat = ee.Image.pixelLonLat().select('latitude')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
             # lat = input_coll.first().select([0]).multiply(0)\
             #     .add(ee.Image.pixelLonLat().select('latitude'))
 
         def wind_magnitude(input_img):
             """Compute hourly wind magnitude from vectors"""
-            return ee.Image(input_img.select(['wind_u'])).pow(2) \
-                .add(ee.Image(input_img.select(['wind_v'])).pow(2)) \
+            return ee.Image(input_img.select(['wind_u'])).pow(2)\
+                .add(ee.Image(input_img.select(['wind_v'])).pow(2))\
                 .sqrt().rename(['uz'])
         wind_img = ee.Image(
             ee.ImageCollection(input_coll.map(wind_magnitude)).mean())

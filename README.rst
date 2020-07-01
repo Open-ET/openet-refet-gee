@@ -75,9 +75,13 @@ A helper function for computing daily ETo and ETr for `GRIDMET <http://www.clima
     import geerefet
 
     gridmet_img = ee.Image(ee.ImageCollection('IDAHO_EPSCOR/GRIDMET').first())
-    etr = geerefet.Daily.gridmet(gridmet_img).etr().getInfo()
+    etr = geerefet.Daily.gridmet(gridmet_img).etr()\
+        .reduceRegion(reducer=ee.Reducer.first(),
+                      geometry=ee.Geometry.Point(-118.77388, 39.4575),
+                      scale=1000)\
+        .getInfo()
 
-    print('ETr: {:.2f} mm'.format(float(etr)))
+    print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
 NLDAS
 -----
@@ -92,10 +96,14 @@ For the daily function, the NLDAS collection must be filtered to a single 24 hou
     import geerefet
 
     nldas_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
-        .filterDate('2017-07-01', '2017-07-02)
-    etr = geerefet.Daily.nldas(nldas_coll).etr().getInfo()
+        .filterDate('2015-07-01', '2015-07-02')
+    etr = geerefet.Daily.nldas(nldas_coll).etr()\
+        .reduceRegion(reducer=ee.Reducer.first(),
+                      geometry=ee.Geometry.Point(-118.77388, 39.4575),
+                      scale=1000)\
+        .getInfo()
 
-    print('ETr: {:.2f} mm'.format(float(etr)))
+    print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
 .. code-block:: console
 
@@ -103,9 +111,13 @@ For the daily function, the NLDAS collection must be filtered to a single 24 hou
     import geerefet
 
     nldas_img = ee.Image(ee.ImageCollection('NASA/NLDAS/FORA0125_H002').first())
-    etr = geerefet.Hourly.nldas(nldas_img).etr().getInfo()
+    etr = geerefet.Hourly.nldas(nldas_img).etr()\
+        .reduceRegion(reducer=ee.Reducer.first(),
+                      geometry=ee.Geometry.Point(-118.77388, 39.4575),
+                      scale=1000)\
+        .getInfo()
 
-    print('ETr: {:.2f} mm'.format(float(etr)))
+    print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
 Input Parameters
 ================

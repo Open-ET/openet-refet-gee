@@ -61,7 +61,7 @@ class Hourly():
             raise ValueError('method must be "asce" or "refet"')
 
         # Get time_start from tmin
-        # Shoudl time_start be set in init?
+        # Should time_start be set in init?
         self.time_start = ee.Image(tmean).get('system:time_start')
         self.date = ee.Date(self.time_start)
 
@@ -72,10 +72,14 @@ class Hourly():
         self.uz = uz
         self.zw = zw
         self.elev = elev
-        self.lat = lat.multiply(math.pi / 180)
-        self.lon = lon.multiply(math.pi / 180)
+        self.lat = lat
+        self.lon = lon
         self.doy = doy
         self.time = time
+
+        # Convert latitude & longitude to radians
+        self.lat = self.lat.multiply(math.pi / 180)
+        self.lon = self.lon.multiply(math.pi / 180)
 
         # To match standardized form, psy is calculated from elevation based pair
         self.pair = calcs._air_pressure(self.elev, method=method)
@@ -246,21 +250,24 @@ class Hourly():
             zw = ee.Number(10)
         if elev is None:
             elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/eddi-noaa/nldas/elevation')
-            # elev = ee.Image('CGIAR/SRTM90_V4') \
+                            'projects/eddi-noaa/nldas/elevation')\
+                .rename(['elevation'])
+            # elev = ee.Image('CGIAR/SRTM90_V4')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
             lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/nldas/elevation') \
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))
-            # lat = ee.Image.pixelLonLat().select('latitude') \
+                           'projects/eddi-noaa/nldas/elevation')\
+                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+                .rename(['latitude'])
+            # lat = ee.Image.pixelLonLat().select('latitude')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
             # lat = nldas_img.select([0]).multiply(0)\
             #     .add(ee.Image.pixelLonLat().select('latitude'))
         if lon is None:
             lon = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/nldas/elevation') \
-                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))
+                           'projects/eddi-noaa/nldas/elevation')\
+                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
+                .rename(['longitude'])
             # lon = ee.Image.pixelLonLat().select('longitude')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
             # lon = nldas_img.select([0]).multiply(0)\
@@ -269,11 +276,11 @@ class Hourly():
         return cls(
             tmean=input_img.select(['temperature']),
             ea=calcs._actual_vapor_pressure(
-                pair=calcs._air_pressure(elev, method),
-                q=input_img.select(['specific_humidity'])),
+                q=input_img.select(['specific_humidity']),
+                pair=calcs._air_pressure(elev, method)),
             rs=input_img.select(['shortwave_radiation']).multiply(0.0036),
-            uz=input_img.select(['wind_u']).pow(2) \
-                .add(input_img.select(['wind_v']).pow(2)) \
+            uz=input_img.select(['wind_u']).pow(2)\
+                .add(input_img.select(['wind_v']).pow(2))\
                 .sqrt().rename(['uz']),
             zw=zw,
             elev=elev,
