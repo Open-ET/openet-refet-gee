@@ -21,32 +21,34 @@ def find_version(*file_paths):
                               version_file, re.M)
     if version_match:
         return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
+    raise RuntimeError('Unable to find version string.')
 
-version = find_version("geerefet", "__init__.py")
+version = find_version('openet', 'refetgee', '__init__.py')
 
 # Get the long description from the README file
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.rst')) as f:
+with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='geerefet',
+    name='openet-refet-gee',
     version=version,
-    description='Google Earth Engine ASCE Standardized Reference Evapotranspiration Functions',
+    description='Google Earth Engine based ASCE Standardized Reference Evapotranspiration Functions',
     long_description=long_description,
+    long_description_content_type='text/x-rst',
     license='Apache',
     author='Charles Morton',
-    author_email='charles.g.morton@gmail.com',
-    url='https://github.com/cgmorton/RefET-GEE',
-    download_url='https://github.com/cgmorton/RefET-GEE/archive/v{}.tar.gz'.format(version),
+    author_email='charles.morton@dri.edu',
+    url='https://github.com/Open-ET/openet-refet-gee',
+    download_url='https://github.com/Open-ET/openet-refet-gee/archive/v{}.tar.gz'.format(version),
     install_requires=['earthengine-api'],
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pandas', 'pytz'],
-    packages=['geerefet'],
-    keywords='RefET Evapotranspiration GEE',
+    tests_require=['pytest', 'pytest-cov', 'pandas', 'pytz'],
+    packages=['openet.refetgee'],
+    keywords='RefET OpenET Evapotranspiration Earth Engine',
     classifiers = [
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'],
+    zip_safe=False,
 )

@@ -1,8 +1,8 @@
 import ee
 import pytest
 
-import geerefet.calcs as calcs
-import geerefet.units as units
+import openet.refetgee.calcs as calcs
+import openet.refetgee.units as units
 
 # Eventually move to conftest.py or a separate file
 # Fallon AgriMet site parameters

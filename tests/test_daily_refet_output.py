@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from geerefet.daily import Daily
-import geerefet.units as units
+from openet.refetgee import Daily
+import openet.refetgee.units as units
 
 constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
 

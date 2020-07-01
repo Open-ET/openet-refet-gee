@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 import pytz
 
-from geerefet.hourly import Hourly
-import geerefet.units as units
+from openet.refetgee import Hourly
+import openet.refetgee.units as units
 
 constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
 

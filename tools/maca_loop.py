@@ -1,4 +1,3 @@
-import geerefet.daily
 import ee
 # import geopandas as gpd
 
@@ -69,11 +68,11 @@ for scenario in future_scenario_list:
             i = i.addBands(ee.Image(dateYear).rename('year'))
             i = i.addBands(ee.Image(dateMonth).rename('month'))
             i = i.addBands(ee.Image(dateDay).rename('day'))
-            # geerefet eto calc
-            eto = geerefet.daily.Daily.maca(i).eto()
+            # refetgee eto calc
+            eto = openet.refetgee.daily.Daily.maca(i).eto()
             i = i.addBands(ee.Image(eto).rename('eto_mm'))
-            # geerefet etr calc
-            etr = geerefet.daily.Daily.maca(i).etr()
+            # refetgee etr calc
+            etr = openet.refetgee.daily.Daily.maca(i).etr()
             i = i.addBands(ee.Image(etr).rename('etr_mm'))
             # resultant wind speed from vectors
             ws = ee.Image(i.select(['uas'])).pow(2) \

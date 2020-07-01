@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-import geerefet.units as units
+import openet.refetgee.units as units
 
 
 def test_deg2rad(d=30, r=(math.pi / 6)):

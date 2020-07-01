@@ -1,8 +1,5 @@
-# Include the README
-include README.rst
-
-# Include the license file
-include LICENSE.txt
-
-# Include the data files
-recursive-include geerefet *
+exclude *.txt
+include LICENSE.txt README.rst setup.py
+recursive-include openet *
+global-exclude *.py[co]
+global-exclude __pycache__

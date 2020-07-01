@@ -1,9 +1,8 @@
 import ee
 import pytest
 
-from geerefet.hourly import Hourly
-import geerefet.units as units
-
+from openet.refetgee import Hourly
+import openet.refetgee.units as units
 
 # Eventually move to conftest.py or a separate file
 # Fallon AgriMet site parameters
