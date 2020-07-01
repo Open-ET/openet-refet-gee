@@ -49,7 +49,7 @@ def test_refet_hourly_input_positions():
         ee.Image.constant(s_args['zw']), ee.Number(s_args['elev']),
         ee.Number(s_args['lat']), ee.Number(s_args['lon']),
         ee.Number(h_args['doy']), ee.Number(h_args['time']), method='refet')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(h_args['etr_refet'])
@@ -64,7 +64,7 @@ def test_refet_hourly_default_method_etr():
         zw=ee.Image.constant(s_args['zw']), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']))
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
@@ -79,7 +79,7 @@ def test_refet_hourly_asce_method_etr():
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
         method='asce')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
@@ -94,7 +94,7 @@ def test_refet_hourly_refet_method_etr():
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
         method='refet')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(h_args['etr_refet'])
@@ -109,7 +109,7 @@ def test_refet_hourly_default_method_eto():
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         doy=ee.Number(h_args['doy']),
         time=ee.Number(h_args['time']))
-    output = refet.eto()\
+    output = refet.eto\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['eto']) == pytest.approx(h_args['eto_asce'])
@@ -124,7 +124,7 @@ def test_refet_hourly_asce_method_eto():
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
         method='asce')
-    output = refet.eto()\
+    output = refet.eto\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['eto']) == pytest.approx(h_args['eto_asce'])
@@ -139,7 +139,7 @@ def test_refet_hourly_asce_method_eto():
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
         method='refet')
-    output = refet.eto()\
+    output = refet.eto\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['eto']) == pytest.approx(h_args['eto_refet'])
@@ -184,7 +184,7 @@ def test_refet_hourly_nldas_etr():
         ee.Image(nldas_img), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         zw=ee.Number(s_args['zw']), method='asce')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])

@@ -5,6 +5,22 @@ import ee
 from . import calcs
 
 
+def lazy_property(fn):
+    """Decorator that makes a property lazy-evaluated
+
+    https://stevenloria.com/lazy-properties/
+    """
+    attr_name = '_lazy_' + fn.__name__
+
+    @property
+    def _lazy_property(self):
+        if not hasattr(self, attr_name):
+            setattr(self, attr_name, fn(self))
+        return getattr(self, attr_name)
+
+    return _lazy_property
+
+
 class Daily():
     """"""
 
@@ -161,12 +177,13 @@ class Daily():
 
         """
         if surface.lower() in ['alfalfa', 'etr', 'tall']:
-            return self.etr()
+            return self.etr
         elif surface.lower() in ['grass', 'eto', 'short']:
-            return self.eto()
+            return self.eto
         else:
             raise ValueError('unsupported surface type: {}'.format(surface))
 
+    @lazy_property
     def eto(self):
         """Short (grass) reference surface"""
         self.cn = 900
@@ -174,6 +191,7 @@ class Daily():
         return ee.Image(self._etsz().rename(['eto'])
             .set('system:time_start', self.time_start))
 
+    @lazy_property
     def etr(self):
         """Tall (alfalfa) reference surface"""
         self.cn = 1600

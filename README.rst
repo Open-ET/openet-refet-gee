@@ -33,7 +33,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/daily.pl?stat
 
     etr = openet.refetgee.Daily(
         tmin=tmin_c, tmax=tmax_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
-        lat=lat, doy=182).etr().getInfo()
+        lat=lat, doy=182).etr.getInfo()
 
     print('ETr: {:.2f} mm'.format(float(etr)))
 
@@ -60,7 +60,7 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/instant.pl?st
 
     etr = openet.refetgee.Hourly(
         tmean=tmean_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
-        lat=lat, lon=lon, doy=182, time=18).etr().getInfo()
+        lat=lat, lon=lon, doy=182, time=18).etr.getInfo()
 
     print('ETr: {:.2f} mm'.format(float(etr)))
 
@@ -75,7 +75,7 @@ A helper function for computing daily ETo and ETr for `GRIDMET <http://www.clima
     import openet.refetgee
 
     gridmet_img = ee.Image(ee.ImageCollection('IDAHO_EPSCOR/GRIDMET').first())
-    etr = openet.refetgee.Daily.gridmet(gridmet_img).etr()\
+    etr = openet.refetgee.Daily.gridmet(gridmet_img).etr\
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
                       scale=1000)\
@@ -97,7 +97,7 @@ For the daily function, the NLDAS collection must be filtered to a single 24 hou
 
     nldas_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
         .filterDate('2015-07-01', '2015-07-02')
-    etr = openet.refetgee.Daily.nldas(nldas_coll).etr()\
+    etr = openet.refetgee.Daily.nldas(nldas_coll).etr\
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
                       scale=1000)\
@@ -110,8 +110,8 @@ For the daily function, the NLDAS collection must be filtered to a single 24 hou
     import ee
     import openet.refetgee
 
-    nldas_img = ee.Image(ee.ImageCollection('NASA/NLDAS/FORA0125_H002').first())
-    etr = openet.refetgee.Hourly.nldas(nldas_img).etr()\
+    nldas_img = ee.Image('NASA/NLDAS/FORA0125_H002/A20150701_2000')
+    etr = openet.refetgee.Hourly.nldas(nldas_img).etr\
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
                       scale=1000)\

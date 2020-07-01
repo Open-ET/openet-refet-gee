@@ -152,9 +152,9 @@ def test_refet_daily_output(daily_params):
             adj_inputs[k] = ee.Number(v)
 
     if surface.lower() == 'etr':
-        refet = Daily(**adj_inputs).etr()
+        refet = Daily(**adj_inputs).etr
     elif surface.lower() == 'eto':
-        refet = Daily(**adj_inputs).eto()
+        refet = Daily(**adj_inputs).eto
     output = refet\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()

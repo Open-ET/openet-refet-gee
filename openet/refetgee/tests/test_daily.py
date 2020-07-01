@@ -48,7 +48,7 @@ constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
 #         ee.Image.constant(d_args['uz']), ee.Number(s_args['zw']),
 #         ee.Number(s_args['elev']), ee.Number(s_args['lat']),
 #         ee.Number(d_args['doy']), method='refet')
-#     output = refet.etr()\
+#     output = refet.etr\
 #         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
 #         .getInfo()
 #     assert float(output['etr']) == pytest.approx(d_args['etr'])
@@ -65,7 +65,7 @@ def test_refet_daily_surface_etr():
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
         doy=ee.Number(d_args['doy']), method='refet')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_refet'])
@@ -80,7 +80,7 @@ def test_refet_daily_surface_eto():
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
         doy=ee.Number(d_args['doy']), method='refet')
-    output = refet.eto()\
+    output = refet.eto\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['eto']) == pytest.approx(d_args['eto_refet'])
@@ -95,7 +95,7 @@ def test_refet_daily_rso_type_simple():
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
         doy=ee.Number(d_args['doy']), method='refet', rso_type='simple')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_rso_simple'])
@@ -111,7 +111,7 @@ def test_refet_daily_rso_type_array():
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
         doy=ee.Number(d_args['doy']), method='refet',
         rso_type='array', rso=ee.Number(d_args['rso']))
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_refet'])
@@ -138,7 +138,7 @@ def test_refet_daily_asce():
         uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
         doy=ee.Number(d_args['doy']), method='asce')
-    output = refet.etr().reduceRegion(
+    output = refet.etr.reduceRegion(
         reducer=ee.Reducer.first(),
         geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
         scale=1).getInfo()
@@ -180,7 +180,7 @@ def test_refet_daily_gridmet_etr():
         ee.Image(gridmet_img), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']),
         method='asce')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
@@ -198,7 +198,7 @@ def test_refet_daily_maca_etr():
         ee.Image(maca_img), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']),
         method='asce')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
@@ -228,7 +228,7 @@ def test_refet_daily_nldas_etr():
     refet = Daily.nldas(
         nldas_coll, elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']), method='asce')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
@@ -240,7 +240,7 @@ def test_refet_daily_nldas_eto():
 
     nldas_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
         .filterDate('2017-07-01T06:00:00', '2017-07-02T06:00:00')
-    output = Daily.nldas(nldas_coll, method='asce').eto() \
+    output = Daily.nldas(nldas_coll, method='asce').eto \
         .reduceRegion(ee.Reducer.first(), geometry=test_point, scale=1)\
         .getInfo()['eto']
 
@@ -295,7 +295,7 @@ def test_refet_daily_cfsv2_etr():
     refet = Daily.cfsv2(
         cfsv2_coll, elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']), method='asce')
-    output = refet.etr()\
+    output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])

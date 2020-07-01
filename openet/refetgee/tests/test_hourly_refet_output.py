@@ -177,9 +177,9 @@ def test_refet_hourly_func_output(hourly_params):
             adj_inputs[k] = ee.Number(v)
 
     if surface.lower() == 'etr':
-        refet = Hourly(**adj_inputs).etr()
+        refet = Hourly(**adj_inputs).etr
     elif surface.lower() == 'eto':
-        refet = Hourly(**adj_inputs).eto()
+        refet = Hourly(**adj_inputs).eto
     output = refet\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
