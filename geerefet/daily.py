@@ -60,8 +60,7 @@ class Daily():
         .. [1] ASCE-EWRI (2005). The ASCE standardized reference evapotranspiration
             equation. ASCE-EWRI Standardization of Reference Evapotranspiration
             Task Committee Rep., ASCE Reston, Va.
-            http://www.kimberly.uidaho.edu/water/asceewri/ascestzdetmain2005.pdf
-            http://www.kimberly.uidaho.edu/water/asceewri/appendix.pdf
+
         """
 
         if method.lower() not in ['asce', 'refet']:
@@ -370,8 +369,8 @@ class Daily():
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  The SRTM elevation image (CGIAR/SRTM90_V4)
-            will be reprojected to the NLDAS grid if not set.
+            Elevation image [m].  A custom NLDAS elevation image
+            (projects/eddi-noaa/nldas/elevation) will be used if not set.
         lat : ee.Image or ee.Number
             Latitude image [degrees].  The latitude will be computed
             dynamically using ee.Image.pixelLonLat() if not set.
