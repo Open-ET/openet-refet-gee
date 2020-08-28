@@ -51,7 +51,7 @@ class DailyData():
     #              if x.startswith(' Mo Da Year ')][0]
     # # Read in the IN2 file using pandas
     # in2_df = pd.read_table(
-    #     in2_path, delim_whitespace=True, skiprows=in2_start, header=[0, 1, 2])
+    #     in2_path, sep='\s+', skiprows=in2_start, header=[0, 1, 2])
     # in2_df.rename(
     #     columns={'Year': 'YEAR', 'Mo': 'MONTH', 'Da': 'DAY', 'DoY': 'DOY'},
     #     inplace=True)
@@ -66,7 +66,7 @@ class DailyData():
         i for i, x in enumerate(out_data) if x.startswith(' Mo Day Yr')][0]
     # Read in the OUT file using pandas (skip header and units)
     out_df = pd.read_table(
-        out_path, delim_whitespace=True, index_col=False,
+        out_path, sep='\s+', index_col=False,
         skiprows=list(range(out_start)) + [out_start + 1])
     out_df.rename(
         columns={'Yr': 'YEAR', 'Mo': 'MONTH', 'Day': 'DAY', 'Tmax': 'TMAX',
