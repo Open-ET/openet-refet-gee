@@ -257,7 +257,7 @@ class Hourly():
 
         Notes
         -----
-        Solar radiation is converted from W m-2 to MJ m-2 day-1.
+        Solar radiation is converted from W m-2 to MJ m-2 hour-1.
         Actual vapor pressure is computed from specific humidity and air
             pressure (from elevation).
 
@@ -300,6 +300,88 @@ class Hourly():
             uz=input_img.select(['wind_u']).pow(2)\
                 .add(input_img.select(['wind_v']).pow(2))\
                 .sqrt().rename(['uz']),
+            zw=zw,
+            elev=elev,
+            lat=lat,
+            lon=lon,
+            doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
+            # time=ee.Number(image_date.getRelative('hour', 'day')),
+            time=ee.Number(image_date.get('hour')),
+            method=method,
+        )
+
+    @classmethod
+    def rtma(cls, input_img, rs=None, zw=None, elev=None, lat=None, lon=None,
+             method='asce'):
+        """Initialize hourly RefET from an RTMA image
+
+        Parameters
+        ----------
+        input_img : ee.Image
+            RTMA hourly image from the collection NOAA/NWS/RTMA.
+        rs : ee.Image
+            Incoming solar radiation [MJ m-2 hr-1].  The NLDAS image for the
+            concurrent hour will be used if not set.
+        zw : ee.Number, optional
+            Wind speed height [m] (the default is 10).
+        elev : ee.Image or ee.Number, optional
+            Elevation image [m].  The RTMA elevation image
+            (projects/climate-engine/rtma/elevation) will be used if not set.
+        lat : ee.Image or ee.Number
+            Latitude image [degrees].  The latitude will be computed
+            dynamically using ee.Image.pixelLonLat() if not set.
+        lon : ee.Image or ee.Number
+            Longitude image [degrees].  The longitude will be computed
+            dynamically using ee.Image.pixelLonLat() if not set.
+        method : {'asce' (default), 'refet'}, optional
+            Specifies which calculation method to use.
+            * 'asce' -- Calculations will follow ASCE-EWRI 2005.
+            * 'refet' -- Calculations will follow RefET software.
+
+        Notes
+        -----
+        Solar radiation is converted from W m-2 to MJ m-2 day-1.
+        Actual vapor pressure is computed from specific humidity and air
+            pressure (from elevation).
+
+        """
+        image_date = ee.Date(input_img.get('system:time_start'))
+
+        if rs is None:
+            # The NLDAS time_start looks identical
+            rs = ee.Image(ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
+                .filterDate(image_date, image_date.advance(30, 'minute'))\
+                .select(['shortwave_radiation'])\
+                .first())
+            rs = rs.multiply(0.0036)
+        if zw is None:
+            zw = ee.Number(10)
+        if elev is None:
+            elev = ee.Image('projects/earthengine-legacy/assets/'
+                            'projects/climate-engine/rtma/elevation')\
+                .rename(['elevation'])
+        if lat is None:
+            lat = ee.Image('projects/earthengine-legacy/assets/'
+                           'projects/climate-engine/rtma/elevation')\
+                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+                .rename(['latitude'])
+        if lon is None:
+            lon = ee.Image('projects/earthengine-legacy/assets/'
+                           'projects/climate-engine/rtma/elevation')\
+                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
+                .rename(['longitude'])
+
+        return cls(
+            tmean=input_img.select(['TMP']),
+            ea=calcs._actual_vapor_pressure(
+                q=input_img.select(['SPFH']),
+                pair=calcs._air_pressure(elev, method)),
+            rs=rs,
+            # Use wind speed band directly instead of computing from components
+            uz=input_img.select(['WIND']),
+            # uz=input_img.select(['UGRD']).pow(2)\
+            #     .add(input_img.select(['VGRD']).pow(2))\
+            #     .sqrt().rename(['WIND']),
             zw=zw,
             elev=elev,
             lat=lat,

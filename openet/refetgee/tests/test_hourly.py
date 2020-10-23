@@ -188,3 +188,26 @@ def test_refet_hourly_nldas_etr():
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
+
+
+def test_refet_hourly_rtma_etr():
+    """Generate a fake RTMA image from the test values"""
+    rtma_time = ee.Date(
+        '2015-07-01T{}:00:00'.format(int(h_args['time'])), 'UTC').millis()
+    rtma_img = ee.Image.constant([
+            h_args['tmean'], h_args['q_asce'], h_args['uz']])\
+        .rename(['TMP', 'SPFH', 'WIND'])\
+        .set('system:time_start', rtma_time)
+    refet = Hourly.rtma(
+        ee.Image(rtma_img),
+        rs=ee.Image.constant(h_args['rs']),
+        elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
+        zw=ee.Number(s_args['zw']), method='asce')
+    output = refet.etr\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+    assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
+
+
+# TODO: Add a test for using the default Rs when one is not provided

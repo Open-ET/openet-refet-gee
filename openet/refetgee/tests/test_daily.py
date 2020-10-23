@@ -299,3 +299,30 @@ def test_refet_daily_cfsv2_etr():
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
+
+
+def test_refet_daily_rtma_etr():
+    """Generate a fake RTMA image from the test values"""
+    band_names = ['TMP', 'SPFH', 'WIND']
+
+    rtma_coll = ee.ImageCollection.fromImages([
+        ee.Image.constant([d_args['tmin'], d_args['q_asce'], d_args['uz']]) \
+            .double().rename(band_names) \
+            .set({'system:time_start': ee.Date('2015-07-01T00:00:00', 'UTC').millis()}),
+        ee.Image.constant([d_args['tmax'], d_args['q_asce'], d_args['uz']]) \
+            .double().rename(band_names) \
+            .set({'system:time_start': ee.Date('2015-07-01T12:00:00', 'UTC').millis()})
+    ])
+
+    refet = Daily.rtma(
+        rtma_coll,
+        rs=ee.Image.constant(d_args['rs']),
+        elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
+        zw=ee.Number(s_args['zw']), method='asce')
+    output = refet.etr\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+    assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
+
+
+# TODO: Add a test for using the default Rs when one is not provided
