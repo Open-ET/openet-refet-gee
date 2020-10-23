@@ -180,6 +180,8 @@ class Daily():
             return self.etr
         elif surface.lower() in ['grass', 'eto', 'short']:
             return self.eto
+        elif surface.lower() in ['priestley-taylor', 'etw']:
+            return self.etw()
         else:
             raise ValueError('unsupported surface type: {}'.format(surface))
 
@@ -220,6 +222,25 @@ class Daily():
         #     {'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
         #      'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
         #      'u2': self.u2, 'vpd': self.vpd})
+
+    def etw(self):
+        """Priestley-Taylor evaporation (alpha=1.26)"""
+        self.alpha = 1.26
+        return ee.Image(self._etw().rename(['etw'])
+            .set('system:time_start', self.time_start))
+
+    def _etw(self):
+        """Priestley-Taylor evaporation
+        https://wetlandscapes.github.io/blog/blog/penman-monteith-and-priestley-taylor/
+
+        Returns
+        -------
+        etw : ee.Image
+            Priestley-Taylor ET [mm].
+
+        """
+        return self.es_slope.multiply(self.rn).divide((self.es_slope.add(self.psy)).multiply(2453))\
+            .multiply(self.alpha).multiply(1000)
 
     @classmethod
     def gridmet(cls, input_img, zw=None, elev=None, lat=None, method='asce',
