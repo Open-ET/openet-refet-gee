@@ -319,7 +319,7 @@ class Hourly():
         ----------
         input_img : ee.Image
             RTMA hourly image from the collection NOAA/NWS/RTMA.
-        rs : ee.Image
+        rs : ee.Image, ee.Number, optional
             Incoming solar radiation [MJ m-2 hr-1].  The NLDAS image for the
             concurrent hour will be used if not set.
         zw : ee.Number, optional
@@ -345,15 +345,21 @@ class Hourly():
             pressure (from elevation).
 
         """
-        image_date = ee.Date(input_img.get('system:time_start'))
+        start_date = ee.Date(input_img.get('system:time_start'))
 
-        if rs is None:
-            # The NLDAS time_start looks identical
-            rs = ee.Image(ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
-                .filterDate(image_date, image_date.advance(30, 'minute'))\
-                .select(['shortwave_radiation'])\
-                .first())
-            rs = rs.multiply(0.0036)
+        # Parse the solar radiation input
+        if isinstance(rs, ee.Image):
+            pass
+        elif isinstance(rs, ee.Number) or isinstance(rs, float) or isinstance(rs, int):
+            rs = ee.Image.constant(rs)
+        elif rs is None or rs.upper() == 'NLDAS':
+            rs = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
+                .filterDate(start_date, start_date.advance(30, 'minute'))\
+                .select(['shortwave_radiation'])
+            rs = ee.Image(rs.first()).multiply(0.0036)
+        else:
+            raise ValueError('Unsupported Rs input')
+
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
@@ -386,8 +392,8 @@ class Hourly():
             elev=elev,
             lat=lat,
             lon=lon,
-            doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            # time=ee.Number(image_date.getRelative('hour', 'day')),
-            time=ee.Number(image_date.get('hour')),
+            doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
+            # time=ee.Number(start_date.getRelative('hour', 'day')),
+            time=ee.Number(start_date.get('hour')),
             method=method,
         )

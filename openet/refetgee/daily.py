@@ -564,8 +564,9 @@ class Daily():
         input_coll : ee.ImageCollection
             Collection of RTMA hourly images for a single day from the
             collection NOAA/NWS/RTMA.
-        rs : ee.Image
-            Incoming solar radiation [MJ m-2 day-1] for a single day.
+        rs : ee.Image, str, optional
+            Incoming solar radiation [MJ m-2 day-1].  The GRIDMET image for the
+            concurrent day will be used if not set.
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
@@ -592,19 +593,31 @@ class Daily():
 
         """
         input_coll = ee.ImageCollection(input_coll)
-        image_date = ee.Date(ee.Image(input_coll.first()).get('system:time_start'))
+        start_date = ee.Date(ee.Image(input_coll.first()).get('system:time_start'))
 
-        # TODO: Add a fallback/default Rs collection if not provided
-        if rs is None:
+        # Parse the solar radiation input
+        if isinstance(rs, ee.Image):
+            pass
+        elif isinstance(rs, ee.Number) or isinstance(rs, float) or isinstance(rs, int):
+            rs = ee.Image.constant(rs)
+        elif rs is None or rs.upper() == 'GRIDMET':
             rs_coll = ee.ImageCollection('IDAHO_EPSCOR/GRIDMET')\
-                .filterDate(image_date, image_date.advance(1, 'day'))\
+                .filterDate(start_date, start_date.advance(1, 'day'))\
                 .select(['srad'])
             rs = ee.Image(rs_coll.first()).multiply(0.0864)
-            # rs_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
-            #     .filterDate(image_date, image_date.advance(1, 'day'))\
-            #     .select(['shortwave_radiation'])
-            # # CGM - Is this the right conversion?
-            # rs = ee.Image(rs_coll.sum()).multiply(0.0036)
+        elif rs.upper() == 'NLDAS':
+            rs_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
+                .filterDate(start_date, start_date.advance(1, 'day'))\
+                .select(['shortwave_radiation'])
+            # TODO: Check this unit conversion
+            rs = ee.Image(rs_coll.sum()).multiply(0.0036)
+        else:
+            raise ValueError('Unsupported Rs input')
+        # CGM - For now I don't think it makes sense to support image collections
+        # elif isinstance(rs, ee.ImageCollection):
+        #     rs = ee.Image(rs.sum())
+        #     # rs = ee.Image(rs.mean())
+
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
@@ -617,7 +630,7 @@ class Daily():
                 .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
                 .rename(['latitude'])
 
-        # DEADBEEF - Don't need to compute wind speed from the components since
+        # DEADBEEF - Don't compute wind speed from the components since
         #   a wind speed band is provided
         # def wind_magnitude(input_img):
         #     """Compute hourly wind magnitude from vectors"""
@@ -636,11 +649,11 @@ class Daily():
             tmin=input_coll.select(['TMP']).min(),
             ea=ea_img,
             rs=rs,
-            uz=input_coll.select(['WIND']).max(),
+            uz=input_coll.select(['WIND']).mean(),
             zw=zw,
             elev=elev,
             lat=lat,
-            doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
+            doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
             method=method,
             rso_type=rso_type,
         )
