@@ -555,8 +555,8 @@ class Daily():
         )
 
     @classmethod
-    def rtma(cls, input_coll, rs=None, zw=None, elev=None, lat=None, method='asce',
-             rso_type=None):
+    def rtma(cls, input_coll, rs=None, zw=None, elev=None, lat=None,
+             method='asce', rso_type=None):
         """Initialize daily RefET from a hourly RTMA image collection
 
         Parameters
