@@ -24,6 +24,7 @@ d_args = {
     'eto_refet': 7.9422320475712835,
     'etr_asce': 10.626087665395694,
     'etr_refet': 10.571314344056955,
+    'etw_refet': 6.242411580074248,
     'etr_rso_simple': 10.628137858930051,
     'q': 0.008691370735727117,          # Computed from Ea from Tdew
     'q_asce': 0.008692530868140688,     # Computed from Ea from Tdew
@@ -84,6 +85,20 @@ def test_refet_daily_surface_eto():
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['eto']) == pytest.approx(d_args['eto_refet'])
+
+def test_refet_daily_surface_etw():
+    refet = Daily(
+        tmax=ee.Image.constant(d_args['tmax']),
+        tmin=ee.Image.constant(d_args['tmin']),
+        ea=ee.Image.constant(d_args['ea']),
+        rs=ee.Image.constant(d_args['rs']),
+        uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
+        elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
+        doy=ee.Number(d_args['doy']), method='refet')
+    output = refet.etw\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+    assert float(output['etw']) == pytest.approx(d_args['etw_refet'])
 
 
 def test_refet_daily_rso_type_simple():
