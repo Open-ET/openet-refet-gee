@@ -180,8 +180,37 @@ class Daily():
             return self.etr
         elif surface.lower() in ['grass', 'eto', 'short']:
             return self.eto
+        elif surface.lower() in ['penman', 'etp']:
+            return self.etp()
         else:
             raise ValueError('unsupported surface type: {}'.format(surface))
+
+    @lazy_property
+    def etp(self):
+        """Penman evaporation"""
+        return ee.Image(self._etp().rename(['etp'])
+            .set('system:time_start', self.time_start))
+
+    def _etp(self):
+        """Penman evaporation
+
+        Returns
+        -------
+        etp : ee.Imagee
+            Penman evaporation [mm].
+        https://www.researchgate.net/publication/228481019_Evaluating_the_Complementary_Relationship_for_Estimating_Evapotranspiration_from_Arid_Shrublands
+        assume E [mm/day] = 0.408 * Rn [MJ/m2*day]
+        Note that drying_pwr equation pressure units are hPa; 1 hPa = 10 * kPa
+
+        """
+        # self.drying_pwr = self.vpd.multiply(10).multiply(0.26).multiply(self.u2.multiply(0.54).add(1))
+        # return self.es_slope.multiply(self.rn).multiply(0.408).add(self.psy.multiply(self.drying_pwr))\
+        #     .divide(self.psy.add(self.es_slope))
+
+        return self.es_slope.multiply(self.rn).multiply(0.408).add(self.psy.multiply(self.vpd.multiply(10)\
+            .multiply(0.26).multiply(self.u2.multiply(0.54).add(1)))) \
+            .divide(self.psy.add(self.es_slope))
+
 
     @lazy_property
     def eto(self):
