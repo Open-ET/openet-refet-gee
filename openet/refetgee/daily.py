@@ -201,11 +201,16 @@ class Daily():
         #     .divide(self.psy.add(self.es_slope)).rename(['etp'])
         #     .set('system:time_start', self.time_start))
 
-        return ee.Image(self.es_slope.multiply(self.rn).multiply(0.408).add(self.vpd.multiply(10)
-            .multiply(0.26).multiply(self.u2.multiply(0.54).add(1)).multiply(self.psy))
-            .divide(self.es_slope.add(self.psy)).rename(['etp'])
-            .set('system:time_start', self.time_start))
+        # return ee.Image(self.es_slope.multiply(self.rn).multiply(0.408).add(self.vpd.multiply(10)
+        #     .multiply(0.26).multiply(self.u2.multiply(0.54).add(1)).multiply(self.psy))
+        #     .divide(self.es_slope.add(self.psy)).rename(['etp'])
+        #     .set('system:time_start', self.time_start))
 
+        return ee.Image(self.es_slope.expression(
+            '((es_slope * rn * 0.408) + (vpd * 10 * 0.26 * (u2* 0.54 + 1) * psy)) / (es_slope + psy)',
+            {'es_slope': self.es_slope, 'rn': self.rn, 'psy': self.psy, 'u2' :self.u2, 'vpd': self.vpd})
+            .rename(['etp'])
+            .set('system:time_start', self.time_start))
 
     @lazy_property
     def eto(self):
