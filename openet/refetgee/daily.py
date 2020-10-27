@@ -324,7 +324,7 @@ class Daily():
 
     @classmethod
     def maca(cls, input_img, zw=None, elev=None, lat=None, method='asce',
-                rso_type=None):
+             rso_type=None):
         """Initialize daily RefET from a MACA image
 
         Parameters
@@ -442,8 +442,7 @@ class Daily():
 
         """
         input_coll = ee.ImageCollection(input_coll)
-        image_date = ee.Date(
-            ee.Image(input_coll.first()).get('system:time_start'))
+        image_date = ee.Date(ee.Image(input_coll.first()).get('system:time_start'))
 
         if zw is None:
             zw = ee.Number(10)
@@ -526,8 +525,7 @@ class Daily():
 
         """
         input_coll = ee.ImageCollection(input_coll)
-        image_date = ee.Date(
-            ee.Image(input_coll.first()).get('system:time_start'))
+        image_date = ee.Date(ee.Image(input_coll.first()).get('system:time_start'))
 
         cfsv2_crs = 'EPSG:4326'
         # Transform for 2011 to Present
@@ -579,6 +577,110 @@ class Daily():
             elev=elev,
             lat=lat,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
+            method=method,
+            rso_type=rso_type,
+        )
+
+    @classmethod
+    def rtma(cls, input_coll, rs=None, zw=None, elev=None, lat=None,
+             method='asce', rso_type=None):
+        """Initialize daily RefET from a hourly RTMA image collection
+
+        Parameters
+        ----------
+        input_coll : ee.ImageCollection
+            Collection of RTMA hourly images for a single day from the
+            collection NOAA/NWS/RTMA.
+        rs : ee.Image, str, optional
+            Incoming solar radiation [MJ m-2 day-1].  The GRIDMET image for the
+            concurrent day will be used if not set.
+        zw : ee.Number, optional
+            Wind speed height [m] (the default is 10).
+        elev : ee.Image or ee.Number, optional
+            Elevation image [m].  The RTMA elevation image
+            (projects/climate-engine/rtma/elevation) will be used if not set.
+        lat : ee.Image or ee.Number
+            Latitude image [degrees].  The latitude will be computed
+            dynamically using ee.Image.pixelLonLat() if not set.
+        method : {'asce' (default), 'refet'}, optional
+            Specifies which calculation method to use.
+            * 'asce' -- Calculations will follow ASCE-EWRI 2005.
+            * 'refet' -- Calculations will follow RefET software.
+        rso_type : {None (default), 'full' , 'simple'}, optional
+            Specifies which clear sky solar radiation (Rso) model to use.
+            * None -- Rso type will be determined from "method" parameter
+            * 'full' -- Full clear sky solar formulation
+            * 'simple' -- Simplified clear sky solar formulation
+
+        Notes
+        -----
+        Solar radiation is converted from W m-2 to MJ m-2 day-1.
+        Actual vapor pressure is computed from specific humidity and air
+            pressure (from elevation).
+
+        """
+        input_coll = ee.ImageCollection(input_coll)
+        start_date = ee.Date(ee.Image(input_coll.first()).get('system:time_start'))
+
+        # Parse the solar radiation input
+        if isinstance(rs, ee.Image):
+            pass
+        elif isinstance(rs, ee.Number) or isinstance(rs, float) or isinstance(rs, int):
+            rs = ee.Image.constant(rs)
+        elif rs is None or rs.upper() == 'GRIDMET':
+            rs_coll = ee.ImageCollection('IDAHO_EPSCOR/GRIDMET')\
+                .filterDate(start_date, start_date.advance(1, 'day'))\
+                .select(['srad'])
+            rs = ee.Image(rs_coll.first()).multiply(0.0864)
+        elif rs.upper() == 'NLDAS':
+            rs_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
+                .filterDate(start_date, start_date.advance(1, 'day'))\
+                .select(['shortwave_radiation'])
+            # TODO: Check this unit conversion
+            rs = ee.Image(rs_coll.sum()).multiply(0.0036)
+        else:
+            raise ValueError('Unsupported Rs input')
+        # CGM - For now I don't think it makes sense to support image collections
+        # elif isinstance(rs, ee.ImageCollection):
+        #     rs = ee.Image(rs.sum())
+        #     # rs = ee.Image(rs.mean())
+
+        if zw is None:
+            zw = ee.Number(10)
+        if elev is None:
+            elev = ee.Image('projects/earthengine-legacy/assets/'
+                            'projects/climate-engine/rtma/elevation')\
+                .rename(['elevation'])
+        if lat is None:
+            lat = ee.Image('projects/earthengine-legacy/assets/'
+                           'projects/climate-engine/rtma/elevation')\
+                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+                .rename(['latitude'])
+
+        # DEADBEEF - Don't compute wind speed from the components since
+        #   a wind speed band is provided
+        # def wind_magnitude(input_img):
+        #     """Compute hourly wind magnitude from vectors"""
+        #     return ee.Image(input_img.select(['UGRD'])).pow(2)\
+        #         .add(ee.Image(input_img.select(['VGRD'])).pow(2))\
+        #         .sqrt().rename(['WIND'])
+        # wind_img = ee.Image(
+        #     ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
+
+        ea_img = calcs._actual_vapor_pressure(
+            pair=calcs._air_pressure(elev, method),
+            q=input_coll.select(['SPFH']).mean())
+
+        return cls(
+            tmax=input_coll.select(['TMP']).max(),
+            tmin=input_coll.select(['TMP']).min(),
+            ea=ea_img,
+            rs=rs,
+            uz=input_coll.select(['WIND']).mean(),
+            zw=zw,
+            elev=elev,
+            lat=lat,
+            doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
             method=method,
             rso_type=rso_type,
         )
