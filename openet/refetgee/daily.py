@@ -224,23 +224,29 @@ class Daily():
     @lazy_property
     def etw(self):
         """Priestley-Taylor evaporation (alpha = 1.26)
-        https://wetlandscapes.github.io/blog/blog/penman-monteith-and-priestley-taylor/
 
         Returns
         -------
         etw : ee.Image
             Priestley-Taylor ET [mm].
 
+        References
+        ----------
+        https://wetlandscapes.github.io/blog/blog/penman-monteith-and-priestley-taylor/
+
         """
-        return ee.Image(self.es_slope.multiply(self.rn).divide((self.es_slope.add(self.psy)).multiply(2453))
-                        .multiply(1.26).multiply(1000).rename(['etw']).set('system:time_start', self.time_start))
-
-        # return self.es_slope.expression(
-        #     '(1.26 * es_slope * rn * 1000 /'
-        #     '(2453 * (es_slope + psy))',
-        #     {'es_slope': self.es_slope, 'rn': self.rn, 'psy': self.psy})
-
-
+        return self.es_slope\
+            .expression(
+                '(1.26 * es_slope * rn * 1000 / (2453 * (es_slope + psy))',
+                {'es_slope': self.es_slope, 'rn': self.rn, 'psy': self.psy,
+                 'alpha': 1.26})\
+            .rename(['etw'])\
+            .set('system:time_start', self.time_start)
+        # return self.es_slope.multiply(self.rn)\
+        #     .divide((self.es_slope.add(self.psy)).multiply(2453))\
+        #     .multiply(1.26).multiply(1000)\
+        #     .rename(['etw'])\
+        #     .set('system:time_start', self.time_start)
 
     @classmethod
     def gridmet(cls, input_img, zw=None, elev=None, lat=None, method='asce',

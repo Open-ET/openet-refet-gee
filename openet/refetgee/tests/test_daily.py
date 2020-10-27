@@ -57,7 +57,7 @@ constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
 
 # Test full daily calculations with keyword inputs
 # Test surface, rso_type, and rso inputs
-def test_refet_daily_surface_etr():
+def test_refet_daily_etr():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
@@ -72,7 +72,7 @@ def test_refet_daily_surface_etr():
     assert float(output['etr']) == pytest.approx(d_args['etr_refet'])
 
 
-def test_refet_daily_surface_eto():
+def test_refet_daily_eto():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
@@ -86,7 +86,8 @@ def test_refet_daily_surface_eto():
         .getInfo()
     assert float(output['eto']) == pytest.approx(d_args['eto_refet'])
 
-def test_refet_daily_surface_etw():
+
+def test_refet_daily_etw():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
@@ -144,7 +145,7 @@ def test_refet_daily_rso_type_exception():
             doy=ee.Number(d_args['doy']), rso_type='nonsense', method='refet')
 
 
-def test_refet_daily_asce():
+def test_refet_daily_etr_asce():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
