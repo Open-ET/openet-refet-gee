@@ -237,7 +237,7 @@ class Daily():
         """
         return self.es_slope\
             .expression(
-                '(1.26 * es_slope * rn * 1000 / (2453 * (es_slope + psy))',
+                '(alpha * es_slope * rn * 1000 / (2453 * (es_slope + psy)))',
                 {'es_slope': self.es_slope, 'rn': self.rn, 'psy': self.psy,
                  'alpha': 1.26})\
             .rename(['etw'])\
