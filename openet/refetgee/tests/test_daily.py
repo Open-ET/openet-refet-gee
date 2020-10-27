@@ -25,6 +25,7 @@ d_args = {
     'etr_asce': 10.626087665395694,
     'etr_refet': 10.571314344056955,
     'etp_refet': 8.654742421482082,
+    'etw_refet': 6.242411580074248,
     'etr_rso_simple': 10.628137858930051,
     'q': 0.008691370735727117,          # Computed from Ea from Tdew
     'q_asce': 0.008692530868140688,     # Computed from Ea from Tdew
@@ -57,7 +58,7 @@ constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
 
 # Test full daily calculations with keyword inputs
 # Test surface, rso_type, and rso inputs
-def test_refet_daily_surface_etr():
+def test_refet_daily_etr():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
@@ -72,7 +73,7 @@ def test_refet_daily_surface_etr():
     assert float(output['etr']) == pytest.approx(d_args['etr_refet'])
 
 
-def test_refet_daily_surface_eto():
+def test_refet_daily_eto():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
@@ -99,6 +100,21 @@ def test_refet_daily_surface_etp():
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
         .getInfo()
     assert float(output['etp']) == pytest.approx(d_args['etp_refet'])
+
+
+def test_refet_daily_etw():
+    refet = Daily(
+        tmax=ee.Image.constant(d_args['tmax']),
+        tmin=ee.Image.constant(d_args['tmin']),
+        ea=ee.Image.constant(d_args['ea']),
+        rs=ee.Image.constant(d_args['rs']),
+        uz=ee.Image.constant(d_args['uz']), zw=ee.Number(s_args['zw']),
+        elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
+        doy=ee.Number(d_args['doy']), method='refet')
+    output = refet.etw\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+    assert float(output['etw']) == pytest.approx(d_args['etw_refet'])
 
 
 def test_refet_daily_rso_type_simple():
@@ -144,7 +160,7 @@ def test_refet_daily_rso_type_exception():
             doy=ee.Number(d_args['doy']), rso_type='nonsense', method='refet')
 
 
-def test_refet_daily_asce():
+def test_refet_daily_etr_asce():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
         tmin=ee.Image.constant(d_args['tmin']),
@@ -314,3 +330,30 @@ def test_refet_daily_cfsv2_etr():
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
+
+
+def test_refet_daily_rtma_etr():
+    """Generate a fake RTMA image from the test values"""
+    band_names = ['TMP', 'SPFH', 'WIND']
+
+    rtma_coll = ee.ImageCollection.fromImages([
+        ee.Image.constant([d_args['tmin'], d_args['q_asce'], d_args['uz']]) \
+            .double().rename(band_names) \
+            .set({'system:time_start': ee.Date('2015-07-01T00:00:00', 'UTC').millis()}),
+        ee.Image.constant([d_args['tmax'], d_args['q_asce'], d_args['uz']]) \
+            .double().rename(band_names) \
+            .set({'system:time_start': ee.Date('2015-07-01T12:00:00', 'UTC').millis()})
+    ])
+
+    refet = Daily.rtma(
+        rtma_coll,
+        rs=ee.Image.constant(d_args['rs']),
+        elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
+        zw=ee.Number(s_args['zw']), method='asce')
+    output = refet.etr\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+    assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
+
+
+# TODO: Add a test for using the default Rs when one is not provided
