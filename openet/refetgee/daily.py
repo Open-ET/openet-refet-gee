@@ -221,6 +221,33 @@ class Daily():
         #      'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
         #      'u2': self.u2, 'vpd': self.vpd})
 
+    @lazy_property
+    def etw(self):
+        """Priestley-Taylor evaporation (alpha = 1.26)
+
+        Returns
+        -------
+        etw : ee.Image
+            Priestley-Taylor ET [mm].
+
+        References
+        ----------
+        https://wetlandscapes.github.io/blog/blog/penman-monteith-and-priestley-taylor/
+
+        """
+        return self.es_slope\
+            .expression(
+                '(alpha * es_slope * rn * 1000 / (2453 * (es_slope + psy)))',
+                {'es_slope': self.es_slope, 'rn': self.rn, 'psy': self.psy,
+                 'alpha': 1.26})\
+            .rename(['etw'])\
+            .set('system:time_start', self.time_start)
+        # return self.es_slope.multiply(self.rn)\
+        #     .divide((self.es_slope.add(self.psy)).multiply(2453))\
+        #     .multiply(1.26).multiply(1000)\
+        #     .rename(['etw'])\
+        #     .set('system:time_start', self.time_start)
+
     @classmethod
     def gridmet(cls, input_img, zw=None, elev=None, lat=None, method='asce',
                 rso_type=None):
