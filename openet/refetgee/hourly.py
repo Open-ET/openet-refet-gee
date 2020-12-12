@@ -397,3 +397,80 @@ class Hourly():
             time=ee.Number(start_date.get('hour')),
             method=method,
         )
+
+    @classmethod
+    def era5_land(cls, input_img, zw=None, elev=None, lat=None, lon=None,
+                  method='asce'):
+        """Initialize hourly RefET from an ERA5-Land image
+
+        Parameters
+        ----------
+        input_img : ee.Image
+            ERA5-Land hourly image from the collection ECMWF/ERA5_LAND/HOURLY.
+        zw : ee.Number, optional
+            Wind speed height [m] (the default is 10).
+        elev : ee.Image or ee.Number, optional
+            Elevation image [m].  The ERA5-Land elevation image
+            (projects/eddi-noaa/era5_land/elevation) will be used if not set.
+        lat : ee.Image or ee.Number
+            Latitude image [degrees].  The latitude will be computed
+            dynamically using ee.Image.pixelLonLat() if not set.
+        lon : ee.Image or ee.Number
+            Longitude image [degrees].  The longitude will be computed
+            dynamically using ee.Image.pixelLonLat() if not set.
+        method : {'asce' (default), 'refet'}, optional
+            Specifies which calculation method to use.
+            * 'asce' -- Calculations will follow ASCE-EWRI 2005.
+            * 'refet' -- Calculations will follow RefET software.
+
+        Notes
+        -----
+        Temperatures are converted from K to C.
+        Solar radiation is converted from W m-2 to MJ m-2 day-1.
+        Actual vapor pressure is computed from dew point temperature.
+
+        """
+        start_date = ee.Date(input_img.get('system:time_start'))
+
+        if zw is None:
+            zw = ee.Number(10)
+        if elev is None:
+            elev = ee.Image('projects/earthengine-legacy/assets/'
+                            'projects/eddi-noaa/era5_land/elevation')\
+                .rename(['elevation'])
+        if lat is None:
+            lat = ee.Image('projects/earthengine-legacy/assets/'
+                           'projects/eddi-noaa/era5_land/elevation')\
+                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+                .rename(['latitude'])
+        if lon is None:
+            lon = ee.Image('projects/earthengine-legacy/assets/'
+                           'projects/eddi-noaa/era5_land/elevation')\
+                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
+                .rename(['longitude'])
+
+        # TODO: Double check that this is correct
+        ea_img = calcs._sat_vapor_pressure(
+            input_img.select(['dewpoint_temperature_2m']).subtract(273.15)),
+        # ea_img = calcs._actual_vapor_pressure(
+        #     q=input_img.select(['SPFH']),
+        #     pair=calcs._air_pressure(elev, method)),
+
+        return cls(
+            tmean=input_img.select(['temperature_2m']).subtract(273.15),
+            ea=ea_img,
+            # TODO: Check aggregation and units for solar
+            rs=input_img.select(['surface_solar_radiation_downwards'])\
+                .divide(3600).multiply(0.0036),
+            uz=input_img.select(['u_component_of_wind_10m']).pow(2)\
+                .add(input_img.select(['v_component_of_wind_10m']).pow(2))\
+                .sqrt().rename(['wind_10m']),
+            zw=zw,
+            elev=elev,
+            lat=lat,
+            lon=lon,
+            doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
+            # time=ee.Number(start_date.getRelative('hour', 'day')),
+            time=ee.Number(start_date.get('hour')),
+            method=method,
+        )

@@ -177,6 +177,42 @@ For the daily function, the RTMA collection must be filtered to a single 24 hour
 
     print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
+ERA5-Land
+---------
+
+Helper functions for computing daily/hourly ETo/ETr for `ERA5-Land <https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-land>`__ images are available.
+
+For the daily function, the ERA5-Land collection must be filtered to a single 24 hour period.
+
+.. code-block:: console
+
+    import ee
+    import openet.refetgee
+
+    source_coll = ee.ImageCollection('ECMWF/ERA5_LAND/HOURLY')\
+        .filterDate('2015-07-01', '2015-07-02')
+    etr = openet.refetgee.Daily.era5_land(source_coll).etr\
+        .reduceRegion(reducer=ee.Reducer.first(),
+                      geometry=ee.Geometry.Point(-118.77388, 39.4575),
+                      scale=1000)\
+        .getInfo()
+
+    print('ETr: {:.2f} mm'.format(float(etr['etr'])))
+
+.. code-block:: console
+
+    import ee
+    import openet.refetgee
+
+    source_img = ee.Image('ECMWF/ERA5_LAND/HOURLY/20150701T20')
+    etr = openet.refetgee.Hourly.era5_land(source_img).etr\
+        .reduceRegion(reducer=ee.Reducer.first(),
+                      geometry=ee.Geometry.Point(-118.77388, 39.4575),
+                      scale=1000)\
+        .getInfo()
+
+    print('ETr: {:.2f} mm'.format(float(etr['etr'])))
+
 Input Parameters
 ================
 
