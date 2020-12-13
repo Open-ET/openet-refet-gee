@@ -371,22 +371,24 @@ def test_refet_daily_rtma_etr():
 def test_refet_daily_era5_land_etr():
     """Generate a fake ERA5-Land image from the test values"""
     band_names = ['temperature_2m', 'dewpoint_temperature_2m',
-                  'surface_solar_radiation_downwards',
+                  'surface_solar_radiation_downwards_hourly',
                   'u_component_of_wind_10m', 'v_component_of_wind_10m']
 
     wind_u = d_args['uz'] / (2 ** 0.5)
 
+    # Each image needs half of the total Rs since hourly images are summed
     era5_coll = ee.ImageCollection.fromImages([
         ee.Image.constant([d_args['tmin'] + 273.15, d_args['tdew'] + 273.15,
-                           d_args['rs'], wind_u, wind_u]) \
+                           0, wind_u, wind_u]) \
             .double().rename(band_names) \
             .set({'system:time_start': ee.Date('2015-07-01T00:00:00', 'UTC').millis()}),
-        ee.Image.constant([d_args['tmax'], d_args['q_asce'], d_args['uz']]) \
+        ee.Image.constant([d_args['tmax'] + 273.15, d_args['tdew'] + 273.15,
+                           d_args['rs'] * 1000000, wind_u, wind_u]) \
             .double().rename(band_names) \
             .set({'system:time_start': ee.Date('2015-07-01T12:00:00', 'UTC').millis()})
     ])
 
-    refet = Daily.era5(
+    refet = Daily.era5_land(
         era5_coll,
         elev=ee.Number(s_args['elev']), lat=ee.Number(s_args['lat']),
         zw=ee.Number(s_args['zw']), method='asce')

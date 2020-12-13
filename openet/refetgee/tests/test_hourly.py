@@ -231,10 +231,10 @@ def test_refet_hourly_era5_land_etr():
     era5_img = ee.Image.constant([
             h_args['tmean'] + 273.15,
             h_args['tdew'] + 273.15,
-            h_args['rs'],
+            h_args['rs'] * 1000000,
             wind_u, wind_u])\
         .rename(['temperature_2m', 'dewpoint_temperature_2m',
-                 'surface_solar_radiation_downwards',
+                 'surface_solar_radiation_downwards_hourly',
                  'u_component_of_wind_10m', 'v_component_of_wind_10m'])\
         .set('system:time_start', era5_time)
 

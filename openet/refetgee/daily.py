@@ -716,7 +716,7 @@ class Daily():
         Notes
         -----
         Temperatures are converted from K to C.
-        Solar radiation is converted from J m-2 to W m-2 to MJ m-2 day-1.
+        Solar radiation is converted from J m-2 to MJ m-2 day-1.
         Actual vapor pressure is computed from dew point temperature.
 
         """
@@ -727,11 +727,11 @@ class Daily():
             zw = ee.Number(10)
         if elev is None:
             elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/eddi-noaa/era5_land/elevation')\
+                            'projects/climate-engine/era5-land/elevation')\
                 .rename(['elevation'])
         if lat is None:
             lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/era5_land/elevation')\
+                           'projects/climate-engine/era5-land/elevation')\
                 .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
                 .rename(['latitude'])
 
@@ -744,20 +744,18 @@ class Daily():
 
         # TODO: Double check that this is correct
         ea_img = calcs._sat_vapor_pressure(
-            input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)),
+            input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15))
         # ea_img = calcs._actual_vapor_pressure(
         #     pair=calcs._air_pressure(elev, method),
-        #     q=input_coll.select(['SPFH']).mean()),
+        #     q=input_coll.select(['SPFH']).mean())
 
         return cls(
             tmax=input_coll.select(['temperature_2m']).max().subtract(273.15),
             tmin=input_coll.select(['temperature_2m']).min().subtract(273.15),
             ea=ea_img,
-            # TODO: Check aggregation and units for solar
-            rs=input_coll.select(['surface_solar_radiation_downwards']).mean()
-                .divide(3600).multiply(0.0864),
-            # rs=input_coll.select(['surface_solar_radiation_downwards']).sum()
-            #     .divide(3600 * 24).multiply(0.0864),
+            # TODO: Check that solar does not need additional conversion
+            rs=input_coll.select(['surface_solar_radiation_downwards_hourly'])\
+                .sum().divide(1000000),
             uz=wind_img,
             zw=zw,
             elev=elev,

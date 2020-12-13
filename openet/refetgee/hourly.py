@@ -426,7 +426,7 @@ class Hourly():
         Notes
         -----
         Temperatures are converted from K to C.
-        Solar radiation is converted from W m-2 to MJ m-2 day-1.
+        Solar radiation is converted from J m-2 to MJ m-2 day-1.
         Actual vapor pressure is computed from dew point temperature.
 
         """
@@ -436,32 +436,31 @@ class Hourly():
             zw = ee.Number(10)
         if elev is None:
             elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/eddi-noaa/era5_land/elevation')\
+                            'projects/climate-engine/era5-land/elevation')\
                 .rename(['elevation'])
         if lat is None:
             lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/era5_land/elevation')\
+                           'projects/climate-engine/era5-land/elevation')\
                 .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
                 .rename(['latitude'])
         if lon is None:
             lon = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/era5_land/elevation')\
+                           'projects/climate-engine/era5-land/elevation')\
                 .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
                 .rename(['longitude'])
 
         # TODO: Double check that this is correct
         ea_img = calcs._sat_vapor_pressure(
-            input_img.select(['dewpoint_temperature_2m']).subtract(273.15)),
+            input_img.select(['dewpoint_temperature_2m']).subtract(273.15))
         # ea_img = calcs._actual_vapor_pressure(
         #     q=input_img.select(['SPFH']),
-        #     pair=calcs._air_pressure(elev, method)),
+        #     pair=calcs._air_pressure(elev, method))
 
         return cls(
             tmean=input_img.select(['temperature_2m']).subtract(273.15),
             ea=ea_img,
-            # TODO: Check aggregation and units for solar
-            rs=input_img.select(['surface_solar_radiation_downwards'])\
-                .divide(3600).multiply(0.0036),
+            rs=input_img.select(['surface_solar_radiation_downwards_hourly'])\
+                .divide(1000000),
             uz=input_img.select(['u_component_of_wind_10m']).pow(2)\
                 .add(input_img.select(['v_component_of_wind_10m']).pow(2))\
                 .sqrt().rename(['wind_10m']),
