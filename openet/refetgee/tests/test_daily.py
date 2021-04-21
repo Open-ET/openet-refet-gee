@@ -291,9 +291,9 @@ def test_refet_daily_nldas_eto():
         .getInfo()['eto']
 
     expected = ee.Image('projects/eddi-noaa/nldas/daily/20170701')\
-        .select(['ETo'])\
+        .select(['eto_asce'])\
         .reduceRegion(ee.Reducer.first(), geometry=test_point, scale=1)\
-        .getInfo()['ETo']
+        .getInfo()['eto_asce']
 
     assert output == pytest.approx(expected, rel=0.001)
 
