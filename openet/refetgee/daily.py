@@ -248,6 +248,65 @@ class Daily():
         #     .rename(['etw'])\
         #     .set('system:time_start', self.time_start)
 
+
+    @lazy_property
+    def eto_fs1(self):
+        """UF-IFAS Extension FS1 Radiation Term (ETrad)
+
+        Returns
+        -------
+        eto_fs1 : ee.Image
+            FS1 ETrad [mm].
+
+        References
+        ----------
+        https://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf
+
+        """
+        return self.u2.expression(
+            '(delta / (delta + psy*(1+0.34*u2)))*(0.408*rn)',
+            {'delta': self.es_slope, 'psy': self.psy, 'u2': self.u2, 'rn': self.rn})\
+            .rename(['eto_fs1'])\
+            .set('system:time_start', self.time_start)
+
+        # return self.es_slope\
+        #       .divide(self.es_slope.add(self.psy.multiply(self.u2.multiply(0.34).add(1))))\
+        #       .multiply(self.rn.multiply(0.408))
+
+
+
+    @lazy_property
+    def eto_fs2(self):
+        """UF-IFAS Extension FS2 Wind Term (ETwind)
+
+        Returns
+        -------
+        eto_fs2 : ee.Image
+            FS2 ETwind [mm].
+
+        References
+        ----------
+        https://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf
+
+        """
+        # Temperature Term (Eq. 14)
+        self.TT = self.u2.expression('(900/(t+273))*u2', {'t': self.tmean, 'u2': self.u2})
+        # Psi Term (Eq. 13)
+        self.PT = self.u2.expression('psy/(slope+psy*(1+0.34*u2))', {'slope': self.es_slope, 'psy': self.psy,
+                                                                     'u2': self.u2})
+
+        return self.u2.expression(
+            'PT * TT * (es-ea)',
+            {'PT': self.PT, 'TT': self.TT, 'es': self.es, 'ea': self.ea})\
+            .rename(['eto_fs2'])\
+            .set('system:time_start', self.time_start)
+
+        # return self.PT.multiply(self.TT)\
+        #     .multiply(self.es.subtract(self.ea))\
+        #     .rename(['eto_fs2'])\
+        #     .set('system:time_start', self.time_start)
+
+
     @classmethod
     def gridmet(cls, input_img, zw=None, elev=None, lat=None, method='asce',
                 rso_type=None):
