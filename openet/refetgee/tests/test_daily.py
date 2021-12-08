@@ -30,6 +30,7 @@ d_args = {
     'etr_rso_simple': 10.628137858930051,
     'q': 0.008691370735727117,          # Computed from Ea from Tdew
     'q_asce': 0.008692530868140688,     # Computed from Ea from Tdew
+    'pet_hargeaves': 8.247962376780558,
     'rs': 674.07 * 0.041868,            # Conversion from Langleys to MJ m-2
     'rso': 31.565939444861765,
     'tdew': units._f2c(49.84),
@@ -103,6 +104,7 @@ def test_refet_daily_etw():
         .getInfo()
     assert float(output['etw']) == pytest.approx(d_args['etw_refet'])
 
+
 def test_refet_daily_eto_fs1():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
@@ -117,6 +119,7 @@ def test_refet_daily_eto_fs1():
         .getInfo()
     assert float(output['eto_fs1']) == pytest.approx(d_args['eto_fs1'])
 
+
 def test_refet_daily_eto_fs2():
     refet = Daily(
         tmax=ee.Image.constant(d_args['tmax']),
@@ -130,6 +133,21 @@ def test_refet_daily_eto_fs2():
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
         .getInfo()
     assert float(output['eto_fs2']) == pytest.approx(d_args['eto_fs2'])
+
+
+def test_refet_daily_pet_hargeaves():
+    refet = Daily(
+        tmax=ee.Image.constant(d_args['tmax']),
+        tmin=ee.Image.constant(d_args['tmin']),
+        ea=ee.Image.constant(0),
+        rs=ee.Image.constant(0),
+        uz=ee.Image.constant(0), zw=ee.Number(s_args['zw']),
+        elev=ee.Number(0), lat=ee.Number(s_args['lat']),
+        doy=ee.Number(d_args['doy']), method='asce')
+    output = refet.pet_hargeaves\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+    assert float(output['pet_hargeaves']) == pytest.approx(d_args['pet_hargeaves'])
 
 
 def test_refet_daily_rso_type_simple():
