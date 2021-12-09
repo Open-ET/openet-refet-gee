@@ -310,13 +310,13 @@ class Daily():
         #     .set('system:time_start', self.time_start)
 
     @lazy_property
-    def pet_hargeaves(self):
-        """Hargeaves potential ET
+    def pet_hargreaves(self):
+        """Hargreaves potential ET
 
         Returns
         -------
-        hargeaves_pet : ee.Image
-            Hargeaves ET [mm].
+        hargreaves_pet : ee.Image
+            Hargreaves ET [mm].
 
         References
         ----------
@@ -328,7 +328,7 @@ class Daily():
                 '0.0023 * (tmean + 17.8) * ((tmax - tmin) ** 0.5) * 0.408 * ra',
                 {'tmean': self.tmean, 'tmax': self.tmax, 'tmin': self.tmin,
                  'ra': self.ra})\
-            .rename(['pet_hargeaves'])\
+            .rename(['pet_hargreaves'])\
             .set('system:time_start', self.time_start)
         # return self.ra\
         #     .multiply(self.tmean.add(17.8))\
@@ -402,13 +402,9 @@ class Daily():
                 q=input_img.select(['sph']),
                 pair=calcs._air_pressure(elev, method)),
             rs=input_img.select(['srad']).multiply(0.0864),
-            uz=input_img.select(['vs']),
-            zw=zw,
-            elev=elev,
-            lat=lat,
+            uz=input_img.select(['vs']), zw=zw, elev=elev, lat=lat,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            method=method,
-            rso_type=rso_type,
+            method=method, rso_type=rso_type,
         )
 
     @classmethod
@@ -486,13 +482,9 @@ class Daily():
                 pair=calcs._air_pressure(elev, method),
                 q=input_img.select(['huss'])),
             rs=input_img.select(['rsds']).multiply(0.0864),
-            uz=wind_img.select(['uz']),
-            zw=zw,
-            elev=elev,
-            lat=lat,
+            uz=wind_img.select(['uz']), zw=zw, elev=elev, lat=lat,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            method=method,
-            rso_type=rso_type,
+            method=method, rso_type=rso_type,
         )
 
     @classmethod
@@ -568,18 +560,14 @@ class Daily():
             tmin=input_coll.select(['temperature']).min(),
             ea=ea_img,
             rs=input_coll.select(['shortwave_radiation']).sum().multiply(0.0036),
-            uz=wind_img,
-            zw=zw,
-            elev=elev,
-            lat=lat,
+            uz=wind_img, zw=zw, elev=elev, lat=lat,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            method=method,
-            rso_type=rso_type,
+            method=method, rso_type=rso_type,
         )
 
     @classmethod
     def cfsv2(cls, input_coll, zw=None, elev=None, lat=None, method='asce',
-             rso_type=None):
+              rso_type=None):
         """Initialize daily RefET from a 6-hourly CFSv2 image collection
 
         Parameters
@@ -661,13 +649,9 @@ class Daily():
             rs=input_coll
                 .select(['Downward_Short-Wave_Radiation_Flux_surface_6_Hour_Average'])
                 .mean().multiply(0.0864),
-            uz=wind_img,
-            zw=zw,
-            elev=elev,
-            lat=lat,
+            uz=wind_img, zw=zw, elev=elev, lat=lat,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            method=method,
-            rso_type=rso_type,
+            method=method, rso_type=rso_type,
         )
 
     @classmethod
@@ -763,13 +747,46 @@ class Daily():
         return cls(
             tmax=input_coll.select(['TMP']).max(),
             tmin=input_coll.select(['TMP']).min(),
-            ea=ea_img,
-            rs=rs,
-            uz=input_coll.select(['WIND']).mean(),
-            zw=zw,
-            elev=elev,
-            lat=lat,
+            ea=ea_img, rs=rs, uz=input_coll.select(['WIND']).mean(),
+            zw=zw, elev=elev, lat=lat,
             doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
-            method=method,
-            rso_type=rso_type,
+            method=method, rso_type=rso_type,
         )
+
+    # @classmethod
+    # def prism(cls, input_img, lat=None):
+    #     """Initialize daily RefET from a PRISM image
+    #
+    #     Parameters
+    #     ----------
+    #     input_img : ee.Image
+    #         PPRISM image from the collection OREGONSTATE/PRISM/AN81d.
+    #     lat : ee.Image or ee.Number
+    #         Latitude image [degrees].  The latitude will be computed
+    #         dynamically using ee.Image.pixelLonLat() if not set.
+    #
+    #     Notes
+    #     -----
+    #     PRISM can only be used to compute Hargreaves PET.
+    #
+    #     """
+    #     image_date = ee.Date(input_img.get('system:time_start'))
+    #
+    #     if lat is None:
+    #         lat = ee.Image('projects/earthengine-legacy/assets/'
+    #                        'projects/climate-engine/prism/elevation')\
+    #             .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+    #             .rename(['latitude'])
+    #         # prism_transform = [0.0416666666667, 0, -125.02083333333336,
+    #         #                    0, -0.0416666666667, 49.93749999999975]
+    #         # lat = ee.Image.pixelLonLat().select('latitude')\
+    #         #     .reproject('EPSG:4326', prism_transform)
+    #         # lat = input_img.select([0]).multiply(0)\
+    #         #     .add(ee.Image.pixelLonLat().select('latitude'))
+    #
+    #     return cls(
+    #         tmax=input_img.select(['tmmx']), tmin=input_img.select(['tmmn']),
+    #         ea=0, rs=0, uz=0, zw=2, elev=0, lat=lat,
+    #         doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
+    #         method='asce',
+    #     )
