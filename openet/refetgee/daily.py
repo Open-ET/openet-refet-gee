@@ -332,9 +332,9 @@ class Daily():
             .set('system:time_start', self.time_start)
         # return self.ra\
         #     .multiply(self.tmean.add(17.8))\
-        #     .multiply(self.tmax.subtract(self.tmin).power(0.5))\
+        #     .multiply(self.tmax.subtract(self.tmin).pow(0.5))\
         #     .multiply(0.0023 * 0.408)\
-        #     .rename(['pet'])\
+        #     .rename(['pet_hargreaves'])\
         #     .set('system:time_start', self.time_start)
 
     @classmethod
