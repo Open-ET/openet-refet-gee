@@ -320,7 +320,8 @@ class Daily():
 
         References
         ----------
-
+        Hargreaves, G.H. and Z.A. Samani, 1985. Reference Crop Evapo-transpiration
+        From Temperature. Applied Engrg. in Agric. 1(2):96-99.
 
         """
         return self.tmax\
