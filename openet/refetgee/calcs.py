@@ -707,6 +707,8 @@ def _rnl_daily(tmax, tmin, ea, fcd):
 
     Notes
     -----
+    The C to K conversion conversion factor is intentionally set to 273.16
+        to match the equation in the ASCE 2005 report
     rnl = 4.901E-9 * fcd * (0.34 - 0.14 * sqrt(ea)) *
           0.5 * ((tmax + 273.16) ** 4 + (tmin + 273.16) ** 4))
 
