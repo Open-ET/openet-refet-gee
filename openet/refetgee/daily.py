@@ -85,8 +85,7 @@ class Daily():
         if rso_type is None:
             pass
         elif rso_type.lower() not in ['simple', 'full', 'array']:
-            raise ValueError(
-                'rso_type must be None, "simple", "full", or "array')
+            raise ValueError('rso_type must be None, "simple", "full", or "array')
         elif rso_type.lower() in 'array':
             # Check that rso is an ee.Image or ee.Number?
             pass
@@ -120,8 +119,8 @@ class Daily():
         self.es_slope = calcs._es_slope(self.tmean, method)
 
         # Saturated vapor pressure
-        self.es = calcs._sat_vapor_pressure(self.tmax).add(
-            calcs._sat_vapor_pressure(self.tmin)) \
+        self.es = calcs._sat_vapor_pressure(self.tmax)\
+            .add(calcs._sat_vapor_pressure(self.tmin))\
             .multiply(0.5)
 
         # Vapor pressure deficit
@@ -138,14 +137,14 @@ class Daily():
                 self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
             elif method.lower() == 'refet':
                 self.rso = calcs._rso_daily(
-                    ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
-                    lat=self.lat)
+                    ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy, lat=self.lat
+                )
         elif rso_type.lower() == 'simple':
             self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
         elif rso_type.lower() == 'full':
             self.rso = calcs._rso_daily(
-                ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
-                lat=self.lat)
+                ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy, lat=self.lat
+            )
         elif rso_type.lower() == 'array':
             # Use rso array passed to function
             self.rso = rso
@@ -321,7 +320,6 @@ class Daily():
         References
         ----------
 
-
         """
         return self.tmax\
             .expression(
@@ -402,9 +400,13 @@ class Daily():
                 q=input_img.select(['sph']),
                 pair=calcs._air_pressure(elev, method)),
             rs=input_img.select(['srad']).multiply(0.0864),
-            uz=input_img.select(['vs']), zw=zw, elev=elev, lat=lat,
+            uz=input_img.select(['vs']),
+            zw=zw,
+            elev=elev,
+            lat=lat,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            method=method, rso_type=rso_type,
+            method=method,
+            rso_type=rso_type,
         )
 
     @classmethod
@@ -482,9 +484,13 @@ class Daily():
                 pair=calcs._air_pressure(elev, method),
                 q=input_img.select(['huss'])),
             rs=input_img.select(['rsds']).multiply(0.0864),
-            uz=wind_img.select(['uz']), zw=zw, elev=elev, lat=lat,
+            uz=wind_img.select(['uz']),
+            zw=zw,
+            elev=elev,
+            lat=lat,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            method=method, rso_type=rso_type,
+            method=method,
+            rso_type=rso_type,
         )
 
     @classmethod
@@ -528,16 +534,15 @@ class Daily():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/eddi-noaa/nldas/elevation')\
-                .rename(['elevation'])
+            elev = ee.Image('projects/openet/assets/nldas/elevation')
             # elev = ee.Image('CGIAR/SRTM90_V4')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
-            lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/nldas/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
-                .rename(['latitude'])
+            lat = ee.Image('projects/openet/assets/nldas/latitude')
+            # lat = ee.Image('projects/earthengine-legacy/assets/'
+            #                'projects/eddi-noaa/nldas/elevation')\
+            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+            #     .rename(['latitude'])
             # lat = ee.Image.pixelLonLat().select('latitude')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
             # lat = input_coll.first().select([0]).multiply(0)\
@@ -548,21 +553,25 @@ class Daily():
             return ee.Image(input_img.select(['wind_u'])).pow(2)\
                 .add(ee.Image(input_img.select(['wind_v'])).pow(2))\
                 .sqrt().rename(['uz'])
-        wind_img = ee.Image(
-            ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
+        wind_img = ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
 
         ea_img = calcs._actual_vapor_pressure(
             pair=calcs._air_pressure(elev, method),
-            q=input_coll.select(['specific_humidity']).mean())
+            q=input_coll.select(['specific_humidity']).mean()
+        )
 
         return cls(
             tmax=input_coll.select(['temperature']).max(),
             tmin=input_coll.select(['temperature']).min(),
             ea=ea_img,
             rs=input_coll.select(['shortwave_radiation']).sum().multiply(0.0036),
-            uz=wind_img, zw=zw, elev=elev, lat=lat,
+            uz=wind_img,
+            zw=zw,
+            elev=elev,
+            lat=lat,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            method=method, rso_type=rso_type,
+            method=method,
+            rso_type=rso_type,
         )
 
     @classmethod
@@ -629,8 +638,7 @@ class Daily():
             u_img = ee.Image(input_img).select(['u-component_of_wind_height_above_ground'])
             v_img = ee.Image(input_img).select(['v-component_of_wind_height_above_ground'])
             return u_img.pow(2).add(v_img.pow(2)).sqrt()
-        wind_img = ee.Image(
-            ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
+        wind_img = ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
 
         ea_img = calcs._actual_vapor_pressure(
             pair=calcs._air_pressure(elev, method),
@@ -649,9 +657,13 @@ class Daily():
             rs=input_coll
                 .select(['Downward_Short-Wave_Radiation_Flux_surface_6_Hour_Average'])
                 .mean().multiply(0.0864),
-            uz=wind_img, zw=zw, elev=elev, lat=lat,
+            uz=wind_img,
+            zw=zw,
+            elev=elev,
+            lat=lat,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            method=method, rso_type=rso_type,
+            method=method,
+            rso_type=rso_type,
         )
 
     @classmethod
@@ -747,10 +759,15 @@ class Daily():
         return cls(
             tmax=input_coll.select(['TMP']).max(),
             tmin=input_coll.select(['TMP']).min(),
-            ea=ea_img, rs=rs, uz=input_coll.select(['WIND']).mean(),
-            zw=zw, elev=elev, lat=lat,
+            ea=ea_img,
+            rs=rs,
+            uz=input_coll.select(['WIND']).mean(),
+            zw=zw,
+            elev=elev,
+            lat=lat,
             doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
-            method=method, rso_type=rso_type,
+            method=method,
+            rso_type=rso_type,
         )
 
     # @classmethod
@@ -785,8 +802,14 @@ class Daily():
     #         #     .add(ee.Image.pixelLonLat().select('latitude'))
     #
     #     return cls(
-    #         tmax=input_img.select(['tmmx']), tmin=input_img.select(['tmmn']),
-    #         ea=0, rs=0, uz=0, zw=2, elev=0, lat=lat,
+    #         tmax=input_img.select(['tmmx']),
+    #         tmin=input_img.select(['tmmn']),
+    #         ea=0,
+    #         rs=0,
+    #         uz=0,
+    #         zw=2,
+    #         elev=0,
+    #         lat=lat,
     #         doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
     #         method='asce',
     #     )

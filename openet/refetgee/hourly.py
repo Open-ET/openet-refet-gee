@@ -113,8 +113,8 @@ class Hourly():
         # Extraterrestrial radiation
         time_mid = self.time.add(0.5)
         self.ra = calcs._ra_hourly(
-            lat=self.lat, lon=self.lon, doy=self.doy, time_mid=time_mid,
-            method=method)
+            lat=self.lat, lon=self.lon, doy=self.doy, time_mid=time_mid, method=method
+        )
 
         # Clear sky solar radiation
         if method == 'asce':
@@ -122,7 +122,8 @@ class Hourly():
         elif method == 'refet':
             self.rso = calcs._rso_hourly(
                 ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
-                time_mid=time_mid, lat=self.lat, lon=self.lon, method=method)
+                time_mid=time_mid, lat=self.lat, lon=self.lon, method=method
+            )
 
         # Cloudiness fraction
         # Intentionally not using time_mid to match Beta value in IN2 file
@@ -131,7 +132,8 @@ class Hourly():
         # Beta (not SinBeta) is used for clamping fcd.
         self.fcd = calcs._fcd_hourly(
             rs=self.rs, rso=self.rso, doy=self.doy, time_mid=self.time,
-            lat=self.lat, lon=self.lon, method=method)
+            lat=self.lat, lon=self.lon, method=method
+        )
 
         # Net long-wave radiation
         self.rnl = calcs._rnl_hourly(tmean=self.tmean, ea=self.ea, fcd=self.fcd)
@@ -228,7 +230,8 @@ class Hourly():
             '(es_slope + psy * (cd * u2 + 1))',
             {'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
              'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
-             'u2': self.u2, 'vpd': self.vpd})
+             'u2': self.u2, 'vpd': self.vpd}
+        )
 
     @classmethod
     def nldas(cls, input_img, zw=None, elev=None, lat=None, lon=None,
@@ -267,25 +270,25 @@ class Hourly():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/eddi-noaa/nldas/elevation')\
-                .rename(['elevation'])
+            elev = ee.Image('projects/openet/assets/nldas/elevation')
             # elev = ee.Image('CGIAR/SRTM90_V4')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
-            lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/nldas/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
-                .rename(['latitude'])
+            lat = ee.Image('projects/openet/assets/nldas/latitude')
+            # lat = ee.Image('projects/earthengine-legacy/assets/'
+            #                'projects/eddi-noaa/nldas/elevation')\
+            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+            #     .rename(['latitude'])
             # lat = ee.Image.pixelLonLat().select('latitude')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
             # lat = nldas_img.select([0]).multiply(0)\
             #     .add(ee.Image.pixelLonLat().select('latitude'))
         if lon is None:
-            lon = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/nldas/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
-                .rename(['longitude'])
+            lon = ee.Image('projects/openet/assets/nldas/longitude')
+            # lon = ee.Image('projects/earthengine-legacy/assets/'
+            #                'projects/eddi-noaa/nldas/elevation')\
+            #     .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
+            #     .rename(['longitude'])
             # lon = ee.Image.pixelLonLat().select('longitude')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
             # lon = nldas_img.select([0]).multiply(0)\
@@ -297,8 +300,8 @@ class Hourly():
                 q=input_img.select(['specific_humidity']),
                 pair=calcs._air_pressure(elev, method)),
             rs=input_img.select(['shortwave_radiation']).multiply(0.0036),
-            uz=input_img.select(['wind_u']).pow(2)\
-                .add(input_img.select(['wind_v']).pow(2))\
+            uz=input_img.select(['wind_u']).pow(2)
+                .add(input_img.select(['wind_v']).pow(2))
                 .sqrt().rename(['uz']),
             zw=zw,
             elev=elev,
