@@ -270,11 +270,11 @@ class Hourly():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/openet/assets/nldas/elevation')
+            elev = ee.Image('projects/openet/assets/meteorology/nldas/elevation')
             # elev = ee.Image('CGIAR/SRTM90_V4')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
-            lat = ee.Image('projects/openet/assets/nldas/latitude')
+            lat = ee.Image('projects/openet/assets/meteorology/nldas/latitude')
             # lat = ee.Image('projects/earthengine-legacy/assets/'
             #                'projects/eddi-noaa/nldas/elevation')\
             #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
@@ -284,7 +284,7 @@ class Hourly():
             # lat = nldas_img.select([0]).multiply(0)\
             #     .add(ee.Image.pixelLonLat().select('latitude'))
         if lon is None:
-            lon = ee.Image('projects/openet/assets/nldas/longitude')
+            lon = ee.Image('projects/openet/assets/meteorology/nldas/longitude')
             # lon = ee.Image('projects/earthengine-legacy/assets/'
             #                'projects/eddi-noaa/nldas/elevation')\
             #     .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
