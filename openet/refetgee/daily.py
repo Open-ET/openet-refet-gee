@@ -85,8 +85,7 @@ class Daily():
         if rso_type is None:
             pass
         elif rso_type.lower() not in ['simple', 'full', 'array']:
-            raise ValueError(
-                'rso_type must be None, "simple", "full", or "array')
+            raise ValueError('rso_type must be None, "simple", "full", or "array')
         elif rso_type.lower() in 'array':
             # Check that rso is an ee.Image or ee.Number?
             pass
@@ -120,8 +119,8 @@ class Daily():
         self.es_slope = calcs._es_slope(self.tmean, method)
 
         # Saturated vapor pressure
-        self.es = calcs._sat_vapor_pressure(self.tmax).add(
-            calcs._sat_vapor_pressure(self.tmin)) \
+        self.es = calcs._sat_vapor_pressure(self.tmax)\
+            .add(calcs._sat_vapor_pressure(self.tmin))\
             .multiply(0.5)
 
         # Vapor pressure deficit
@@ -138,14 +137,14 @@ class Daily():
                 self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
             elif method.lower() == 'refet':
                 self.rso = calcs._rso_daily(
-                    ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
-                    lat=self.lat)
+                    ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy, lat=self.lat
+                )
         elif rso_type.lower() == 'simple':
             self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
         elif rso_type.lower() == 'full':
             self.rso = calcs._rso_daily(
-                ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
-                lat=self.lat)
+                ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy, lat=self.lat
+            )
         elif rso_type.lower() == 'array':
             # Use rso array passed to function
             self.rso = rso
@@ -246,6 +245,94 @@ class Daily():
         #     .divide((self.es_slope.add(self.psy)).multiply(2453))\
         #     .multiply(1.26).multiply(1000)\
         #     .rename(['etw'])\
+        #     .set('system:time_start', self.time_start)
+
+    @lazy_property
+    def eto_fs1(self):
+        """UF-IFAS Extension FS1 Radiation Term (ETrad)
+
+        Returns
+        -------
+        eto_fs1 : ee.Image
+            FS1 ETrad [mm].
+
+        References
+        ----------
+        https://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf
+
+        """
+        return self.u2\
+            .expression(
+                '(delta / (delta + psy * (1 + 0.34 * u2))) * (0.408 * rn)',
+                {'delta': self.es_slope, 'psy': self.psy, 'u2': self.u2,
+                 'rn': self.rn})\
+            .rename(['eto_fs1'])\
+            .set('system:time_start', self.time_start)
+
+        # return self.es_slope\
+        #       .divide(self.es_slope.add(self.psy.multiply(self.u2.multiply(0.34).add(1))))\
+        #       .multiply(self.rn.multiply(0.408))
+
+    @lazy_property
+    def eto_fs2(self):
+        """UF-IFAS Extension FS2 Wind Term (ETwind)
+
+        Returns
+        -------
+        eto_fs2 : ee.Image
+            FS2 ETwind [mm].
+
+        References
+        ----------
+        https://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf
+
+        """
+        # Temperature Term (Eq. 14)
+        TT = self.u2.expression(
+            '(900 / (t + 273)) * u2',
+            {'t': self.tmean, 'u2': self.u2})
+        # Psi Term (Eq. 13)
+        PT = self.u2.expression(
+            'psy / (slope + psy * (1 + 0.34 * u2))',
+            {'slope': self.es_slope, 'psy': self.psy, 'u2': self.u2})
+
+        return self.u2\
+            .expression(
+                'PT * TT * (es-ea)',
+                {'PT': PT, 'TT': TT, 'es': self.es, 'ea': self.ea})\
+            .rename(['eto_fs2'])\
+            .set('system:time_start', self.time_start)
+
+        # return self.PT.multiply(self.TT)\
+        #     .multiply(self.es.subtract(self.ea))\
+        #     .rename(['eto_fs2'])\
+        #     .set('system:time_start', self.time_start)
+
+    @lazy_property
+    def pet_hargreaves(self):
+        """Hargreaves potential ET
+
+        Returns
+        -------
+        hargreaves_pet : ee.Image
+            Hargreaves ET [mm].
+
+        References
+        ----------
+
+        """
+        return self.tmax\
+            .expression(
+                '0.0023 * (tmean + 17.8) * ((tmax - tmin) ** 0.5) * 0.408 * ra',
+                {'tmean': self.tmean, 'tmax': self.tmax, 'tmin': self.tmin,
+                 'ra': self.ra})\
+            .rename(['pet_hargreaves'])\
+            .set('system:time_start', self.time_start)
+        # return self.ra\
+        #     .multiply(self.tmean.add(17.8))\
+        #     .multiply(self.tmax.subtract(self.tmin).pow(0.5))\
+        #     .multiply(0.0023 * 0.408)\
+        #     .rename(['pet_hargreaves'])\
         #     .set('system:time_start', self.time_start)
 
     @classmethod
@@ -447,16 +534,15 @@ class Daily():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/eddi-noaa/nldas/elevation')\
-                .rename(['elevation'])
+            elev = ee.Image('projects/openet/assets/meteorology/nldas/elevation')
             # elev = ee.Image('CGIAR/SRTM90_V4')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
-            lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/eddi-noaa/nldas/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
-                .rename(['latitude'])
+            lat = ee.Image('projects/openet/assets/meteorology/nldas/latitude')
+            # lat = ee.Image('projects/earthengine-legacy/assets/'
+            #                'projects/eddi-noaa/nldas/elevation')\
+            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+            #     .rename(['latitude'])
             # lat = ee.Image.pixelLonLat().select('latitude')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
             # lat = input_coll.first().select([0]).multiply(0)\
@@ -467,12 +553,12 @@ class Daily():
             return ee.Image(input_img.select(['wind_u'])).pow(2)\
                 .add(ee.Image(input_img.select(['wind_v'])).pow(2))\
                 .sqrt().rename(['uz'])
-        wind_img = ee.Image(
-            ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
+        wind_img = ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
 
         ea_img = calcs._actual_vapor_pressure(
             pair=calcs._air_pressure(elev, method),
-            q=input_coll.select(['specific_humidity']).mean())
+            q=input_coll.select(['specific_humidity']).mean()
+        )
 
         return cls(
             tmax=input_coll.select(['temperature']).max(),
@@ -490,7 +576,7 @@ class Daily():
 
     @classmethod
     def cfsv2(cls, input_coll, zw=None, elev=None, lat=None, method='asce',
-             rso_type=None):
+              rso_type=None):
         """Initialize daily RefET from a 6-hourly CFSv2 image collection
 
         Parameters
@@ -552,8 +638,7 @@ class Daily():
             u_img = ee.Image(input_img).select(['u-component_of_wind_height_above_ground'])
             v_img = ee.Image(input_img).select(['v-component_of_wind_height_above_ground'])
             return u_img.pow(2).add(v_img.pow(2)).sqrt()
-        wind_img = ee.Image(
-            ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
+        wind_img = ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
 
         ea_img = calcs._actual_vapor_pressure(
             pair=calcs._air_pressure(elev, method),
@@ -764,3 +849,47 @@ class Daily():
             method=method,
             rso_type=rso_type,
         )
+
+    # @classmethod
+    # def prism(cls, input_img, lat=None):
+    #     """Initialize daily RefET from a PRISM image
+    #
+    #     Parameters
+    #     ----------
+    #     input_img : ee.Image
+    #         PPRISM image from the collection OREGONSTATE/PRISM/AN81d.
+    #     lat : ee.Image or ee.Number
+    #         Latitude image [degrees].  The latitude will be computed
+    #         dynamically using ee.Image.pixelLonLat() if not set.
+    #
+    #     Notes
+    #     -----
+    #     PRISM can only be used to compute Hargreaves PET.
+    #
+    #     """
+    #     image_date = ee.Date(input_img.get('system:time_start'))
+    #
+    #     if lat is None:
+    #         lat = ee.Image('projects/earthengine-legacy/assets/'
+    #                        'projects/climate-engine/prism/elevation')\
+    #             .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+    #             .rename(['latitude'])
+    #         # prism_transform = [0.0416666666667, 0, -125.02083333333336,
+    #         #                    0, -0.0416666666667, 49.93749999999975]
+    #         # lat = ee.Image.pixelLonLat().select('latitude')\
+    #         #     .reproject('EPSG:4326', prism_transform)
+    #         # lat = input_img.select([0]).multiply(0)\
+    #         #     .add(ee.Image.pixelLonLat().select('latitude'))
+    #
+    #     return cls(
+    #         tmax=input_img.select(['tmmx']),
+    #         tmin=input_img.select(['tmmn']),
+    #         ea=0,
+    #         rs=0,
+    #         uz=0,
+    #         zw=2,
+    #         elev=0,
+    #         lat=lat,
+    #         doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
+    #         method='asce',
+    #     )
