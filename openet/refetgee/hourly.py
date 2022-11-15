@@ -413,14 +413,17 @@ class Hourly():
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  The ERA5-Land elevation image
-            (projects/eddi-noaa/era5_land/elevation) will be used if not set.
+            Elevation image [m].  The OpenET ERA5-Land elevation image
+            (projects/openet/assets/meteorology/era5land/elevation)
+            will be used if not set.
         lat : ee.Image or ee.Number
-            Latitude image [degrees].  The latitude will be computed
-            dynamically using ee.Image.pixelLonLat() if not set.
+            Latitude image [degrees].  The OpenET ERA5-Land latitude image
+            (projects/openet/assets/meteorology/era5land/latitude)
+            will be used if not set.
         lon : ee.Image or ee.Number
-            Longitude image [degrees].  The longitude will be computed
-            dynamically using ee.Image.pixelLonLat() if not set.
+            Longitude image [degrees].  The OpenET ERA5-Land longitude image
+            (projects/openet/assets/meteorology/era5land/longitude)
+            will be used if not set.
         method : {'asce' (default), 'refet'}, optional
             Specifies which calculation method to use.
             * 'asce' -- Calculations will follow ASCE-EWRI 2005.
@@ -438,34 +441,28 @@ class Hourly():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/climate-engine/era5-land/elevation')\
+            elev = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
                 .rename(['elevation'])
         if lat is None:
-            lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/climate-engine/era5-land/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
-                .rename(['latitude'])
+            lat = ee.Image('projects/openet/assets/meteorology/era5land/latitude')
+            # lat = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
+            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+            #     .rename(['latitude'])
         if lon is None:
-            lon = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/climate-engine/era5-land/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
-                .rename(['longitude'])
-
-        # TODO: Double check that this is correct
-        ea_img = calcs._sat_vapor_pressure(
-            input_img.select(['dewpoint_temperature_2m']).subtract(273.15))
-        # ea_img = calcs._actual_vapor_pressure(
-        #     q=input_img.select(['SPFH']),
-        #     pair=calcs._air_pressure(elev, method))
+            lon = ee.Image('projects/openet/assets/meteorology/era5land/longitude')
+            # lon = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
+            #     .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
+            #     .rename(['longitude'])
 
         return cls(
             tmean=input_img.select(['temperature_2m']).subtract(273.15),
-            ea=ea_img,
-            rs=input_img.select(['surface_solar_radiation_downwards_hourly'])\
+            ea=calcs._sat_vapor_pressure(
+                input_img.select(['dewpoint_temperature_2m']).subtract(273.15)
+            ),
+            rs=input_img.select(['surface_solar_radiation_downwards_hourly'])
                 .divide(1000000),
-            uz=input_img.select(['u_component_of_wind_10m']).pow(2)\
-                .add(input_img.select(['v_component_of_wind_10m']).pow(2))\
+            uz=input_img.select(['u_component_of_wind_10m']).pow(2)
+                .add(input_img.select(['v_component_of_wind_10m']).pow(2))
                 .sqrt().rename(['wind_10m']),
             zw=zw,
             elev=elev,

@@ -783,11 +783,13 @@ class Daily():
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  The RTMA elevation image
-            (projects/eddi-noaa/era5_land/elevation) will be used if not set.
+            Elevation image [m].  The OpenET ERA5-Land elevation image
+            (projects/openet/assets/meteorology/era5land/elevation)
+            will be used if not set.
         lat : ee.Image or ee.Number
-            Latitude image [degrees].  The latitude will be computed
-            dynamically using ee.Image.pixelLonLat() if not set.
+            Latitude image [degrees].  The OpenET ERA5-Land latitude image
+            (projects/openet/assets/meteorology/era5land/latitude)
+            will be used if not set.
         method : {'asce' (default), 'refet'}, optional
             Specifies which calculation method to use.
             * 'asce' -- Calculations will follow ASCE-EWRI 2005.
@@ -811,35 +813,30 @@ class Daily():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/climate-engine/era5-land/elevation')\
+            elev = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
                 .rename(['elevation'])
         if lat is None:
-            lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/climate-engine/era5-land/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
-                .rename(['latitude'])
+            lat = ee.Image('projects/openet/assets/meteorology/era5land/latitude')\
+            # lat = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
+            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+            #     .rename(['latitude'])
 
         def wind_magnitude(input_img):
             """Compute hourly wind magnitude from vectors"""
             return ee.Image(input_img.select(['u_component_of_wind_10m'])).pow(2)\
                 .add(ee.Image(input_img.select(['v_component_of_wind_10m'])).pow(2))\
                 .sqrt().rename(['wind_10m'])
-        wind_img = ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
 
-        # TODO: Double check that this is correct
-        ea_img = calcs._sat_vapor_pressure(
-            input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15))
-        # ea_img = calcs._actual_vapor_pressure(
-        #     pair=calcs._air_pressure(elev, method),
-        #     q=input_coll.select(['SPFH']).mean())
+        wind_img = ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
 
         return cls(
             tmax=input_coll.select(['temperature_2m']).max().subtract(273.15),
             tmin=input_coll.select(['temperature_2m']).min().subtract(273.15),
-            ea=ea_img,
+            ea=calcs._sat_vapor_pressure(
+                input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)
+            ),
             # TODO: Check that solar does not need additional conversion
-            rs=input_coll.select(['surface_solar_radiation_downwards_hourly'])\
+            rs=input_coll.select(['surface_solar_radiation_downwards_hourly'])
                 .sum().divide(1000000),
             uz=wind_img,
             zw=zw,
