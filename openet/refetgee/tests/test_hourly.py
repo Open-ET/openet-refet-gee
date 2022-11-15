@@ -162,10 +162,12 @@ def test_refet_daily_etsz(surface, expected):
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
         method='refet')
+
     output = refet.etsz(surface).rename(['etsz']).reduceRegion(
         reducer=ee.Reducer.first(),
         geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
         scale=1).getInfo()
+
     assert float(output['etsz']) == pytest.approx(expected)
 
 
@@ -173,20 +175,25 @@ def test_refet_hourly_nldas_etr():
     """Generate a fake NLDAS image from the test values"""
     nldas_time = ee.Date(
         '2015-07-01T{}:00:00'.format(int(h_args['time'])), 'UTC').millis()
+
     wind_u = h_args['uz'] / (2 ** 0.5)
+
     nldas_img = ee.Image.constant([
             h_args['tmean'], h_args['q_asce'], h_args['rs'] / 0.0036,
             wind_u, wind_u])\
         .rename(['temperature', 'specific_humidity', 'shortwave_radiation',
                  'wind_u', 'wind_v'])\
         .set('system:time_start', nldas_time)
+
     refet = Hourly.nldas(
         ee.Image(nldas_img), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         zw=ee.Number(s_args['zw']), method='asce')
+
     output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
+
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 
 
@@ -194,19 +201,53 @@ def test_refet_hourly_rtma_etr():
     """Generate a fake RTMA image from the test values"""
     rtma_time = ee.Date(
         '2015-07-01T{}:00:00'.format(int(h_args['time'])), 'UTC').millis()
+
     rtma_img = ee.Image.constant([
             h_args['tmean'], h_args['q_asce'], h_args['uz']])\
         .rename(['TMP', 'SPFH', 'WIND'])\
         .set('system:time_start', rtma_time)
+
     refet = Hourly.rtma(
         ee.Image(rtma_img),
         rs=ee.Image.constant(h_args['rs']),
         elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
         zw=ee.Number(s_args['zw']), method='asce')
+
     output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
+
+    assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
+
+
+def test_refet_hourly_era5_land_etr():
+    """Generate a fake ERA5-Land image from the test values"""
+    era5_time = ee.Date(
+        '2015-07-01T{}:00:00'.format(int(h_args['time'])), 'UTC').millis()
+
+    wind_u = h_args['uz'] / (2 ** 0.5)
+
+    era5_img = ee.Image.constant([
+            h_args['tmean'] + 273.15,
+            h_args['tdew'] + 273.15,
+            h_args['rs'] * 1000000,
+            wind_u, wind_u])\
+        .rename(['temperature_2m', 'dewpoint_temperature_2m',
+                 'surface_solar_radiation_downwards_hourly',
+                 'u_component_of_wind_10m', 'v_component_of_wind_10m'])\
+        .set('system:time_start', era5_time)
+
+    refet = Hourly.era5_land(
+        ee.Image(era5_img),
+        elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
+        zw=ee.Number(s_args['zw']), method='asce')
+
+    output = refet.etr\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 
 
