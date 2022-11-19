@@ -534,11 +534,11 @@ class Daily():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/openet/assets/meteorology/nldas/elevation')
+            elev = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/elevation')
             # elev = ee.Image('CGIAR/SRTM90_V4')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
-            lat = ee.Image('projects/openet/assets/meteorology/nldas/latitude')
+            lat = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/latitude')
             # lat = ee.Image('projects/earthengine-legacy/assets/'
             #                'projects/eddi-noaa/nldas/elevation')\
             #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
@@ -784,11 +784,11 @@ class Daily():
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
             Elevation image [m].  The OpenET ERA5-Land elevation image
-            (projects/openet/assets/meteorology/era5land/elevation)
+            (projects/openet/assets/meteorology/era5land/ancillary/elevation)
             will be used if not set.
         lat : ee.Image or ee.Number
             Latitude image [degrees].  The OpenET ERA5-Land latitude image
-            (projects/openet/assets/meteorology/era5land/latitude)
+            (projects/openet/assets/meteorology/era5land/ancillary/latitude)
             will be used if not set.
         method : {'asce' (default), 'refet'}, optional
             Specifies which calculation method to use.
@@ -803,7 +803,7 @@ class Daily():
         Notes
         -----
         Temperatures are converted from K to C.
-        Solar radiation is converted from J m-2 to MJ m-2 day-1.
+        Solar radiation is summed and converted from J m-2 to MJ m-2 day-1.
         Actual vapor pressure is computed from dew point temperature.
 
         """
@@ -813,11 +813,10 @@ class Daily():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
-                .rename(['elevation'])
+            elev = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/elevation')
         if lat is None:
-            lat = ee.Image('projects/openet/assets/meteorology/era5land/latitude')\
-            # lat = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
+            lat = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/latitude')\
+            # lat = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/elevation')\
             #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
             #     .rename(['latitude'])
 
@@ -835,7 +834,6 @@ class Daily():
             ea=calcs._sat_vapor_pressure(
                 input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)
             ),
-            # TODO: Check that solar does not need additional conversion
             rs=input_coll.select(['surface_solar_radiation_downwards_hourly'])
                 .sum().divide(1000000),
             uz=wind_img,

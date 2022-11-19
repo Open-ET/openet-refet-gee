@@ -245,14 +245,17 @@ class Hourly():
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  A custom NLDAS elevation image
-            (projects/eddi-noaa/nldas/elevation) will be used if not set.
+            Elevation image [m].  A precomputed NLDAS elevation image
+            (projects/openet/assets/meteorology/nldas/ancillary/elevation)
+            will be used if not set.
         lat : ee.Image or ee.Number
-            Latitude image [degrees].  The latitude will be computed
-            dynamically using ee.Image.pixelLonLat() if not set.
+            Latitude image [degrees].  A precomputed NLDAS latitude image
+            (projects/openet/assets/meteorology/nldas/ancillary/latitude)
+            will be used if not set.
         lon : ee.Image or ee.Number
-            Longitude image [degrees].  The longitude will be computed
-            dynamically using ee.Image.pixelLonLat() if not set.
+            Longitude image [degrees].  A precomputed NLDAS longitude image
+            (projects/openet/assets/meteorology/nldas/ancillary/longitude)
+            will be used if not set.
         method : {'asce' (default), 'refet'}, optional
             Specifies which calculation method to use.
             * 'asce' -- Calculations will follow ASCE-EWRI 2005.
@@ -270,13 +273,12 @@ class Hourly():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/openet/assets/meteorology/nldas/elevation')
+            elev = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/elevation')
             # elev = ee.Image('CGIAR/SRTM90_V4')\
             #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
-            lat = ee.Image('projects/openet/assets/meteorology/nldas/latitude')
-            # lat = ee.Image('projects/earthengine-legacy/assets/'
-            #                'projects/eddi-noaa/nldas/elevation')\
+            lat = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/latitude')
+            # lat = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/elevation')\
             #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
             #     .rename(['latitude'])
             # lat = ee.Image.pixelLonLat().select('latitude')\
@@ -284,9 +286,8 @@ class Hourly():
             # lat = nldas_img.select([0]).multiply(0)\
             #     .add(ee.Image.pixelLonLat().select('latitude'))
         if lon is None:
-            lon = ee.Image('projects/openet/assets/meteorology/nldas/longitude')
-            # lon = ee.Image('projects/earthengine-legacy/assets/'
-            #                'projects/eddi-noaa/nldas/elevation')\
+            lon = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/longitude')
+            # lon = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/elevation')\
             #     .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
             #     .rename(['longitude'])
             # lon = ee.Image.pixelLonLat().select('longitude')\
@@ -414,15 +415,15 @@ class Hourly():
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
             Elevation image [m].  The OpenET ERA5-Land elevation image
-            (projects/openet/assets/meteorology/era5land/elevation)
+            (projects/openet/assets/meteorology/era5land/ancillary/elevation)
             will be used if not set.
         lat : ee.Image or ee.Number
             Latitude image [degrees].  The OpenET ERA5-Land latitude image
-            (projects/openet/assets/meteorology/era5land/latitude)
+            (projects/openet/assets/meteorology/era5land/ancillary/latitude)
             will be used if not set.
         lon : ee.Image or ee.Number
             Longitude image [degrees].  The OpenET ERA5-Land longitude image
-            (projects/openet/assets/meteorology/era5land/longitude)
+            (projects/openet/assets/meteorology/era5land/ancillary/longitude)
             will be used if not set.
         method : {'asce' (default), 'refet'}, optional
             Specifies which calculation method to use.
@@ -432,7 +433,7 @@ class Hourly():
         Notes
         -----
         Temperatures are converted from K to C.
-        Solar radiation is converted from J m-2 to MJ m-2 day-1.
+        Solar radiation is summed and converted from J m-2 to MJ m-2 hr-1.
         Actual vapor pressure is computed from dew point temperature.
 
         """
@@ -441,16 +442,15 @@ class Hourly():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
-                .rename(['elevation'])
+            elev = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/elevation')
         if lat is None:
-            lat = ee.Image('projects/openet/assets/meteorology/era5land/latitude')
-            # lat = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
+            lat = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/latitude')
+            # lat = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/elevation')\
             #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
             #     .rename(['latitude'])
         if lon is None:
-            lon = ee.Image('projects/openet/assets/meteorology/era5land/longitude')
-            # lon = ee.Image('projects/openet/assets/meteorology/era5land/elevation')\
+            lon = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/longitude')
+            # lon = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/elevation')\
             #     .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
             #     .rename(['longitude'])
 
