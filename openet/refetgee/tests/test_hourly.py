@@ -38,6 +38,12 @@ h_args = {
     'u2': 1.3709275319197722,
 }
 
+# Compute wind x and y components
+h_args['uz_x'] = h_args['uz'] / (2 ** 0.5)
+h_args['uz_y'] = h_args['uz'] / (2 ** 0.5)
+# h_args['uz_x'] = h_args['uz']
+# h_args['uz_y'] = 0.0
+
 constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
 
 
@@ -48,120 +54,132 @@ def test_refet_hourly_input_positions():
         ee.Image.constant(h_args['rs']), ee.Image.constant(h_args['uz']),
         ee.Image.constant(s_args['zw']), ee.Number(s_args['elev']),
         ee.Number(s_args['lat']), ee.Number(s_args['lon']),
-        ee.Number(h_args['doy']), ee.Number(h_args['time']), method='refet')
+        ee.Number(h_args['doy']), ee.Number(h_args['time']), method='refet'
+    )
+
     output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
+
     assert float(output['etr']) == pytest.approx(h_args['etr_refet'])
 
 
 # Test full hourly calculations with keyword inputs
 def test_refet_hourly_default_method_etr():
     refet = Hourly(
-        tmean=ee.Image.constant(h_args['tmean']),
-        ea=ee.Image.constant(h_args['ea']),
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Image.constant(h_args['ea']),
         rs=ee.Image.constant(h_args['rs']), uz=ee.Image.constant(h_args['uz']),
         zw=ee.Image.constant(s_args['zw']), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']))
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time'])
+    )
+
     output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
+
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 
 
 def test_refet_hourly_asce_method_etr():
     refet = Hourly(
-        tmean=ee.Image.constant(h_args['tmean']),
-        ea=ee.Image.constant(h_args['ea']),
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Image.constant(h_args['ea']),
         rs=ee.Image.constant(h_args['rs']), uz=ee.Image.constant(h_args['uz']),
         zw=ee.Number(s_args['zw']), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
-        method='asce')
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']), method='asce'
+    )
+
     output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
+
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 
 
 def test_refet_hourly_refet_method_etr():
     refet = Hourly(
-        tmean=ee.Image.constant(h_args['tmean']),
-        ea=ee.Image.constant(h_args['ea']),
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Image.constant(h_args['ea']),
         rs=ee.Image.constant(h_args['rs']), uz=ee.Image.constant(h_args['uz']),
         zw=ee.Image.constant(s_args['zw']), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
-        method='refet')
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']), method='refet'
+    )
+
     output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
+
     assert float(output['etr']) == pytest.approx(h_args['etr_refet'])
 
 
 def test_refet_hourly_default_method_eto():
     refet = Hourly(
-        tmean=ee.Image.constant(h_args['tmean']),
-        ea=ee.Image.constant(h_args['ea']),
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Image.constant(h_args['ea']),
         rs=ee.Image.constant(h_args['rs']), uz=ee.Image.constant(h_args['uz']),
         zw=ee.Image.constant(s_args['zw']), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        doy=ee.Number(h_args['doy']),
-        time=ee.Number(h_args['time']))
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time'])
+    )
+
     output = refet.eto\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
+
     assert float(output['eto']) == pytest.approx(h_args['eto_asce'])
 
 
 def test_refet_hourly_asce_method_eto():
     refet = Hourly(
-        tmean=ee.Image.constant(h_args['tmean']),
-        ea=ee.Image.constant(h_args['ea']),
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Image.constant(h_args['ea']),
         rs=ee.Image.constant(h_args['rs']), uz=ee.Image.constant(h_args['uz']),
         zw=ee.Image.constant(s_args['zw']), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
-        method='asce')
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']), method='asce'
+    )
+
     output = refet.eto\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
+
     assert float(output['eto']) == pytest.approx(h_args['eto_asce'])
 
 
 def test_refet_hourly_asce_method_eto():
     refet = Hourly(
-        tmean=ee.Image.constant(h_args['tmean']),
-        ea=ee.Image.constant(h_args['ea']),
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Image.constant(h_args['ea']),
         rs=ee.Image.constant(h_args['rs']), uz=ee.Image.constant(h_args['uz']),
         zw=ee.Image.constant(s_args['zw']), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
-        method='refet')
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']), method='refet'
+    )
+
     output = refet.eto\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
+
     assert float(output['eto']) == pytest.approx(h_args['eto_refet'])
 
 
 @pytest.mark.parametrize(
     'surface, expected',
-    [['etr', h_args['etr_refet']],
-     ['alfalfa', h_args['etr_refet']],
-     ['tall', h_args['etr_refet']],
-     ['eto', h_args['eto_refet']],
-     ['grass', h_args['eto_refet']],
-     ['short', h_args['eto_refet']]])
+    [
+        ['etr', h_args['etr_refet']],
+        ['alfalfa', h_args['etr_refet']],
+        ['tall', h_args['etr_refet']],
+        ['eto', h_args['eto_refet']],
+        ['grass', h_args['eto_refet']],
+        ['short', h_args['eto_refet']],
+    ]
+)
 def test_refet_daily_etsz(surface, expected):
     refet = Hourly(
-        tmean=ee.Image.constant(h_args['tmean']),
-        ea=ee.Image.constant(h_args['ea']),
+        tmean=ee.Image.constant(h_args['tmean']), ea=ee.Image.constant(h_args['ea']),
         rs=ee.Image.constant(h_args['rs']), uz=ee.Image.constant(h_args['uz']),
         zw=ee.Image.constant(s_args['zw']), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']),
-        method='refet')
+        doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']), method='refet'
+    )
 
     output = refet.etsz(surface).rename(['etsz']).reduceRegion(
         reducer=ee.Reducer.first(),
@@ -172,23 +190,21 @@ def test_refet_daily_etsz(surface, expected):
 
 
 def test_refet_hourly_nldas_etr():
-    """Generate a fake NLDAS image from the test values"""
-    nldas_time = ee.Date(
-        '2015-07-01T{}:00:00'.format(int(h_args['time'])), 'UTC').millis()
+    """Generate a mock NLDAS image from the test values"""
+    time_start = ee.Date(f'2015-07-01T{int(h_args["time"])}:00:00', 'UTC').millis()
 
-    wind_u = h_args['uz'] / (2 ** 0.5)
-
-    nldas_img = ee.Image.constant([
+    input_img = ee.Image.constant([
             h_args['tmean'], h_args['q_asce'], h_args['rs'] / 0.0036,
-            wind_u, wind_u])\
+            h_args['uz_x'], h_args['uz_y']])\
         .rename(['temperature', 'specific_humidity', 'shortwave_radiation',
                  'wind_u', 'wind_v'])\
-        .set('system:time_start', nldas_time)
+        .set('system:time_start', time_start)
 
     refet = Hourly.nldas(
-        ee.Image(nldas_img), elev=ee.Number(s_args['elev']),
+        ee.Image(input_img), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        zw=ee.Number(s_args['zw']), method='asce')
+        zw=ee.Number(s_args['zw']), method='asce'
+    )
 
     output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
@@ -198,21 +214,44 @@ def test_refet_hourly_nldas_etr():
 
 
 def test_refet_hourly_rtma_etr():
-    """Generate a fake RTMA image from the test values"""
-    rtma_time = ee.Date(
-        '2015-07-01T{}:00:00'.format(int(h_args['time'])), 'UTC').millis()
+    """Generate a mock RTMA image from the test values"""
+    time_start = ee.Date(f'2015-07-01T{int(h_args["time"])}:00:00', 'UTC').millis()
 
-    rtma_img = ee.Image.constant([
-            h_args['tmean'], h_args['q_asce'], h_args['uz']])\
+    input_img = ee.Image.constant([h_args['tmean'], h_args['q_asce'], h_args['uz']])\
         .rename(['TMP', 'SPFH', 'WIND'])\
-        .set('system:time_start', rtma_time)
+        .set('system:time_start', time_start)
 
     refet = Hourly.rtma(
-        ee.Image(rtma_img),
-        rs=ee.Image.constant(h_args['rs']),
+        ee.Image(input_img), rs=ee.Image.constant(h_args['rs']),
         elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        zw=ee.Number(s_args['zw']), method='asce')
+        zw=ee.Number(s_args['zw']), method='asce'
+    )
+
+    output = refet.etr\
+        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
+        .getInfo()
+
+    assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
+
+
+def test_refet_hourly_era5_etr():
+    """Generate a mock ERA5 image from the test values"""
+    time_start = ee.Date(f'2015-07-01T{int(h_args["time"])}:00:00', 'UTC').millis()
+
+    input_img = ee.Image.constant([
+            h_args['tmean'] + 273.15, h_args['tdew'] + 273.15,
+            h_args['rs'] * 1000000, h_args['uz_x'], h_args['uz_y']])\
+        .rename(['temperature_2m', 'dewpoint_temperature_2m',
+                 'surface_solar_radiation_downwards',
+                 'u_component_of_wind_10m', 'v_component_of_wind_10m'])\
+        .set('system:time_start', time_start)
+
+    refet = Hourly.era5(
+        ee.Image(input_img), elev=ee.Number(s_args['elev']),
+        lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
+        zw=ee.Number(s_args['zw']), method='asce'
+    )
 
     output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
@@ -222,27 +261,22 @@ def test_refet_hourly_rtma_etr():
 
 
 def test_refet_hourly_era5_land_etr():
-    """Generate a fake ERA5-Land image from the test values"""
-    era5_time = ee.Date(
-        '2015-07-01T{}:00:00'.format(int(h_args['time'])), 'UTC').millis()
+    """Generate a mock ERA5-Land image from the test values"""
+    time_start = ee.Date(f'2015-07-01T{int(h_args["time"])}:00:00', 'UTC').millis()
 
-    wind_u = h_args['uz'] / (2 ** 0.5)
-
-    era5_img = ee.Image.constant([
-            h_args['tmean'] + 273.15,
-            h_args['tdew'] + 273.15,
-            h_args['rs'] * 1000000,
-            wind_u, wind_u])\
+    input_img = ee.Image.constant([
+            h_args['tmean'] + 273.15, h_args['tdew'] + 273.15,
+            h_args['rs'] * 1000000, h_args['uz_x'], h_args['uz_y']])\
         .rename(['temperature_2m', 'dewpoint_temperature_2m',
                  'surface_solar_radiation_downwards_hourly',
                  'u_component_of_wind_10m', 'v_component_of_wind_10m'])\
-        .set('system:time_start', era5_time)
+        .set('system:time_start', time_start)
 
     refet = Hourly.era5_land(
-        ee.Image(era5_img),
-        elev=ee.Number(s_args['elev']),
+        ee.Image(input_img), elev=ee.Number(s_args['elev']),
         lat=ee.Number(s_args['lat']), lon=ee.Number(s_args['lon']),
-        zw=ee.Number(s_args['zw']), method='asce')
+        zw=ee.Number(s_args['zw']), method='asce'
+    )
 
     output = refet.etr\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\

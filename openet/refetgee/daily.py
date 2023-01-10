@@ -771,9 +771,84 @@ class Daily():
         )
 
     @classmethod
+    def era5(cls, input_coll, zw=None, elev=None, lat=None, method='asce',
+             rso_type=None):
+        """Initialize daily RefET from an hourly ERA5 image collection
+
+        Parameters
+        ----------
+        input_coll : ee.ImageCollection
+            Collection of ERA5 hourly images for a single day from the
+            collection ECMWF/ERA5/HOURLY.
+        zw : ee.Number, optional
+            Wind speed height [m] (the default is 10).
+        elev : ee.Image or ee.Number, optional
+            Elevation image [m].  The OpenET ERA5 elevation image
+            (projects/openet/assets/meteorology/era5/ancillary/elevation)
+            will be used if not set.
+        lat : ee.Image or ee.Number
+            Latitude image [degrees].  The OpenET ERA5 latitude image
+            (projects/openet/assets/meteorology/era5/ancillary/latitude)
+            will be used if not set.
+        method : {'asce' (default), 'refet'}, optional
+            Specifies which calculation method to use.
+            * 'asce' -- Calculations will follow ASCE-EWRI 2005.
+            * 'refet' -- Calculations will follow RefET software.
+        rso_type : {None (default), 'full' , 'simple'}, optional
+            Specifies which clear sky solar radiation (Rso) model to use.
+            * None -- Rso type will be determined from "method" parameter
+            * 'full' -- Full clear sky solar formulation
+            * 'simple' -- Simplified clear sky solar formulation
+
+        Notes
+        -----
+        Temperatures are converted from K to C.
+        Solar radiation is summed and converted from J m-2 to MJ m-2 day-1.
+        Actual vapor pressure is computed from dew point temperature.
+
+        """
+        input_coll = ee.ImageCollection(input_coll)
+        start_date = ee.Date(ee.Image(input_coll.first()).get('system:time_start'))
+
+        if zw is None:
+            zw = ee.Number(10)
+        if elev is None:
+            elev = ee.Image('projects/openet/assets/meteorology/era5/ancillary/elevation')
+        if lat is None:
+            lat = ee.Image('projects/openet/assets/meteorology/era5/ancillary/latitude')\
+            # lat = ee.Image('projects/openet/assets/meteorology/era5/ancillary/elevation')\
+            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
+            #     .rename(['latitude'])
+
+        def wind_magnitude(input_img):
+            """Compute hourly wind magnitude from vectors"""
+            return ee.Image(input_img.select(['u_component_of_wind_10m'])).pow(2)\
+                .add(ee.Image(input_img.select(['v_component_of_wind_10m'])).pow(2))\
+                .sqrt().rename(['wind_10m'])
+
+        wind_img = ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
+
+        return cls(
+            tmax=input_coll.select(['temperature_2m']).max().subtract(273.15),
+            tmin=input_coll.select(['temperature_2m']).min().subtract(273.15),
+            ea=calcs._sat_vapor_pressure(
+                input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)
+            ),
+            rs=input_coll.select(['surface_solar_radiation_downwards'])
+                .sum().divide(1000000),
+            uz=wind_img,
+            zw=zw,
+            elev=elev,
+            lat=lat,
+            doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
+            method=method,
+            rso_type=rso_type,
+        )
+
+    @classmethod
     def era5_land(cls, input_coll, zw=None, elev=None, lat=None,
                   method='asce', rso_type=None):
-        """Initialize daily RefET from a hourly ERA5-Land image collection
+        """Initialize daily RefET from an hourly ERA5-Land image collection
 
         Parameters
         ----------
