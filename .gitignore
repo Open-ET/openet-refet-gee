@@ -19,5 +19,8 @@ dist/
 # PyCharm project settings
 .idea
 
+# MacOS
+.DS_Store
+
 # Miscellaneous files
 notes.txt
