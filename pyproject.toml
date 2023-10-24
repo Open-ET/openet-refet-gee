@@ -1,0 +1,44 @@
+[project]
+name = "openet-refet-gee"
+version = "0.6.3"
+authors = [
+  { name = "Charles Morton", email = "charles.morton@dri.edu" },
+]
+# maintainers = [
+#   { name = "Charles Morton", email = "charles.morton@dri.edu" }
+# ]
+description = "Google Earth Engine based ASCE Standardized Reference Evapotranspiration Functions"
+readme = "README.rst"
+requires-python = ">=3.7"
+keywords = ["RefET", "OpenET", "Earth Engine", "evapotranspiration"]
+license = {file = "LICENSE.txt"}
+# license = {text = "Apache-2.0"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "earthengine-api>=0.1.364",
+    "importlib-metadata; python_version <= '3.7'",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Open-ET/openet-refet-gee"
+# "Repository" = "https://github.com/Open-ET/openet-refet-gee.git"
+# "Documentation" = "https://github.com/Open-ET/openet-refet-gee"
+# "Bug Tracker" = "https://github.com/Open-ET/openet-refet-gee"
+# "Changelog" = "https://github.com/Open-ET/openet-refet-gee"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+test = [
+    "pytest", "pandas", "pytz"
+]
+
+[tool.setuptools.packages.find]
+# include = ["openet*"]
+exclude = ["docs*", "examples*"]
