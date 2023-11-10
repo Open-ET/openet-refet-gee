@@ -27,8 +27,7 @@ class DailyData():
     # Read in the inputs CSV file using pandas
     csv_df = pd.read_csv(csv_path, engine='python', na_values='NO RECORD')
     csv_df.rename(
-        columns={'MN': 'TMIN', 'MX': 'TMAX', 'YM': 'TDEW', 'UA': 'WIND',
-                 'SR': 'RS'},
+        columns={'MN': 'TMIN', 'MX': 'TMAX', 'YM': 'TDEW', 'UA': 'WIND', 'SR': 'RS'},
         inplace=True)
     csv_df['DATE'] = csv_df[['YEAR', 'MONTH', 'DAY']].apply(
         lambda x: dt.datetime(*x).strftime('%Y-%m-%d'), axis=1)
@@ -102,15 +101,12 @@ class DailyData():
         for surface in ['ETr', 'ETo']:
             date_values = csv_df \
                 .loc[test_date, ['TMIN', 'TMAX', 'EA', 'RS', 'WIND']] \
-                .rename({
-                    'TMIN': 'tmin', 'TMAX': 'tmax', 'EA': 'ea', 'RS': 'rs',
-                    'WIND': 'uz'}) \
+                .rename({'TMIN': 'tmin', 'TMAX': 'tmax', 'EA': 'ea', 'RS': 'rs', 'WIND': 'uz'}) \
                 .to_dict()
             date_values.update({
                 'surface': surface.lower(),
                 'expected': out_df.loc[test_date, surface],
-                'doy': int(
-                    dt.datetime.strptime(test_date, '%Y-%m-%d').strftime('%j')),
+                'doy': int(dt.datetime.strptime(test_date, '%Y-%m-%d').strftime('%j')),
                 'zw': zw,
                 'elev': elev,
                 'lat': lat,
@@ -125,8 +121,7 @@ def pytest_generate_tests(metafunc):
     if 'daily_params' not in metafunc.fixturenames:
         return
     daily = DailyData()
-    metafunc.parametrize('daily_params', daily.values, ids=daily.ids,
-                         scope='module')
+    metafunc.parametrize('daily_params', daily.values, ids=daily.ids, scope='module')
 
 
 def test_refet_daily_output(daily_params):
@@ -155,7 +150,5 @@ def test_refet_daily_output(daily_params):
         refet = Daily(**adj_inputs).etr
     elif surface.lower() == 'eto':
         refet = Daily(**adj_inputs).eto
-    output = refet\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
     assert float(output[surface.lower()]) == pytest.approx(expected, abs=diff)

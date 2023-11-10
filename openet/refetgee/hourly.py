@@ -22,8 +22,7 @@ def lazy_property(fn):
 
 
 class Hourly():
-    def __init__(self, tmean, ea, rs, uz, zw, elev, lat, lon, doy, time,
-                 method='asce'):
+    def __init__(self, tmean, ea, rs, uz, zw, elev, lat, lon, doy, time, method='asce'):
         """ASCE Hourly Standardized Reference Evapotranspiration (ET)
 
         .. warning:: Cloudiness fraction at night is not being computed per [1]_
@@ -176,16 +175,14 @@ class Hourly():
         # Adjust coefficients for daytime/nighttime
         # Nighttime is defined as when Rn < 0 (pg 44)
         self.cd = self.rn.multiply(0).add(cd_day).where(self.rn.lt(0), cd_night)
-        self.g_rn = self.rn.multiply(0).add(g_rn_day)\
-            .where(self.rn.lt(0), g_rn_night)
+        self.g_rn = self.rn.multiply(0).add(g_rn_day).where(self.rn.lt(0), g_rn_night)
         # self.cd = ee.Image.constant(cd_day).where(self.rn.lt(0), cd_night)
         # self.g_rn = ee.Image.constant(g_rn_day).where(self.rn.lt(0), g_rn_night)
 
         # Soil heat flux (Eqs. 65 and 66)
         self.g = self.rn.multiply(self.g_rn)
 
-        return ee.Image(self._etsz().rename(['eto'])
-            .set('system:time_start', self.time_start))
+        return ee.Image(self._etsz().rename(['eto']).set('system:time_start', self.time_start))
 
     @lazy_property
     def etr(self):
@@ -199,16 +196,14 @@ class Hourly():
         # Adjust coefficients for daytime/nighttime
         # Nighttime is defined as when Rn < 0 (pg 44)
         self.cd = self.rn.multiply(0).add(cd_day).where(self.rn.lt(0), cd_night)
-        self.g_rn = self.rn.multiply(0).add(g_rn_day)\
-            .where(self.rn.lt(0), g_rn_night)
+        self.g_rn = self.rn.multiply(0).add(g_rn_day).where(self.rn.lt(0), g_rn_night)
         # self.cd = ee.Image.constant(cd_day).where(self.rn.lt(0), cd_night)
         # self.g_rn = ee.Image.constant(g_rn_day).where(self.rn.lt(0), g_rn_night)
 
         # Soil heat flux (Eqs. 65 and 66)
         self.g = self.rn.multiply(self.g_rn)
 
-        return ee.Image(self._etsz().rename(['etr'])
-            .set('system:time_start', self.time_start))
+        return ee.Image(self._etsz().rename(['etr']).set('system:time_start', self.time_start))
 
     def _etsz(self):
         """Hourly reference ET (Eq. 1)
@@ -228,14 +223,15 @@ class Hourly():
         return self.tmean.expression(
             '(0.408 * es_slope * (rn - g) + (psy * cn * u2 * vpd / (tmean + 273))) / '
             '(es_slope + psy * (cd * u2 + 1))',
-            {'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
-             'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
-             'u2': self.u2, 'vpd': self.vpd}
+            {
+                'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
+                'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
+                'u2': self.u2, 'vpd': self.vpd
+            }
         )
 
     @classmethod
-    def nldas(cls, input_img, zw=None, elev=None, lat=None, lon=None,
-              method='asce'):
+    def nldas(cls, input_img, zw=None, elev=None, lat=None, lon=None, method='asce'):
         """Initialize hourly RefET from an NLDAS image
 
         Parameters
@@ -301,8 +297,7 @@ class Hourly():
                 q=input_img.select(['specific_humidity']),
                 pair=calcs._air_pressure(elev, method)),
             rs=input_img.select(['shortwave_radiation']).multiply(0.0036),
-            uz=input_img.select(['wind_u']).pow(2)
-                .add(input_img.select(['wind_v']).pow(2))
+            uz=input_img.select(['wind_u']).pow(2).add(input_img.select(['wind_v']).pow(2))
                 .sqrt().rename(['uz']),
             zw=zw,
             elev=elev,
@@ -315,8 +310,7 @@ class Hourly():
         )
 
     @classmethod
-    def rtma(cls, input_img, rs=None, zw=None, elev=None, lat=None, lon=None,
-             method='asce'):
+    def rtma(cls, input_img, rs=None, zw=None, elev=None, lat=None, lon=None, method='asce'):
         """Initialize hourly RefET from an RTMA image
 
         Parameters
@@ -458,8 +452,7 @@ class Hourly():
             ea=calcs._sat_vapor_pressure(
                 input_img.select(['dewpoint_temperature_2m']).subtract(273.15)
             ),
-            rs=input_img.select(['surface_solar_radiation_downwards'])
-                .divide(1000000),
+            rs=input_img.select(['surface_solar_radiation_downwards']).divide(1000000),
             uz=input_img.select(['u_component_of_wind_10m']).pow(2)
                 .add(input_img.select(['v_component_of_wind_10m']).pow(2))
                 .sqrt().rename(['wind_10m']),
@@ -474,8 +467,7 @@ class Hourly():
         )
 
     @classmethod
-    def era5_land(cls, input_img, zw=None, elev=None, lat=None, lon=None,
-                  method='asce'):
+    def era5_land(cls, input_img, zw=None, elev=None, lat=None, lon=None, method='asce'):
         """Initialize hourly RefET from an ERA5-Land image
 
         Parameters

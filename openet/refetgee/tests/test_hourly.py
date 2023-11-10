@@ -57,9 +57,7 @@ def test_refet_hourly_input_positions():
         ee.Number(h_args['doy']), ee.Number(h_args['time']), method='refet'
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(h_args['etr_refet'])
 
@@ -74,9 +72,7 @@ def test_refet_hourly_default_method_etr():
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time'])
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 
@@ -90,9 +86,7 @@ def test_refet_hourly_asce_method_etr():
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']), method='asce'
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 
@@ -106,9 +100,7 @@ def test_refet_hourly_refet_method_etr():
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']), method='refet'
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(h_args['etr_refet'])
 
@@ -122,9 +114,7 @@ def test_refet_hourly_default_method_eto():
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time'])
     )
 
-    output = refet.eto\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.eto.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['eto']) == pytest.approx(h_args['eto_asce'])
 
@@ -138,9 +128,7 @@ def test_refet_hourly_asce_method_eto():
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']), method='asce'
     )
 
-    output = refet.eto\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.eto.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['eto']) == pytest.approx(h_args['eto_asce'])
 
@@ -154,9 +142,7 @@ def test_refet_hourly_asce_method_eto():
         doy=ee.Number(h_args['doy']), time=ee.Number(h_args['time']), method='refet'
     )
 
-    output = refet.eto\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.eto.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['eto']) == pytest.approx(h_args['eto_refet'])
 
@@ -206,9 +192,7 @@ def test_refet_hourly_nldas_etr():
         zw=ee.Number(s_args['zw']), method='asce'
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 
@@ -228,9 +212,7 @@ def test_refet_hourly_rtma_etr():
         zw=ee.Number(s_args['zw']), method='asce'
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 
@@ -253,9 +235,7 @@ def test_refet_hourly_era5_etr():
         zw=ee.Number(s_args['zw']), method='asce'
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 
@@ -278,9 +258,7 @@ def test_refet_hourly_era5_land_etr():
         zw=ee.Number(s_args['zw']), method='asce'
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(h_args['etr_asce'])
 

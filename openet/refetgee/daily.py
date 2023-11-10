@@ -22,10 +22,7 @@ def lazy_property(fn):
 
 
 class Daily():
-    """"""
-
-    def __init__(self, tmax, tmin, ea, rs, uz, zw, elev, lat, doy,
-                 method='asce', rso_type=None, rso=None):
+    def __init__(self, tmax, tmin, ea, rs, uz, zw, elev, lat, doy, method='asce', rso_type=None, rso=None):
         """ASCE Daily Standardized Reference Evapotranspiration (ET)
 
         Arguments
@@ -153,8 +150,7 @@ class Daily():
         self.fcd = calcs._fcd_daily(rs=self.rs, rso=self.rso)
 
         # Net long-wave radiation
-        self.rnl = calcs._rnl_daily(
-            tmax=self.tmax, tmin=self.tmin, ea=self.ea, fcd=self.fcd)
+        self.rnl = calcs._rnl_daily(tmax=self.tmax, tmin=self.tmin, ea=self.ea, fcd=self.fcd)
 
         # Net radiation
         self.rn = calcs._rn(self.rs, self.rnl)
@@ -187,16 +183,14 @@ class Daily():
         """Short (grass) reference surface"""
         self.cn = 900
         self.cd = 0.34
-        return ee.Image(self._etsz().rename(['eto'])
-            .set('system:time_start', self.time_start))
+        return ee.Image(self._etsz().rename(['eto']).set('system:time_start', self.time_start))
 
     @lazy_property
     def etr(self):
         """Tall (alfalfa) reference surface"""
         self.cn = 1600
         self.cd = 0.38
-        return ee.Image(self._etsz().rename(['etr'])
-            .set('system:time_start', self.time_start))
+        return ee.Image(self._etsz().rename(['etr']).set('system:time_start', self.time_start))
 
     def _etsz(self):
         """Daily reference ET (Eq. 1)
@@ -207,11 +201,12 @@ class Daily():
             Standardized reference ET [mm].
 
         """
-        return self.tmean.add(273).pow(-1).multiply(self.u2)\
-            .multiply(self.vpd).multiply(self.cn).multiply(self.psy)\
-            .add(self.es_slope.multiply(self.rn).multiply(0.408))\
-            .divide(self.u2.multiply(self.cd).add(1)\
-                        .multiply(self.psy).add(self.es_slope))
+        return (
+            self.tmean.add(273).pow(-1).multiply(self.u2)
+            .multiply(self.vpd).multiply(self.cn).multiply(self.psy)
+            .add(self.es_slope.multiply(self.rn).multiply(0.408))
+            .divide(self.u2.multiply(self.cd).add(1).multiply(self.psy).add(self.es_slope))
+        )
 
         # return self.tmin.expression(
         #     '(0.408 * es_slope * rn + (psy * cn * u2 * vpd / (tmean + 273))) / '
@@ -234,13 +229,14 @@ class Daily():
         https://wetlandscapes.github.io/blog/blog/penman-monteith-and-priestley-taylor/
 
         """
-        return self.es_slope\
+        return (
+            self.es_slope
             .expression(
                 '(alpha * es_slope * rn * 1000 / (2453 * (es_slope + psy)))',
-                {'es_slope': self.es_slope, 'rn': self.rn, 'psy': self.psy,
-                 'alpha': 1.26})\
-            .rename(['etw'])\
+                {'es_slope': self.es_slope, 'rn': self.rn, 'psy': self.psy, 'alpha': 1.26})
+            .rename(['etw'])
             .set('system:time_start', self.time_start)
+        )
         # return self.es_slope.multiply(self.rn)\
         #     .divide((self.es_slope.add(self.psy)).multiply(2453))\
         #     .multiply(1.26).multiply(1000)\
@@ -261,13 +257,14 @@ class Daily():
         https://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf
 
         """
-        return self.u2\
+        return (
+            self.u2
             .expression(
                 '(delta / (delta + psy * (1 + 0.34 * u2))) * (0.408 * rn)',
-                {'delta': self.es_slope, 'psy': self.psy, 'u2': self.u2,
-                 'rn': self.rn})\
-            .rename(['eto_fs1'])\
+                {'delta': self.es_slope, 'psy': self.psy, 'u2': self.u2, 'rn': self.rn})
+            .rename(['eto_fs1'])
             .set('system:time_start', self.time_start)
+        )
 
         # return self.es_slope\
         #       .divide(self.es_slope.add(self.psy.multiply(self.u2.multiply(0.34).add(1))))\
@@ -288,21 +285,19 @@ class Daily():
 
         """
         # Temperature Term (Eq. 14)
-        TT = self.u2.expression(
-            '(900 / (t + 273)) * u2',
-            {'t': self.tmean, 'u2': self.u2})
+        tt = self.u2.expression('(900 / (t + 273)) * u2', {'t': self.tmean, 'u2': self.u2})
         # Psi Term (Eq. 13)
-        PT = self.u2.expression(
+        pt = self.u2.expression(
             'psy / (slope + psy * (1 + 0.34 * u2))',
-            {'slope': self.es_slope, 'psy': self.psy, 'u2': self.u2})
+            {'slope': self.es_slope, 'psy': self.psy, 'u2': self.u2}
+        )
 
-        return self.u2\
-            .expression(
-                'PT * TT * (es-ea)',
-                {'PT': PT, 'TT': TT, 'es': self.es, 'ea': self.ea})\
-            .rename(['eto_fs2'])\
+        return (
+            self.u2
+            .expression('PT * TT * (es-ea)', {'PT': pt, 'TT': tt, 'es': self.es, 'ea': self.ea})
+            .rename(['eto_fs2'])
             .set('system:time_start', self.time_start)
-
+        )
         # return self.PT.multiply(self.TT)\
         #     .multiply(self.es.subtract(self.ea))\
         #     .rename(['eto_fs2'])\
@@ -321,13 +316,14 @@ class Daily():
         ----------
 
         """
-        return self.tmax\
+        return (
+            self.tmax
             .expression(
                 '0.0023 * (tmean + 17.8) * ((tmax - tmin) ** 0.5) * 0.408 * ra',
-                {'tmean': self.tmean, 'tmax': self.tmax, 'tmin': self.tmin,
-                 'ra': self.ra})\
-            .rename(['pet_hargreaves'])\
+                {'tmean': self.tmean, 'tmax': self.tmax, 'tmin': self.tmin, 'ra': self.ra})
+            .rename(['pet_hargreaves'])
             .set('system:time_start', self.time_start)
+        )
         # return self.ra\
         #     .multiply(self.tmean.add(17.8))\
         #     .multiply(self.tmax.subtract(self.tmin).pow(0.5))\
@@ -336,8 +332,7 @@ class Daily():
         #     .set('system:time_start', self.time_start)
 
     @classmethod
-    def gridmet(cls, input_img, zw=None, elev=None, lat=None, method='asce',
-                rso_type=None):
+    def gridmet(cls, input_img, zw=None, elev=None, lat=None, method='asce', rso_type=None):
         """Initialize daily RefET from a GRIDMET image
 
         Parameters
@@ -378,11 +373,12 @@ class Daily():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/climate-engine/gridmet/elevation')\
+            elev = (
+                ee.Image('projects/earthengine-legacy/assets/'
+                         'projects/climate-engine/gridmet/elevation')\
                 .rename(['elevation'])
-            # elev = ee.Image('CGIAR/SRTM90_V4')\
-            #     .reproject('EPSG:4326', gridmet_transform)
+            )
+            # elev = ee.Image('CGIAR/SRTM90_V4').reproject('EPSG:4326', gridmet_transform)
         if lat is None:
             lat = ee.Image('projects/earthengine-legacy/assets/'
                            'projects/climate-engine/gridmet/elevation')\
@@ -410,8 +406,7 @@ class Daily():
         )
 
     @classmethod
-    def maca(cls, input_img, zw=None, elev=None, lat=None, method='asce',
-             rso_type=None):
+    def maca(cls, input_img, zw=None, elev=None, lat=None, method='asce', rso_type=None):
         """Initialize daily RefET from a MACA image
 
         Parameters
@@ -459,8 +454,7 @@ class Daily():
             # should we use gridmet elev? maca grid is shifted
             elev = ee.Image('projects/earthengine-legacy/assets/'
                             'projects/climate-engine/gridmet/elevation')
-            # elev = ee.Image('CGIAR/SRTM90_V4') \
-            #     .reproject('EPSG:4326', gridmet_transform)
+            # elev = ee.Image('CGIAR/SRTM90_V4').reproject('EPSG:4326', gridmet_transform)
         if lat is None:
             lat = ee.Image('projects/earthengine-legacy/assets/'
                            'projects/climate-engine/gridmet/elevation') \
@@ -494,8 +488,7 @@ class Daily():
         )
 
     @classmethod
-    def nldas(cls, input_coll, zw=None, elev=None, lat=None, method='asce',
-              rso_type=None):
+    def nldas(cls, input_coll, zw=None, elev=None, lat=None, method='asce', rso_type=None):
         """Initialize daily RefET from a hourly NLDAS image collection
 
         Parameters
@@ -615,21 +608,17 @@ class Daily():
 
         cfsv2_crs = 'EPSG:4326'
         # Transform for 2011 to Present
-        cfsv2_transform = [0.20454520376789903, 0., -180,
-                           0., -0.20442210122586923, 90]
+        cfsv2_transform = [0.20454520376789903, 0., -180, 0., -0.20442210122586923, 90]
         # Transform for 1979 to 2010
-        # cfsv2_transform = [0.3124995757764987, 0, -180,
-        #                    0, -0.31221217943274454, 90]
+        # cfsv2_transform = [0.3124995757764987, 0, -180, 0, -0.31221217943274454, 90]
 
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
             # TODO: Build a CFSv2 elevation asset
-            elev = ee.Image('CGIAR/SRTM90_V4')\
-                .reproject(cfsv2_crs, cfsv2_transform)
+            elev = ee.Image('CGIAR/SRTM90_V4').reproject(cfsv2_crs, cfsv2_transform)
         if lat is None:
-            lat = ee.Image.pixelLonLat().select('latitude')\
-                .reproject(cfsv2_crs, cfsv2_transform)
+            lat = ee.Image.pixelLonLat().select('latitude').reproject(cfsv2_crs, cfsv2_transform)
             # lat = input_coll.first().select([0]).multiply(0)\
             #     .add(ee.Image.pixelLonLat().select('latitude'))
 
@@ -638,19 +627,19 @@ class Daily():
             u_img = ee.Image(input_img).select(['u-component_of_wind_height_above_ground'])
             v_img = ee.Image(input_img).select(['v-component_of_wind_height_above_ground'])
             return u_img.pow(2).add(v_img.pow(2)).sqrt()
+
         wind_img = ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
 
         ea_img = calcs._actual_vapor_pressure(
             pair=calcs._air_pressure(elev, method),
             # pair=input_coll.select(['Pressure_surface']).mean()
-            q=input_coll.select(['Specific_humidity_height_above_ground']).mean())
+            q=input_coll.select(['Specific_humidity_height_above_ground']).mean()
+        )
 
         return cls(
-            tmax=input_coll
-                .select(['Maximum_temperature_height_above_ground_6_Hour_Interval'])
+            tmax=input_coll.select(['Maximum_temperature_height_above_ground_6_Hour_Interval'])
                 .max().subtract(273.15),
-            tmin=input_coll
-                .select(['Minimum_temperature_height_above_ground_6_Hour_Interval'])
+            tmin=input_coll.select(['Minimum_temperature_height_above_ground_6_Hour_Interval'])
                 .min().subtract(273.15),
             ea=ea_img,
             # TODO: Check the conversion on solar
@@ -667,8 +656,7 @@ class Daily():
         )
 
     @classmethod
-    def rtma(cls, input_coll, rs=None, zw=None, elev=None, lat=None,
-             method='asce', rso_type=None):
+    def rtma(cls, input_coll, rs=None, zw=None, elev=None, lat=None, method='asce', rso_type=None):
         """Initialize daily RefET from a hourly RTMA image collection
 
         Parameters
@@ -713,14 +701,18 @@ class Daily():
         elif isinstance(rs, ee.Number) or isinstance(rs, float) or isinstance(rs, int):
             rs = ee.Image.constant(rs)
         elif rs is None or rs.upper() == 'GRIDMET':
-            rs_coll = ee.ImageCollection('IDAHO_EPSCOR/GRIDMET')\
-                .filterDate(start_date, start_date.advance(1, 'day'))\
+            rs_coll = (
+                ee.ImageCollection('IDAHO_EPSCOR/GRIDMET')
+                .filterDate(start_date, start_date.advance(1, 'day'))
                 .select(['srad'])
+            )
             rs = ee.Image(rs_coll.first()).multiply(0.0864)
         elif rs.upper() == 'NLDAS':
-            rs_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
-                .filterDate(start_date, start_date.advance(1, 'day'))\
+            rs_coll = (
+                ee.ImageCollection('NASA/NLDAS/FORA0125_H002')
+                .filterDate(start_date, start_date.advance(1, 'day'))
                 .select(['shortwave_radiation'])
+            )
             # TODO: Check this unit conversion
             rs = ee.Image(rs_coll.sum()).multiply(0.0036)
         else:
@@ -754,7 +746,8 @@ class Daily():
 
         ea_img = calcs._actual_vapor_pressure(
             pair=calcs._air_pressure(elev, method),
-            q=input_coll.select(['SPFH']).mean())
+            q=input_coll.select(['SPFH']).mean()
+        )
 
         return cls(
             tmax=input_coll.select(['TMP']).max(),
@@ -771,8 +764,7 @@ class Daily():
         )
 
     @classmethod
-    def era5(cls, input_coll, zw=None, elev=None, lat=None, method='asce',
-             rso_type=None):
+    def era5(cls, input_coll, zw=None, elev=None, lat=None, method='asce', rso_type=None):
         """Initialize daily RefET from an hourly ERA5 image collection
 
         Parameters
@@ -846,8 +838,7 @@ class Daily():
         )
 
     @classmethod
-    def era5_land(cls, input_coll, zw=None, elev=None, lat=None,
-                  method='asce', rso_type=None):
+    def era5_land(cls, input_coll, zw=None, elev=None, lat=None, method='asce', rso_type=None):
         """Initialize daily RefET from an hourly ERA5-Land image collection
 
         Parameters

@@ -31,8 +31,7 @@ def _air_pressure(elev, method='asce'):
 
     """
     if method == 'asce':
-        return elev.multiply(-0.0065).add(293).divide(293)\
-            .pow(5.26).multiply(101.3)
+        return elev.multiply(-0.0065).add(293).divide(293).pow(5.26).multiply(101.3)
     elif method == 'refet':
         return elev.multiply(-0.0065).add(293).divide(293)\
             .pow(9.8 / (0.0065 * 286.9)).multiply(101.3)

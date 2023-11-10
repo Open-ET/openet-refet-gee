@@ -27,9 +27,7 @@ class HourlyData():
 
     # Read in the inputs CSV file using pandas
     csv_df = pd.read_csv(csv_path, engine='python', na_values='NO RECORD')
-    csv_df.rename(
-        columns={'OB': 'TEMP', 'TP': 'TDEW', 'WS': 'WIND', 'SI': 'RS'},
-        inplace=True)
+    csv_df.rename(columns={'OB': 'TEMP', 'TP': 'TDEW', 'WS': 'WIND', 'SI': 'RS'}, inplace=True)
     # AgriMet times are local with DST (this will drop one hour)
     # DEADBEEF - Can't set timezone as variable in class?
     csv_df['DATETIME'] = csv_df[['YEAR', 'MONTH', 'DAY', 'HOUR']].apply(
@@ -129,9 +127,7 @@ class HourlyData():
         for surface in ['ETr', 'ETo']:
             date_values = csv_df \
                 .loc[test_date, ['TEMP', 'EA', 'RS', 'WIND', 'DOY']] \
-                .rename({
-                    'DOY': 'doy', 'TEMP': 'tmean', 'EA': 'ea', 'RS': 'rs',
-                    'WIND': 'uz'}) \
+                .rename({'DOY': 'doy', 'TEMP': 'tmean', 'EA': 'ea', 'RS': 'rs', 'WIND': 'uz'}) \
                 .to_dict()
             date_values.update({
                 'surface': surface.lower(),
@@ -154,8 +150,7 @@ def pytest_generate_tests(metafunc):
     if 'hourly_params' not in metafunc.fixturenames:
         return
     hourly = HourlyData()
-    metafunc.parametrize('hourly_params', hourly.values, ids=hourly.ids,
-                         scope='module')
+    metafunc.parametrize('hourly_params', hourly.values, ids=hourly.ids, scope='module')
 
 
 def test_refet_hourly_func_output(hourly_params):
@@ -180,7 +175,5 @@ def test_refet_hourly_func_output(hourly_params):
         refet = Hourly(**adj_inputs).etr
     elif surface.lower() == 'eto':
         refet = Hourly(**adj_inputs).eto
-    output = refet\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
     assert float(output[surface.lower()]) == pytest.approx(expected, abs=0.01)

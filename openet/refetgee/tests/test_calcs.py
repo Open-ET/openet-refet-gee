@@ -92,8 +92,7 @@ constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
 
 # Test ancillary functions with positional inputs
 def test_air_pressure_default(elev=s_args['elev'], pair=s_args['pair_asce']):
-    assert float(calcs._air_pressure(
-        elev=ee.Number(elev)).getInfo()) == pytest.approx(pair)
+    assert float(calcs._air_pressure(elev=ee.Number(elev)).getInfo()) == pytest.approx(pair)
 
 def test_air_pressure_asce(elev=s_args['elev'], pair=s_args['pair_asce']):
     assert float(calcs._air_pressure(
@@ -104,8 +103,7 @@ def test_air_pressure_refet(elev=s_args['elev'], pair=s_args['pair']):
         elev=ee.Number(elev), method='refet').getInfo()) == pytest.approx(pair)
 
 def test_air_pressure_position(elev=s_args['elev'], pair=s_args['pair']):
-    assert float(calcs._air_pressure(
-        ee.Number(elev), 'refet').getInfo()) == pytest.approx(pair)
+    assert float(calcs._air_pressure(ee.Number(elev), 'refet').getInfo()) == pytest.approx(pair)
 
 def test_air_pressure_image(elev=s_args['elev'], pair=s_args['pair_asce']):
     output = calcs._air_pressure(elev=ee.Image.constant(elev))\
@@ -116,12 +114,14 @@ def test_air_pressure_image(elev=s_args['elev'], pair=s_args['pair_asce']):
 
 @pytest.mark.parametrize(
     'tdew, ea',
-    [[d_args['tdew'], d_args['ea']],
-     [h_args['tmean'], h_args['es']],
-     [h_args['tdew'], h_args['ea']]])
+    [
+        [d_args['tdew'], d_args['ea']],
+        [h_args['tmean'], h_args['es']],
+        [h_args['tdew'], h_args['ea']],
+    ]
+)
 def test_sat_vapor_pressure_number(tdew, ea):
-    assert float(calcs._sat_vapor_pressure(
-        ee.Number(tdew)).getInfo()) == pytest.approx(ea)
+    assert float(calcs._sat_vapor_pressure(ee.Number(tdew)).getInfo()) == pytest.approx(ea)
 
 def test_sat_vapor_pressure_keyword(tdew=d_args['tdew'], ea=d_args['ea']):
     assert float(calcs._sat_vapor_pressure(
@@ -136,21 +136,22 @@ def test_sat_vapor_pressure_image(tdew=d_args['tdew'], ea=d_args['ea']):
 
 @pytest.mark.parametrize(
     'ea, pair, q',
-    [[d_args['ea'], s_args['pair'], d_args['q']],
-     [d_args['ea'], s_args['pair_asce'], d_args['q_asce']],
-     [h_args['ea'], s_args['pair'], h_args['q']],
-     [h_args['ea'], s_args['pair_asce'], h_args['q_asce']]])
+    [
+        [d_args['ea'], s_args['pair'], d_args['q']],
+        [d_args['ea'], s_args['pair_asce'], d_args['q_asce']],
+        [h_args['ea'], s_args['pair'], h_args['q']],
+        [h_args['ea'], s_args['pair_asce'], h_args['q_asce']],
+    ]
+)
 def test_specific_humidity_number(ea, pair, q):
     assert float(calcs._specific_humidity(
         ea=ee.Number(ea), pair=ee.Number(pair)).getInfo()) == pytest.approx(q)
 
-def test_specific_humidity_position(ea=d_args['ea'], pair=s_args['pair'],
-                                    q=d_args['q']):
+def test_specific_humidity_position(ea=d_args['ea'], pair=s_args['pair'], q=d_args['q']):
     assert float(calcs._specific_humidity(
         ee.Number(ea), ee.Number(pair)).getInfo()) == pytest.approx(q)
 
-def test_specific_humidity_image(ea=d_args['ea'], pair=s_args['pair'],
-                                 q=d_args['q']):
+def test_specific_humidity_image(ea=d_args['ea'], pair=s_args['pair'], q=d_args['q']):
     output = calcs._specific_humidity(
             ea=ee.Image.constant(ea), pair=ee.Number(pair)) \
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
@@ -158,25 +159,20 @@ def test_specific_humidity_image(ea=d_args['ea'], pair=s_args['pair'],
     assert float(output['constant']) == pytest.approx(q)
 
 
-def test_actual_vapor_pressure_number(q=d_args['q'], pair=s_args['pair'],
-                                      ea=d_args['ea']):
+def test_actual_vapor_pressure_number(q=d_args['q'], pair=s_args['pair'], ea=d_args['ea']):
     assert float(calcs._actual_vapor_pressure(
         q=ee.Number(q), pair=ee.Number(pair)).getInfo()) == pytest.approx(ea)
 
-def test_actual_vapor_pressure_asce(q=d_args['q_asce'], pair=s_args['pair_asce'],
-                                    ea=d_args['ea']):
+def test_actual_vapor_pressure_asce(q=d_args['q_asce'], pair=s_args['pair_asce'], ea=d_args['ea']):
     assert float(calcs._actual_vapor_pressure(
         q=ee.Number(q), pair=ee.Number(pair)).getInfo()) == pytest.approx(ea)
 
-def test_actual_vapor_pressure_position(q=d_args['q'], pair=s_args['pair'],
-                                       ea=d_args['ea']):
+def test_actual_vapor_pressure_position(q=d_args['q'], pair=s_args['pair'], ea=d_args['ea']):
     assert float(calcs._actual_vapor_pressure(
         ee.Number(q), ee.Number(pair)).getInfo()) == pytest.approx(ea)
 
-def test_actual_vapor_pressure_image(q=d_args['q'], pair=s_args['pair'],
-                                     ea=d_args['ea']):
-    output = calcs._actual_vapor_pressure(
-            q=ee.Image.constant(q), pair=ee.Number(pair))\
+def test_actual_vapor_pressure_image(q=d_args['q'], pair=s_args['pair'], ea=d_args['ea']):
+    output = calcs._actual_vapor_pressure(q=ee.Image.constant(q), pair=ee.Number(pair))\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
         .getInfo()
     assert float(output['constant']) == pytest.approx(ea)
@@ -186,8 +182,7 @@ def test_vpd_number(es=d_args['es'], ea=d_args['ea']):
     assert float(calcs._vpd(
         es=ee.Number(es), ea=ee.Number(ea)).getInfo()) == pytest.approx(float(es-ea))
     # Check that negative VPD's are set to 0
-    assert float(calcs._vpd(
-        es=ee.Number(es), ea=ee.Number(es+1)).getInfo()) == pytest.approx(0)
+    assert float(calcs._vpd(es=ee.Number(es), ea=ee.Number(es+1)).getInfo()) == pytest.approx(0)
 
 def test_vpd_image(es=d_args['es'], ea=d_args['ea']):
     output = calcs._vpd(es=ee.Image.constant(es), ea=ee.Number(ea))\
@@ -207,14 +202,12 @@ def test_es_slope_asce(tmin=d_args['tmin'], tmax=d_args['tmax'],
         tmean=ee.Number(0.5 * (tmin + tmax)),
         method='asce').getInfo()) == pytest.approx(es_slope)
 
-def test_es_slope_refet(tmin=d_args['tmin'], tmax=d_args['tmax'],
-                        es_slope=d_args['es_slope']):
+def test_es_slope_refet(tmin=d_args['tmin'], tmax=d_args['tmax'], es_slope=d_args['es_slope']):
     assert float(calcs._es_slope(
         tmean=ee.Number(0.5 * (tmin + tmax)),
         method='refet').getInfo() == pytest.approx(es_slope))
 
-def test_es_slope_position(tmin=d_args['tmin'], tmax=d_args['tmax'],
-                           es_slope=d_args['es_slope']):
+def test_es_slope_position(tmin=d_args['tmin'], tmax=d_args['tmax'], es_slope=d_args['es_slope']):
     assert float(calcs._es_slope(
         ee.Number(0.5 * (tmin + tmax)),
         'refet').getInfo()) == pytest.approx(es_slope)
@@ -228,30 +221,25 @@ def test_es_slope_image(tmin=d_args['tmin'], tmax=d_args['tmax'],
 
 
 
-def test_precipitable_water_number(ea=d_args['ea'], pair=s_args['pair'],
-                                   w=d_args['w']):
+def test_precipitable_water_number(ea=d_args['ea'], pair=s_args['pair'], w=d_args['w']):
     assert float(calcs._precipitable_water(
         ee.Number(ea), ee.Number(pair)).getInfo()) == pytest.approx(w)
 
-def test_precipitable_water_image_1(ea=d_args['ea'], pair=s_args['pair'],
-                                    w=d_args['w']):
+def test_precipitable_water_image_1(ea=d_args['ea'], pair=s_args['pair'], w=d_args['w']):
     output = calcs._precipitable_water(ee.Image.constant(ea), ee.Number(pair)) \
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
         .getInfo()
     assert float(output['constant']) == pytest.approx(w)
 
-def test_precipitable_water_image_2(ea=d_args['ea'], pair=s_args['pair'],
-                                    w=d_args['w']):
-    output = calcs._precipitable_water(
-            ee.Image.constant(ea), ee.Image.constant(pair)) \
+def test_precipitable_water_image_2(ea=d_args['ea'], pair=s_args['pair'], w=d_args['w']):
+    output = calcs._precipitable_water(ee.Image.constant(ea), ee.Image.constant(pair)) \
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
         .getInfo()
     assert float(output['constant']) == pytest.approx(w)
 
 
 def test_doy_fraction_number(doy=d_args['doy'], expected=d_args['doy_frac']):
-    assert float(calcs._doy_fraction(
-        ee.Number(doy)).getInfo()) == pytest.approx(expected)
+    assert float(calcs._doy_fraction(ee.Number(doy)).getInfo()) == pytest.approx(expected)
 
 def test_doy_fraction_keyword(doy=d_args['doy'], expected=d_args['doy_frac']):
     assert float(calcs._doy_fraction(
@@ -265,20 +253,16 @@ def test_doy_fraction_image(doy=d_args['doy'], expected=d_args['doy_frac']):
 
 
 def test_delta_default(doy=d_args['doy'], delta=d_args['delta_asce']):
-    assert float(calcs._delta(
-        ee.Number(doy)).getInfo()) == pytest.approx(delta)
+    assert float(calcs._delta(ee.Number(doy)).getInfo()) == pytest.approx(delta)
 
 def test_delta_asce(doy=d_args['doy'], delta=d_args['delta_asce']):
-    assert float(calcs._delta(
-        ee.Number(doy), method='asce').getInfo()) == pytest.approx(delta)
+    assert float(calcs._delta(ee.Number(doy), method='asce').getInfo()) == pytest.approx(delta)
 
 def test_delta_refet(doy=d_args['doy'], delta=d_args['delta']):
-    assert float(calcs._delta(
-        ee.Number(doy), method='refet').getInfo()) == pytest.approx(delta)
+    assert float(calcs._delta(ee.Number(doy), method='refet').getInfo()) == pytest.approx(delta)
 
 def test_delta_keyword(doy=d_args['doy'], delta=d_args['delta_asce']):
-    assert float(calcs._delta(
-        doy=ee.Number(doy)).getInfo()) == pytest.approx(delta)
+    assert float(calcs._delta(doy=ee.Number(doy)).getInfo()) == pytest.approx(delta)
 
 def test_delta_image(doy=d_args['doy'], delta=d_args['delta_asce']):
     output = calcs._delta(ee.Image.constant(doy)) \
@@ -324,8 +308,7 @@ def test_solar_time_rad_number(lon=s_args['lon'], time_mid=h_args['time'],
 
 def test_solar_time_rad_image(lon=s_args['lon'], time_mid=h_args['time'],
                               sc=d_args['sc'], expected=h_args['solar_time']):
-    output = calcs._solar_time_rad(
-            ee.Image.constant(lon), ee.Number(time_mid), ee.Number(sc)) \
+    output = calcs._solar_time_rad(ee.Image.constant(lon), ee.Number(time_mid), ee.Number(sc)) \
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
         .getInfo()
     assert float(output['constant']) == pytest.approx(expected)
@@ -342,12 +325,10 @@ def test_solar_time_rad_image(lon=s_args['lon'], time_mid=h_args['time'],
 
 
 def test_omega_number(solar_time=h_args['solar_time'], omega=h_args['omega']):
-    assert float(calcs._omega(
-        ee.Number(solar_time)).getInfo()) == pytest.approx(omega)
+    assert float(calcs._omega(ee.Number(solar_time)).getInfo()) == pytest.approx(omega)
 
 def test_omega_keyword(solar_time=h_args['solar_time'], omega=h_args['omega']):
-    assert float(calcs._omega(
-        solar_time=ee.Number(solar_time)).getInfo()) == pytest.approx(omega)
+    assert float(calcs._omega(solar_time=ee.Number(solar_time)).getInfo()) == pytest.approx(omega)
 
 def test_omega_image(solar_time=h_args['solar_time'], omega=h_args['omega']):
     output = calcs._omega(ee.Image.constant(solar_time)) \
@@ -364,18 +345,16 @@ def test_omega_image(solar_time=h_args['solar_time'], omega=h_args['omega']):
      [2.0, 1.2, 1.5, 1.4]]
 )
 def test_wrap(x, x_min, x_max, expected):
-    assert float(calcs._wrap(
-        ee.Number(x), x_min, x_max).getInfo()) == pytest.approx(expected)
+    assert float(calcs._wrap(ee.Number(x), x_min, x_max).getInfo()) == pytest.approx(expected)
 
 
-def test_omega_sunset_number(lat=s_args['lat'], delta=d_args['delta'],
-                             omega_s=d_args['omega_s']):
+def test_omega_sunset_number(lat=s_args['lat'], delta=d_args['delta'], omega_s=d_args['omega_s']):
     assert float(calcs._omega_sunset(
         lat=ee.Number(lat),
         delta=ee.Number(delta)).getInfo()) == pytest.approx(omega_s)
 
 def test_omega_sunset_position(lat=s_args['lat'], delta=d_args['delta'],
-                              omega_s=d_args['omega_s']):
+                               omega_s=d_args['omega_s']):
     assert float(calcs._omega_sunset(
         ee.Number(lat),
         ee.Number(delta)).getInfo()) == pytest.approx(omega_s)
@@ -390,30 +369,25 @@ def test_omega_sunset_image(lat=s_args['lat'], delta=d_args['delta'],
 
 
 # Ra Daily
-def test_ra_daily_default(lat=s_args['lat'], doy=d_args['doy'],
-                          ra=d_args['ra_asce']):
+def test_ra_daily_default(lat=s_args['lat'], doy=d_args['doy'], ra=d_args['ra_asce']):
     assert float(calcs._ra_daily(
         lat=ee.Number(lat), doy=ee.Number(doy)).getInfo()) == pytest.approx(ra)
 
-def test_ra_daily_asce(lat=s_args['lat'], doy=d_args['doy'],
-                       ra=d_args['ra_asce']):
+def test_ra_daily_asce(lat=s_args['lat'], doy=d_args['doy'], ra=d_args['ra_asce']):
     assert float(calcs._ra_daily(
         lat=ee.Number(lat), doy=ee.Number(doy),
         method='asce').getInfo()) == pytest.approx(ra)
 
-def test_ra_daily_refet(lat=s_args['lat'], doy=d_args['doy'],
-                        ra=d_args['ra']):
+def test_ra_daily_refet(lat=s_args['lat'], doy=d_args['doy'], ra=d_args['ra']):
     assert float(calcs._ra_daily(
         lat=ee.Number(lat), doy=ee.Number(doy),
         method='refet').getInfo()) == pytest.approx(ra)
 
-def test_ra_daily_position(lat=s_args['lat'], doy=d_args['doy'],
-                           ra=d_args['ra_asce']):
+def test_ra_daily_position(lat=s_args['lat'], doy=d_args['doy'], ra=d_args['ra_asce']):
     assert float(calcs._ra_daily(
         ee.Number(lat), ee.Number(doy)).getInfo()) == pytest.approx(ra)
 
-def test_ra_daily_image(lat=s_args['lat'], doy=d_args['doy'],
-                        ra=d_args['ra_asce']):
+def test_ra_daily_image(lat=s_args['lat'], doy=d_args['doy'], ra=d_args['ra_asce']):
     output = calcs._ra_daily(lat=ee.Image.constant(lat), doy=ee.Number(doy)) \
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
         .getInfo()
@@ -543,19 +517,20 @@ def test_rso_hourly_image(ea=h_args['ea'], ra=h_args['ra'],
 # Rso Simple
 @pytest.mark.parametrize(
     'ra, elev, rso',
-    [[d_args['ra'], s_args['elev'], d_args['rso_simple']],
-     [h_args['ra'], s_args['elev'], h_args['rso_simple']]])
+    [
+        [d_args['ra'], s_args['elev'], d_args['rso_simple']],
+        [h_args['ra'], s_args['elev'], h_args['rso_simple']]
+    ]
+)
 def test_rso_simple_number(ra, elev, rso):
     assert float(calcs._rso_simple(
         ra=ee.Number(ra), elev=ee.Number(elev)).getInfo()) == pytest.approx(rso)
 
-def test_rso_simple_position(ra=d_args['ra'], elev=s_args['elev'],
-                             rso=d_args['rso_simple']):
+def test_rso_simple_position(ra=d_args['ra'], elev=s_args['elev'], rso=d_args['rso_simple']):
     assert float(calcs._rso_simple(
         ee.Number(ra), ee.Number(elev)).getInfo()) == pytest.approx(rso)
 
-def test_rso_simple_image(ra=d_args['ra'], elev=s_args['elev'],
-                          rso=d_args['rso_simple']):
+def test_rso_simple_image(ra=d_args['ra'], elev=s_args['elev'], rso=d_args['rso_simple']):
     output = calcs._rso_simple(ra=ee.Image.constant(ra), elev=ee.Number(elev)) \
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
         .getInfo()
@@ -583,10 +558,11 @@ def test_fcd_hourly_default(rs=h_args['rs'], rso=h_args['rso'],
                             doy=h_args['doy'], time_mid=h_args['time_mid'],
                             lat=s_args['lat'], lon=s_args['lon'],
                             fcd=h_args['fcd_asce']):
-    assert float(calcs._fcd_hourly(
+    output = calcs._fcd_hourly(
         rs=ee.Number(rs), rso=ee.Number(rso), doy=ee.Number(doy),
-        time_mid=ee.Number(time_mid), lat=ee.Number(lat),
-        lon=ee.Number(lon)).getInfo()) == pytest.approx(fcd)
+        time_mid=ee.Number(time_mid), lat=ee.Number(lat), lon=ee.Number(lon)
+    ).getInfo()
+    assert float(output) == pytest.approx(fcd)
 
 def test_fcd_hourly_asce(rs=h_args['rs'], rso=h_args['rso'],
                          doy=h_args['doy'], time_mid=h_args['time_mid'],
@@ -594,7 +570,7 @@ def test_fcd_hourly_asce(rs=h_args['rs'], rso=h_args['rso'],
                          fcd=h_args['fcd_asce']):
     assert float(calcs._fcd_hourly(
         rs=ee.Number(rs), rso=ee.Number(rso), doy=ee.Number(doy),
-        time_mid= ee.Number(time_mid), lat=ee.Number(lat), lon=ee.Number(lon),
+        time_mid=ee.Number(time_mid), lat=ee.Number(lat), lon=ee.Number(lon),
         method='asce').getInfo()) == pytest.approx(fcd)
 
 def test_fcd_hourly_refet(rs=h_args['rs'], rso=h_args['rso'],
@@ -607,8 +583,7 @@ def test_fcd_hourly_refet(rs=h_args['rs'], rso=h_args['rso'],
         method='refet').getInfo()) == pytest.approx(fcd)
 
 def test_fcd_hourly_night(rs=h_args['rs'], rso=h_args['rso'], doy=h_args['doy'],
-                          time_mid=6.5, lat=s_args['lat'], lon=s_args['lon'],
-                          fcd=1):
+                          time_mid=6.5, lat=s_args['lat'], lon=s_args['lon'], fcd=1):
     # For now, check that nighttime fcd values are set to 1
     assert float(calcs._fcd_hourly(
         rs=ee.Number(rs), rso=ee.Number(rso), doy=ee.Number(doy),
@@ -685,12 +660,10 @@ def test_rnl_hourly_image(tmean=h_args['tmean'], ea=h_args['ea'],
 
 # Rn
 def test_rn_number(rs=d_args['rs'], rnl=d_args['rnl'], rn=d_args['rn']):
-    assert float(calcs._rn(
-        rs=ee.Number(rs), rnl=ee.Number(rnl)).getInfo()) == pytest.approx(rn)
+    assert float(calcs._rn(rs=ee.Number(rs), rnl=ee.Number(rnl)).getInfo()) == pytest.approx(rn)
 
 def test_rn_keywods(rs=d_args['rs'], rnl=d_args['rnl'], rn=d_args['rn']):
-    assert float(calcs._rn(
-        ee.Number(rs), ee.Number(rnl)).getInfo()) == pytest.approx(rn)
+    assert float(calcs._rn(ee.Number(rs), ee.Number(rnl)).getInfo()) == pytest.approx(rn)
 
 def test_rn_image(rs=d_args['rs'], rnl=d_args['rnl'], rn=d_args['rn']):
     output = calcs._rn(rs=ee.Number(rs), rnl=ee.Image.constant(rnl)) \
@@ -702,29 +675,32 @@ def test_rn_image(rs=d_args['rs'], rnl=d_args['rnl'], rn=d_args['rn']):
 # Wind
 def test_wind_height_adjust_2m(uz=2.5, zw=2.0, u2=2.5):
     assert float(calcs._wind_height_adjust(
-        uz=ee.Number(uz),
-        zw=ee.Number(zw)).getInfo()) == pytest.approx(u2, abs=0.001)
+        uz=ee.Number(uz), zw=ee.Number(zw)).getInfo()) == pytest.approx(u2, abs=0.001)
 
-def test_wind_height_adjust_position(uz=d_args['uz'], zw=s_args['zw'],
-                                     u2=d_args['u2']):
+def test_wind_height_adjust_position(uz=d_args['uz'], zw=s_args['zw'], u2=d_args['u2']):
     assert float(calcs._wind_height_adjust(
         ee.Number(uz), ee.Number(zw)).getInfo()) == pytest.approx(u2)
 
 @pytest.mark.parametrize(
     'uz, zw, u2',
-    [[d_args['uz'], s_args['zw'], d_args['u2']],
-     [h_args['uz'], s_args['zw'], h_args['u2']]])
+    [
+        [d_args['uz'], s_args['zw'], d_args['u2']],
+        [h_args['uz'], s_args['zw'], h_args['u2']]
+    ]
+)
 def test_wind_height_adjust_number(uz, zw, u2):
     assert float(calcs._wind_height_adjust(
         uz=ee.Number(uz), zw=ee.Number(zw)).getInfo()) == pytest.approx(u2)
 
 @pytest.mark.parametrize(
     'uz, zw, u2',
-    [[d_args['uz'], s_args['zw'], d_args['u2']],
-     [h_args['uz'], s_args['zw'], h_args['u2']]])
+    [
+        [d_args['uz'], s_args['zw'], d_args['u2']],
+        [h_args['uz'], s_args['zw'], h_args['u2']]
+    ]
+)
 def test_wind_height_adjust_image(uz, zw, u2):
-    output = calcs._wind_height_adjust(
-            uz=ee.Image.constant(uz), zw=ee.Number(zw))\
+    output = calcs._wind_height_adjust(uz=ee.Image.constant(uz), zw=ee.Number(zw))\
         .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1) \
         .getInfo()
     assert float(output['constant']) == pytest.approx(u2, abs=0.001)

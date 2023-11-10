@@ -246,10 +246,13 @@ def test_refet_daily_etsz(surface, expected):
         doy=ee.Number(d_args['doy']), method='refet',
     )
 
-    output = refet.etsz(surface).rename(['etsz']).reduceRegion(
-        reducer=ee.Reducer.first(),
-        geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False),
-        scale=1).getInfo()
+    output = (
+        refet.etsz(surface).rename(['etsz'])
+        .reduceRegion(
+            reducer=ee.Reducer.first(), scale=1,
+            geometry=ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False))
+        .getInfo()
+    )
 
     assert float(output['etsz']) == pytest.approx(expected)
 
@@ -267,9 +270,7 @@ def test_refet_daily_gridmet_etr():
         lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']), method='asce',
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
@@ -288,9 +289,7 @@ def test_refet_daily_maca_etr():
         lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']), method='asce',
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
@@ -306,8 +305,7 @@ def test_refet_daily_nldas_etr():
     ]
 
     input_coll = ee.ImageCollection.fromImages([
-        ee.Image.constant([d_args['tmin'], d_args['q_asce'], 0.0,
-                           d_args['uz_x'], d_args['uz_y']])
+        ee.Image.constant([d_args['tmin'], d_args['q_asce'], 0.0, d_args['uz_x'], d_args['uz_y']])
             .double().rename(band_names)
             .set({'system:time_start': ee.Date('2015-07-01T00:00:00', 'UTC').millis()}),
         ee.Image.constant([d_args['tmax'], d_args['q_asce'], d_args['rs'] / 0.0036,
@@ -321,9 +319,7 @@ def test_refet_daily_nldas_etr():
         lat=ee.Number(s_args['lat']), zw=ee.Number(s_args['zw']), method='asce',
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
@@ -389,9 +385,7 @@ def test_refet_daily_cfsv2_etr():
         zw=ee.Number(s_args['zw']), method='asce',
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
@@ -415,9 +409,7 @@ def test_refet_daily_rtma_etr():
         zw=ee.Number(s_args['zw']), method='asce',
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
@@ -447,9 +439,7 @@ def test_refet_daily_era5_etr():
         zw=ee.Number(s_args['zw']), method='asce',
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
@@ -479,9 +469,7 @@ def test_refet_daily_era5_land_etr():
         zw=ee.Number(s_args['zw']), method='asce',
     )
 
-    output = refet.etr\
-        .reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1)\
-        .getInfo()
+    output = refet.etr.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
 
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
