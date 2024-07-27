@@ -8,8 +8,7 @@ import pytest
 
 from openet.refetgee import Daily
 import openet.refetgee.units as units
-
-constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
+import utils
 
 
 # Test daily functions using actual RefET input/output files
@@ -28,9 +27,11 @@ class DailyData():
     csv_df = pd.read_csv(csv_path, engine='python', na_values='NO RECORD')
     csv_df.rename(
         columns={'MN': 'TMIN', 'MX': 'TMAX', 'YM': 'TDEW', 'UA': 'WIND', 'SR': 'RS'},
-        inplace=True)
+        inplace=True
+    )
     csv_df['DATE'] = csv_df[['YEAR', 'MONTH', 'DAY']].apply(
-        lambda x: dt.datetime(*x).strftime('%Y-%m-%d'), axis=1)
+        lambda x: dt.datetime(*x).strftime('%Y-%m-%d'), axis=1
+    )
     csv_df.set_index('DATE', inplace=True, drop=True)
 
     # Convert inputs units
@@ -46,33 +47,33 @@ class DailyData():
     # # Identify the row number of the IN2 data
     # with open(in2_path) as in2_f:
     #     in2_data = in2_f.readlines()
-    # in2_start = [i for i, x in enumerate(in2_data)
-    #              if x.startswith(' Mo Da Year ')][0]
+    # in2_start = [i for i, x in enumerate(in2_data) if x.startswith(' Mo Da Year ')][0]
     # # Read in the IN2 file using pandas
-    # in2_df = pd.read_table(
-    #     in2_path, sep='\s+', skiprows=in2_start, header=[0, 1, 2])
+    # in2_df = pd.read_table(in2_path, sep='\s+', skiprows=in2_start, header=[0, 1, 2])
     # in2_df.rename(
-    #     columns={'Year': 'YEAR', 'Mo': 'MONTH', 'Da': 'DAY', 'DoY': 'DOY'},
-    #     inplace=True)
+    #     columns={'Year': 'YEAR', 'Mo': 'MONTH', 'Da': 'DAY', 'DoY': 'DOY'}, inplace=True
+    # )
     # in2_df['DATE'] = in2_df[['YEAR', 'MONTH', 'DAY']].apply(
-    #     lambda x: dt.datetime(*x).strftime('%Y-%m-%d'), axis=1)
+    #     lambda x: dt.datetime(*x).strftime('%Y-%m-%d'), axis=1
+    # )
     # in2_df.set_index('DATE', inplace=True, drop=True)
 
     # Identify the row number of the OUT data
     with open(out_path) as out_f:
         out_data = out_f.readlines()
-    out_start = [
-        i for i, x in enumerate(out_data) if x.startswith(' Mo Day Yr')][0]
+    out_start = [i for i, x in enumerate(out_data) if x.startswith(' Mo Day Yr')][0]
     # Read in the OUT file using pandas (skip header and units)
     out_df = pd.read_table(
-        out_path, sep='\s+', index_col=False,
+        out_path, sep='\\s+', index_col=False,
         skiprows=list(range(out_start)) + [out_start + 1])
     out_df.rename(
         columns={'Yr': 'YEAR', 'Mo': 'MONTH', 'Day': 'DAY', 'Tmax': 'TMAX',
                  'Tmin': 'TMIN', 'Wind': 'WIND', 'Rs': 'RS', 'DewP': 'TDEW'},
-        inplace=True)
+        inplace=True
+    )
     out_df['DATE'] = out_df[['YEAR', 'MONTH', 'DAY']].apply(
-        lambda x: dt.datetime(*x).strftime('%Y-%m-%d'), axis=1)
+        lambda x: dt.datetime(*x).strftime('%Y-%m-%d'), axis=1
+    )
     out_df.set_index('DATE', inplace=True, drop=True)
 
     # Read the station properties from the IN2 file for now
@@ -99,10 +100,12 @@ class DailyData():
         test_dt = dt.datetime.strptime(test_date, '%Y-%m-%d')
         # Can the surface type be parameterized inside pytest_generate_tests?
         for surface in ['ETr', 'ETo']:
-            date_values = csv_df \
-                .loc[test_date, ['TMIN', 'TMAX', 'EA', 'RS', 'WIND']] \
-                .rename({'TMIN': 'tmin', 'TMAX': 'tmax', 'EA': 'ea', 'RS': 'rs', 'WIND': 'uz'}) \
+            date_values = (
+                csv_df
+                .loc[test_date, ['TMIN', 'TMAX', 'EA', 'RS', 'WIND']]
+                .rename({'TMIN': 'tmin', 'TMAX': 'tmax', 'EA': 'ea', 'RS': 'rs', 'WIND': 'uz'})
                 .to_dict()
+            )
             date_values.update({
                 'surface': surface.lower(),
                 'expected': out_df.loc[test_date, surface],
@@ -112,7 +115,8 @@ class DailyData():
                 'lat': lat,
                 # DEADBEEF
                 # 'lat': lat * math.pi / 180,
-                'rso_type': 'full'})
+                'rso_type': 'full',
+            })
             values.append(date_values)
             ids.append('{}-{}'.format(test_date, surface))
 
@@ -150,5 +154,6 @@ def test_refet_daily_output(daily_params):
         refet = Daily(**adj_inputs).etr
     elif surface.lower() == 'eto':
         refet = Daily(**adj_inputs).eto
-    output = refet.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
+    output = utils.constant_image_value(refet)
+
     assert float(output[surface.lower()]) == pytest.approx(expected, abs=diff)

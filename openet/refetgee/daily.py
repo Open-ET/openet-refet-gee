@@ -134,13 +134,13 @@ class Daily():
                 self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
             elif method.lower() == 'refet':
                 self.rso = calcs._rso_daily(
-                    ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy, lat=self.lat
+                    ea=self.ea, pair=self.pair, ra=self.ra, doy=self.doy, lat=self.lat
                 )
         elif rso_type.lower() == 'simple':
             self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
         elif rso_type.lower() == 'full':
             self.rso = calcs._rso_daily(
-                ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy, lat=self.lat
+                ea=self.ea, pair=self.pair, ra=self.ra, doy=self.doy, lat=self.lat
             )
         elif rso_type.lower() == 'array':
             # Use rso array passed to function

@@ -9,8 +9,7 @@ import pytz
 
 from openet.refetgee import Hourly
 import openet.refetgee.units as units
-
-constant_geom = ee.Geometry.Rectangle([0, 0, 10, 10], 'EPSG:32613', False)
+import utils
 
 
 # Test hourly functions using actual RefET input/output files
@@ -31,11 +30,13 @@ class HourlyData():
     # AgriMet times are local with DST (this will drop one hour)
     # DEADBEEF - Can't set timezone as variable in class?
     csv_df['DATETIME'] = csv_df[['YEAR', 'MONTH', 'DAY', 'HOUR']].apply(
-        lambda x: pytz.timezone('US/Pacific').localize(dt.datetime(*x)), axis=1)
+        lambda x: pytz.timezone('US/Pacific').localize(dt.datetime(*x)), axis=1
+    )
     # To match RefET IN2 values exactly, compute DOY using localtime (not UTC)
     csv_df['DOY'] = csv_df['DATETIME'].apply(lambda x: int(x.strftime('%j')))
     csv_df['DATETIME'] = csv_df['DATETIME'].apply(
-        lambda x: x.tz_convert('UTC').strftime('%Y-%m-%d %H:00'))
+        lambda x: x.tz_convert('UTC').strftime('%Y-%m-%d %H:00')
+    )
     csv_df.set_index('DATETIME', inplace=True, drop=True)
 
     # Convert inputs units
@@ -50,49 +51,46 @@ class HourlyData():
     # # Identify the row number of the IN2 data
     # with open(in2_path) as in2_f:
     #     in2_data = in2_f.readlines()
-    # in2_start = [i for i, x in enumerate(in2_data)
-    #              if x.startswith(' Mo Da Year ')][0]
+    # in2_start = [i for i, x in enumerate(in2_data) if x.startswith(' Mo Da Year ')][0]
     # # Read in the IN2 file using pandas
-    # in2_df = pd.read_table(
-    #     in2_path, sep='\s+', skiprows=in2_start, header=[0, 1, 2])
+    # in2_df = pd.read_table(in2_path, sep='\s+', skiprows=in2_start, header=[0, 1, 2])
     # # Flatten multi-row header
-    # in2_df.columns = [
-    #     ' '.join(col).replace('-', '').strip()
-    #     for col in in2_df.columns.values]
+    # in2_df.columns = [' '.join(col).replace('-', '').strip() for col in in2_df.columns.values]
     # in2_df.rename(
-    #     columns={'Year': 'YEAR', 'Mo': 'MONTH', 'Da': 'DAY', 'DoY': 'DOY',
-    #              'HrMn': 'HOUR'},
+    #     columns={'Year': 'YEAR', 'Mo': 'MONTH', 'Da': 'DAY', 'DoY': 'DOY', 'HrMn': 'HOUR'},
     #     inplace=True)
     # in2_df['HOUR'] = (in2_df['HOUR'] / 100).astype(int)
     # # AgriMet times are local with DST (this will drop one hour)
     # in2_df['DATETIME'] = in2_df[['YEAR', 'MONTH', 'DAY', 'HOUR']].apply(
-    #     lambda x: pytz.timezone('US/Pacific').localize(dt.datetime(*x)),
-    #     axis=1)
+    #     lambda x: pytz.timezone('US/Pacific').localize(dt.datetime(*x)), axis=1
+    # )
     # in2_df['DATETIME'] = in2_df['DATETIME'].apply(
-    #     lambda x: x.tz_convert('UTC').strftime('%Y-%m-%d %H:00'))
+    #     lambda x: x.tz_convert('UTC').strftime('%Y-%m-%d %H:00')
+    # )
     # in2_df.set_index('DATETIME', inplace=True, drop=True)
 
     # Identify the row number of the OUT data
     with open(out_path) as out_f:
         out_data = out_f.readlines()
-    out_start = [
-        i for i, x in enumerate(out_data) if x.startswith(' Mo Day Yr')][0]
+    out_start = [i for i, x in enumerate(out_data) if x.startswith(' Mo Day Yr')][0]
     # Read in the OUT file using pandas (skip header and units)
     out_df = pd.read_table(
-        out_path, sep='\s+', index_col=False,
+        out_path, sep='\\s+', index_col=False,
         skiprows=list(range(out_start)) + [out_start + 1])
     out_df.rename(
         columns={'Yr': 'YEAR', 'Mo': 'MONTH', 'Day': 'DAY', 'HrMn': 'HOUR',
                  'Tmax': 'TMAX', 'Tmin': 'TMIN', 'DewP': 'TDEW',
                  'Wind': 'WIND', 'Rs': 'RS'},
-        inplace=True)
+        inplace=True
+    )
     out_df['HOUR'] = (out_df['HOUR'] / 100).astype(int)
     # AgriMet times are local with DST (this will drop one hour)
     out_df['DATETIME'] = out_df[['YEAR', 'MONTH', 'DAY', 'HOUR']].apply(
-        lambda x: pytz.timezone('US/Pacific').localize(dt.datetime(*x)),
-        axis=1)
+        lambda x: pytz.timezone('US/Pacific').localize(dt.datetime(*x)), axis=1
+    )
     out_df['DATETIME'] = out_df['DATETIME'].apply(
-        lambda x: x.tz_convert('UTC').strftime('%Y-%m-%d %H:00'))
+        lambda x: x.tz_convert('UTC').strftime('%Y-%m-%d %H:00')
+    )
     # out_df['DATETIME'] = out_df[['YEAR', 'MONTH', 'DAY', 'HOUR']].apply(
     #     lambda x: dt.datetime(*x).strftime('%Y-%m-%d %H:00'), axis=1)
     out_df.set_index('DATETIME', inplace=True, drop=True)
@@ -125,10 +123,12 @@ class HourlyData():
         test_dt = dt.datetime.strptime(test_date, '%Y-%m-%d %H:%M')
         # Can the surface type be parameterized inside pytest_generate_tests?
         for surface in ['ETr', 'ETo']:
-            date_values = csv_df \
-                .loc[test_date, ['TEMP', 'EA', 'RS', 'WIND', 'DOY']] \
-                .rename({'DOY': 'doy', 'TEMP': 'tmean', 'EA': 'ea', 'RS': 'rs', 'WIND': 'uz'}) \
+            date_values = (
+                csv_df
+                .loc[test_date, ['TEMP', 'EA', 'RS', 'WIND', 'DOY']]
+                .rename({'DOY': 'doy', 'TEMP': 'tmean', 'EA': 'ea', 'RS': 'rs', 'WIND': 'uz'})
                 .to_dict()
+            )
             date_values.update({
                 'surface': surface.lower(),
                 'expected': out_df.loc[test_date, surface],
@@ -137,7 +137,7 @@ class HourlyData():
                 'zw': zw,
                 'elev': elev,
                 'lat': lat,
-                'lon': lon
+                'lon': lon,
                 # DEADBEEF
                 # 'lat': lat * math.pi / 180,
                 # 'lon': lon * math.pi / 180
@@ -175,5 +175,6 @@ def test_refet_hourly_func_output(hourly_params):
         refet = Hourly(**adj_inputs).etr
     elif surface.lower() == 'eto':
         refet = Hourly(**adj_inputs).eto
-    output = refet.reduceRegion(ee.Reducer.first(), geometry=constant_geom, scale=1).getInfo()
+    output = utils.constant_image_value(refet)
+
     assert float(output[surface.lower()]) == pytest.approx(expected, abs=0.01)

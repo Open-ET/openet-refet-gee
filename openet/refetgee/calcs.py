@@ -470,17 +470,17 @@ def _ra_hourly(lat, lon, doy, time_mid, method='asce'):
     return ra
 
 
-def _rso_daily(ea, ra, pair, doy, lat):
+def _rso_daily(ea, pair, ra, doy, lat):
     """Full daily clear sky solar radiation formulation (Appendix D)
 
     Parameters
     ----------
     ea : ee.Image or ee.Number
         Actual vapor pressure [kPa].
-    ra : ee.Image or ee.Number
-        Extraterrestrial radiation [MJ m-2 d-1].
     pair : ee.Image or ee.Number
         Air pressure [kPa].
+    ra : ee.Image or ee.Number
+        Extraterrestrial radiation [MJ m-2 d-1].
     doy : ee.Image or ee.Number
         Day of year.
     lat : ee.Image or ee.Number
@@ -493,30 +493,28 @@ def _rso_daily(ea, ra, pair, doy, lat):
         Output data type will match "ea" data type.
 
     """
-    # sin of the angle of the sun above the horizon (D.5 and Eq. 62)
-    sin_beta_24 = _doy_fraction(doy).subtract(1.39).sin().multiply(lat).multiply(0.3)\
+    # Sin() of the angle of the sun above the horizon (D.5 and Eq. 62)
+    # Compute from latitude since doy is more likely to be an ee.Number
+    sin_beta_24 = (
+        lat.multiply(_doy_fraction(doy).subtract(1.39).sin()).multiply(0.3)
         .add(0.85).subtract(lat.pow(2).multiply(0.42)).sin().max(0.1)
+    )
 
     # Precipitable water
     w = _precipitable_water(ea, pair)
 
     # Clearness index for direct beam radiation (Eq. D.2)
     # Limit sin_beta >= 0.01 so that KB does not go undefined
-    kb = w.divide(sin_beta_24).pow(0.4).multiply(-0.075)\
-        .add(pair.multiply(-0.00146).divide(sin_beta_24))\
-        .exp().multiply(0.98)
+    kb = (
+        w.divide(sin_beta_24).pow(0.4).multiply(-0.075)
+        .add(pair.multiply(-0.00146).divide(sin_beta_24)).exp().multiply(0.98)
+    )
     # kb = ea.expression(
-    #     '0.98 * exp((-0.00146 * pair) / sin_beta_24 - '
-    #     '           0.075 * (w / sin_beta_24) ** 0.4)',
+    #     '0.98 * exp((-0.00146 * pair) / sin_beta_24 - 0.075 * (w / sin_beta_24) ** 0.4)',
     #     {'pair': pair, 'sin_beta_24': sin_beta_24, 'w': w})
 
     # Transmissivity index for diffuse radiation (Eq. D.4)
     kd = kb.multiply(-0.36).add(0.35).min(kb.multiply(0.82).add(0.18))
-
-    # print('{:>10s}: {:>8.3f}'.format('sin_beta_24', float(sin_beta_24)))
-    # print('{:>10s}: {:>8.3f}'.format('w', float(w)))
-    # print('{:>10s}: {:>8.3f}'.format('kb', float(kb)))
-    # print('{:>10s}: {:>8.3f}'.format('kd', float(kd)))
 
     rso = kb.add(kd).multiply(ra)
     return rso
@@ -568,9 +566,11 @@ def _rso_hourly(ea, ra, pair, doy, time_mid, lat, lon, method='asce'):
     # Clearness index for direct beam radiation (Eq. D.2)
     # Limit sin_beta >= 0.01 so that KB does not go undefined
     kt = 1.0
-    kb = w.divide(sin_beta.max(0.01)).pow(0.4).multiply(-0.075)\
-        .add(pair.multiply(-0.00146).divide(sin_beta.max(0.01).multiply(kt)))\
+    kb = (
+        w.divide(sin_beta.max(0.01)).pow(0.4).multiply(-0.075)
+        .add(pair.multiply(-0.00146).divide(sin_beta.max(0.01).multiply(kt)))
         .exp().multiply(0.98)
+    )
     # kb = ea.expression(
     #     '0.98 * exp((-0.00146 * pair) / (kt * sin_beta) - '
     #     '           0.075 * (w / sin_beta) ** 0.4))',
@@ -710,9 +710,11 @@ def _rnl_daily(tmax, tmin, ea, fcd):
           0.5 * ((tmax + 273.16) ** 4 + (tmin + 273.16) ** 4))
 
     """
-    return tmax.add(273.16).pow(4).add(tmin.add(273.16).pow(4)).multiply(0.5)\
-        .multiply(ea.sqrt().multiply(-0.14).add(0.34))\
+    return (
+        tmax.add(273.16).pow(4).add(tmin.add(273.16).pow(4)).multiply(0.5)
+        .multiply(ea.sqrt().multiply(-0.14).add(0.34))
         .multiply(fcd).multiply(4.901E-9)
+    )
 
 
 def _rnl_hourly(tmean, ea, fcd):
@@ -738,9 +740,11 @@ def _rnl_hourly(tmean, ea, fcd):
     rnl = 2.042E-10 * fcd * (0.34 - 0.14 * sqrt(ea)) * ((tmean + 273.16) ** 4)
 
     """
-    return tmean.add(273.16).pow(4)\
-        .multiply(ea.sqrt().multiply(-0.14).add(0.34))\
+    return (
+        tmean.add(273.16).pow(4)
+        .multiply(ea.sqrt().multiply(-0.14).add(0.34))
         .multiply(fcd).multiply(2.042E-10)
+    )
 
 
 def _rn(rs, rnl):
