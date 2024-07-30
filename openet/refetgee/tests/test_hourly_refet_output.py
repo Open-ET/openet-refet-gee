@@ -58,7 +58,8 @@ class HourlyData():
     # in2_df.columns = [' '.join(col).replace('-', '').strip() for col in in2_df.columns.values]
     # in2_df.rename(
     #     columns={'Year': 'YEAR', 'Mo': 'MONTH', 'Da': 'DAY', 'DoY': 'DOY', 'HrMn': 'HOUR'},
-    #     inplace=True)
+    #     inplace=True,
+    # )
     # in2_df['HOUR'] = (in2_df['HOUR'] / 100).astype(int)
     # # AgriMet times are local with DST (this will drop one hour)
     # in2_df['DATETIME'] = in2_df[['YEAR', 'MONTH', 'DAY', 'HOUR']].apply(
@@ -76,12 +77,14 @@ class HourlyData():
     # Read in the OUT file using pandas (skip header and units)
     out_df = pd.read_table(
         out_path, sep='\\s+', index_col=False,
-        skiprows=list(range(out_start)) + [out_start + 1])
+        skiprows=list(range(out_start)) + [out_start + 1],
+    )
     out_df.rename(
-        columns={'Yr': 'YEAR', 'Mo': 'MONTH', 'Day': 'DAY', 'HrMn': 'HOUR',
-                 'Tmax': 'TMAX', 'Tmin': 'TMIN', 'DewP': 'TDEW',
-                 'Wind': 'WIND', 'Rs': 'RS'},
-        inplace=True
+        columns={
+            'Yr': 'YEAR', 'Mo': 'MONTH', 'Day': 'DAY', 'HrMn': 'HOUR',
+            'Tmax': 'TMAX', 'Tmin': 'TMIN', 'DewP': 'TDEW', 'Wind': 'WIND', 'Rs': 'RS',
+        },
+        inplace=True,
     )
     out_df['HOUR'] = (out_df['HOUR'] / 100).astype(int)
     # AgriMet times are local with DST (this will drop one hour)
@@ -140,7 +143,7 @@ class HourlyData():
                 'lon': lon,
                 # DEADBEEF
                 # 'lat': lat * math.pi / 180,
-                # 'lon': lon * math.pi / 180
+                # 'lon': lon * math.pi / 180,
             })
             values.append(date_values)
             ids.append('{}-{}'.format(test_date, surface))

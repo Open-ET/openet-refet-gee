@@ -33,8 +33,10 @@ def _air_pressure(elev, method='asce'):
     if method == 'asce':
         return elev.multiply(-0.0065).add(293).divide(293).pow(5.26).multiply(101.3)
     elif method == 'refet':
-        return elev.multiply(-0.0065).add(293).divide(293)\
+        return (
+            elev.multiply(-0.0065).add(293).divide(293)
             .pow(9.8 / (0.0065 * 286.9)).multiply(101.3)
+        )
 
 
 def _sat_vapor_pressure(temperature):
@@ -55,10 +57,10 @@ def _sat_vapor_pressure(temperature):
     es = 0.6108 * exp(17.27 * temperature / (temperature + 237.3))
 
     """
-    return temperature.add(237.3).pow(-1).multiply(temperature)\
+    return (
+        temperature.add(237.3).pow(-1).multiply(temperature)
         .multiply(17.27).exp().multiply(0.6108)
-    # return temperature.multiply(17.27).divide(temperature.add(237.3)).exp()\
-    #     .multiply(0.6108)
+    )
 
 
 def _es_slope(tmean, method='asce'):
@@ -83,11 +85,12 @@ def _es_slope(tmean, method='asce'):
 
     """
     if method == 'refet':
-        return _sat_vapor_pressure(tmean)\
-            .multiply(4098.0).divide(tmean.add(237.3).pow(2))
+        return _sat_vapor_pressure(tmean).multiply(4098.0).divide(tmean.add(237.3).pow(2))
     elif method == 'asce':
-        return tmean.add(237.3).pow(-1).multiply(tmean).multiply(17.27).exp()\
+        return (
+            tmean.add(237.3).pow(-1).multiply(tmean).multiply(17.27).exp()
             .multiply(2503.0).divide(tmean.add(237.3).pow(2))
+        )
 
 
 def _actual_vapor_pressure(q, pair):
@@ -173,7 +176,6 @@ def _precipitable_water(ea, pair):
     ee.Image or ee.Number
         Precipitable water [mm].
 
-
     Notes
     -----
     w = pair * 0.14 * ea + 2.1
@@ -213,7 +215,7 @@ def _delta(doy, method='asce'):
 
     Returns
     -------
-    ee.Image or ee.Number
+    delta : ee.Image or ee.Number
         Earth declination [radians].
 
     Notes
@@ -225,10 +227,14 @@ def _delta(doy, method='asce'):
 
     """
     if method == 'asce':
-        return _doy_fraction(doy).subtract(1.39).sin().multiply(0.409)
+        delta = _doy_fraction(doy).subtract(1.39).sin().multiply(0.409)
     else:
-        return doy.add(284).multiply(2 * math.pi / 365).sin()\
+        delta = (
+            doy.add(284).multiply(2 * math.pi / 365).sin()
             .multiply(23.45 * (math.pi / 180))
+        )
+
+    return delta
 
 
 def _dr(doy):
@@ -272,8 +278,10 @@ def _seasonal_correction(doy):
 
     """
     b = doy.subtract(81).divide(364.0).multiply(2 * math.pi)
-    return b.multiply(2).sin().multiply(0.1645)\
+    return (
+        b.multiply(2).sin().multiply(0.1645)
         .subtract(b.cos().multiply(0.1255)).subtract(b.sin().multiply(0.0250))
+    )
 
 
 def _solar_time_rad(lon, time_mid, sc):
@@ -323,8 +331,7 @@ def _omega(solar_time):
 
     # Need to adjust omega so that the values go from -pi to pi
     # Values outside this range are wrapped (i.e. -3*pi/2 -> pi/2)
-    omega = _wrap(omega, -math.pi, math.pi)
-    return omega
+    return _wrap(omega, -math.pi, math.pi)
 
 
 def _wrap(x, x_min, x_max):
@@ -353,6 +360,7 @@ def _wrap(x, x_min, x_max):
 
     """
     x_range = x_max - x_min
+
     return x.subtract(x_min).mod(x_range).add(x_range).mod(x_range).add(x_min)
     # return np.mod((x - x_min), (x_max - x_min)) + x_min
 
@@ -407,8 +415,10 @@ def _ra_daily(lat, doy, method='asce'):
     """
     delta = _delta(doy, method)
     omegas = _omega_sunset(lat, delta)
-    theta = omegas.multiply(lat.sin()).multiply(delta.sin())\
+    theta = (
+        omegas.multiply(lat.sin()).multiply(delta.sin())
         .add(lat.cos().multiply(delta.cos()).multiply(omegas.sin()))
+    )
 
     if method == 'asce':
         # (24. / math.pi) * 4.92 * _dr(doy) * theta
@@ -416,6 +426,7 @@ def _ra_daily(lat, doy, method='asce'):
     else:
         # ra = (24. / math.pi) * (1367 * 0.0036) * _dr(doy) * theta
         ra = theta.multiply(_dr(doy)).multiply((24. / math.pi) * (1367 * 0.0036))
+
     return ra
 
 
@@ -467,6 +478,7 @@ def _ra_hourly(lat, lon, doy, time_mid, method='asce'):
     else:
         # ra = (12. / math.pi) * (1367 * 0.0036) * _dr(doy) * theta
         ra = theta.multiply(_dr(doy)).multiply((12. / math.pi) * (1367 * 0.0036))
+
     return ra
 
 
@@ -516,8 +528,7 @@ def _rso_daily(ea, pair, ra, doy, lat):
     # Transmissivity index for diffuse radiation (Eq. D.4)
     kd = kb.multiply(-0.36).add(0.35).min(kb.multiply(0.82).add(0.18))
 
-    rso = kb.add(kd).multiply(ra)
-    return rso
+    return kb.add(kd).multiply(ra)
 
 
 def _rso_hourly(ea, ra, pair, doy, time_mid, lat, lon, method='asce'):
@@ -557,8 +568,10 @@ def _rso_hourly(ea, ra, pair, doy, time_mid, lat, lon, method='asce'):
 
     # sin of the angle of the sun above the horizon (D.6 and Eq. 62)
     delta = _delta(doy, method)
-    sin_beta = lat.sin().multiply(delta.sin())\
+    sin_beta = (
+        lat.sin().multiply(delta.sin())
         .add(lat.cos().multiply(delta.cos()).multiply(omega.cos()))
+    )
 
     # Precipitable water
     w = _precipitable_water(ea, pair)
@@ -572,15 +585,14 @@ def _rso_hourly(ea, ra, pair, doy, time_mid, lat, lon, method='asce'):
         .exp().multiply(0.98)
     )
     # kb = ea.expression(
-    #     '0.98 * exp((-0.00146 * pair) / (kt * sin_beta) - '
-    #     '           0.075 * (w / sin_beta) ** 0.4))',
-    #     {'pair': pair, 'kt': kt, 'sin_beta': sin_beta.max(0.01), 'w': w})
+    #     '0.98 * exp((-0.00146 * pair) / (kt * sin_beta) - 0.075 * (w / sin_beta) ** 0.4))',
+    #     {'pair': pair, 'kt': kt, 'sin_beta': sin_beta.max(0.01), 'w': w}
+    # )
 
     # Transmissivity index for diffuse radiation (Eq. D.4)
     kd = kb.multiply(-0.36).add(0.35).min(kb.multiply(0.82).add(0.18))
 
-    rso = kb.add(kd).multiply(ra)
-    return rso
+    return kb.add(kd).multiply(ra)
 
 
 def _rso_simple(ra, elev):
@@ -663,8 +675,10 @@ def _fcd_hourly(rs, rso, doy, time_mid, lat, lon, method='asce'):
     sc = _seasonal_correction(doy)
     delta = _delta(doy, method)
     omega = _omega(_solar_time_rad(lon, time_mid, sc))
-    beta = lat.sin().multiply(delta.sin())\
+    beta = (
+        lat.sin().multiply(delta.sin())
         .add(lat.cos().multiply(delta.cos()).multiply(omega.cos())).asin()
+    )
 
     fcd = rs.divide(rso).max(0.3).min(1).multiply(1.35).subtract(0.35)
 

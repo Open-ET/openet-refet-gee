@@ -413,8 +413,8 @@ def test_ra_hourly_refet(lat=s_args['lat'], lon=s_args['lon'],
     assert float(output) == pytest.approx(expected)
 
 def test_ra_hourly_position(lat=s_args['lat'], lon=s_args['lon'],
-                           doy=h_args['doy'], time_mid=h_args['time_mid'],
-                           expected=h_args['ra_asce']):
+                            doy=h_args['doy'], time_mid=h_args['time_mid'],
+                            expected=h_args['ra_asce']):
     output = utils.get_info(calcs._ra_hourly(
         ee.Number(lat), ee.Number(lon), ee.Number(doy), ee.Number(time_mid)
     ))
@@ -621,7 +621,7 @@ def test_fcd_hourly_position(rs=h_args['rs'], rso=h_args['rso'],
                              expected=h_args['fcd_asce']):
     output = utils.get_info(calcs._fcd_hourly(
         ee.Number(rs), ee.Number(rso), ee.Number(doy), ee.Number(time_mid),
-        ee.Number(lat), ee.Number(lon)
+        ee.Number(lat), ee.Number(lon),
     ))
     assert float(output) == pytest.approx(expected)
 
@@ -641,7 +641,7 @@ def test_rnl_daily_number(tmin=d_args['tmin'], tmax=d_args['tmax'],
                           ea=d_args['ea'], fcd=d_args['fcd'], expected=d_args['rnl']):
     output = utils.get_info(calcs._rnl_daily(
         tmax=ee.Number(tmax), tmin=ee.Number(tmin), ea=ee.Number(ea),
-        fcd=ee.Number(fcd)
+        fcd=ee.Number(fcd),
     ))
     assert float(output) == pytest.approx(expected)
 
@@ -657,7 +657,7 @@ def test_rnl_daily_image(tmin=d_args['tmin'], tmax=d_args['tmax'],
                          ea=d_args['ea'], fcd=d_args['fcd'], expected=d_args['rnl']):
     output = utils.constant_image_value(calcs._rnl_daily(
         tmax=ee.Image.constant(tmax), tmin=ee.Number(tmin),
-        ea=ee.Number(ea), fcd=ee.Number(fcd)
+        ea=ee.Number(ea), fcd=ee.Number(fcd),
     ))
     assert float(output['constant']) == pytest.approx(expected)
 

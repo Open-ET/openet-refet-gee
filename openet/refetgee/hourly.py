@@ -112,7 +112,7 @@ class Hourly():
         # Extraterrestrial radiation
         time_mid = self.time.add(0.5)
         self.ra = calcs._ra_hourly(
-            lat=self.lat, lon=self.lon, doy=self.doy, time_mid=time_mid, method=method
+            lat=self.lat, lon=self.lon, doy=self.doy, time_mid=time_mid, method=method,
         )
 
         # Clear sky solar radiation
@@ -121,7 +121,7 @@ class Hourly():
         elif method == 'refet':
             self.rso = calcs._rso_hourly(
                 ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
-                time_mid=time_mid, lat=self.lat, lon=self.lon, method=method
+                time_mid=time_mid, lat=self.lat, lon=self.lon, method=method,
             )
 
         # Cloudiness fraction
@@ -131,7 +131,7 @@ class Hourly():
         # Beta (not SinBeta) is used for clamping fcd.
         self.fcd = calcs._fcd_hourly(
             rs=self.rs, rso=self.rso, doy=self.doy, time_mid=self.time,
-            lat=self.lat, lon=self.lon, method=method
+            lat=self.lat, lon=self.lon, method=method,
         )
 
         # Net long-wave radiation
@@ -214,11 +214,6 @@ class Hourly():
             Standardized reference ET [mm].
 
         """
-        # return self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy)\
-        #     .divide(self.tmean.add(273))\
-        #     .add(self.es_slope.multiply(self.rn.subtract(self.g)).multiply(0.408))\
-        #     .divide(self.u2.multiply(self.cd).add(1)\
-        #                 .multiply(self.psy).add(self.es_slope))
 
         return self.tmean.expression(
             '(0.408 * es_slope * (rn - g) + (psy * cn * u2 * vpd / (tmean + 273))) / '
@@ -226,9 +221,15 @@ class Hourly():
             {
                 'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
                 'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
-                'u2': self.u2, 'vpd': self.vpd
+                'u2': self.u2, 'vpd': self.vpd,
             }
         )
+        # return (
+        #     self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy)
+        #     .divide(self.tmean.add(273))
+        #     .add(self.es_slope.multiply(self.rn.subtract(self.g)).multiply(0.408))
+        #     .divide(self.u2.multiply(self.cd).add(1).multiply(self.psy).add(self.es_slope))
+        # )
 
     @classmethod
     def nldas(cls, input_img, zw=None, elev=None, lat=None, lon=None, method='asce'):
@@ -270,32 +271,17 @@ class Hourly():
             zw = ee.Number(10)
         if elev is None:
             elev = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/elevation')
-            # elev = ee.Image('CGIAR/SRTM90_V4')\
-            #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
         if lat is None:
             lat = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/latitude')
-            # lat = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/elevation')\
-            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
-            #     .rename(['latitude'])
-            # lat = ee.Image.pixelLonLat().select('latitude')\
-            #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
-            # lat = nldas_img.select([0]).multiply(0)\
-            #     .add(ee.Image.pixelLonLat().select('latitude'))
         if lon is None:
             lon = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/longitude')
-            # lon = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/elevation')\
-            #     .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
-            #     .rename(['longitude'])
-            # lon = ee.Image.pixelLonLat().select('longitude')\
-            #     .reproject('EPSG:4326', [0.125, 0, -125, 0, -0.125, 53])
-            # lon = nldas_img.select([0]).multiply(0)\
-            #     .add(ee.Image.pixelLonLat().select('longitude'))
 
         return cls(
             tmean=input_img.select(['temperature']),
             ea=calcs._actual_vapor_pressure(
+                pair=calcs._air_pressure(elev, method),
                 q=input_img.select(['specific_humidity']),
-                pair=calcs._air_pressure(elev, method)),
+            ),
             rs=input_img.select(['shortwave_radiation']).multiply(0.0036),
             uz=input_img.select(['wind_u']).pow(2).add(input_img.select(['wind_v']).pow(2))
                 .sqrt().rename(['uz']),
@@ -350,10 +336,12 @@ class Hourly():
             pass
         elif isinstance(rs, ee.Number) or isinstance(rs, float) or isinstance(rs, int):
             rs = ee.Image.constant(rs)
-        elif rs is None or rs.upper() == 'NLDAS':
-            rs = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
-                .filterDate(start_date, start_date.advance(30, 'minute'))\
+        elif (rs is None) or (rs.upper() == 'NLDAS'):
+            rs = (
+                ee.ImageCollection('NASA/NLDAS/FORA0125_H002')
+                .filterDate(start_date, start_date.advance(30, 'minute'))
                 .select(['shortwave_radiation'])
+            )
             rs = ee.Image(rs.first()).multiply(0.0036)
         else:
             raise ValueError('Unsupported Rs input')
@@ -362,30 +350,25 @@ class Hourly():
             zw = ee.Number(10)
         if elev is None:
             elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/climate-engine/rtma/elevation')\
-                .rename(['elevation'])
+                            'projects/climate-engine/rtma/elevation')
         if lat is None:
             lat = ee.Image('projects/earthengine-legacy/assets/'
                            'projects/climate-engine/rtma/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
-                .rename(['latitude'])
+                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))
         if lon is None:
             lon = ee.Image('projects/earthengine-legacy/assets/'
                            'projects/climate-engine/rtma/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
-                .rename(['longitude'])
+                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))
 
         return cls(
             tmean=input_img.select(['TMP']),
             ea=calcs._actual_vapor_pressure(
-                q=input_img.select(['SPFH']),
-                pair=calcs._air_pressure(elev, method)),
+                pair=calcs._air_pressure(elev, method), q=input_img.select(['SPFH']),
+            ),
             rs=rs,
             # Use wind speed band directly instead of computing from components
             uz=input_img.select(['WIND']),
-            # uz=input_img.select(['UGRD']).pow(2)\
-            #     .add(input_img.select(['VGRD']).pow(2))\
-            #     .sqrt().rename(['WIND']),
+            # uz=input_img.select(['UGRD']).pow(2).add(input_img.select(['VGRD']).pow(2)).sqrt(),
             zw=zw,
             elev=elev,
             lat=lat,
@@ -438,14 +421,8 @@ class Hourly():
             elev = ee.Image('projects/openet/assets/meteorology/era5/ancillary/elevation')
         if lat is None:
             lat = ee.Image('projects/openet/assets/meteorology/era5/ancillary/latitude')
-            # lat = ee.Image('projects/openet/assets/meteorology/era5/ancillary/elevation')\
-            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
-            #     .rename(['latitude'])
         if lon is None:
             lon = ee.Image('projects/openet/assets/meteorology/era5/ancillary/longitude')
-            # lon = ee.Image('projects/openet/assets/meteorology/era5/ancillary/elevation')\
-            #     .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
-            #     .rename(['longitude'])
 
         return cls(
             tmean=input_img.select(['temperature_2m']).subtract(273.15),
@@ -508,22 +485,15 @@ class Hourly():
             elev = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/elevation')
         if lat is None:
             lat = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/latitude')
-            # lat = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/elevation')\
-            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))\
-            #     .rename(['latitude'])
         if lon is None:
             lon = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/longitude')
-            # lon = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/elevation')\
-            #     .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))\
-            #     .rename(['longitude'])
 
         return cls(
             tmean=input_img.select(['temperature_2m']).subtract(273.15),
             ea=calcs._sat_vapor_pressure(
                 input_img.select(['dewpoint_temperature_2m']).subtract(273.15)
             ),
-            rs=input_img.select(['surface_solar_radiation_downwards_hourly'])
-                .divide(1000000),
+            rs=input_img.select(['surface_solar_radiation_downwards_hourly']).divide(1000000),
             uz=input_img.select(['u_component_of_wind_10m']).pow(2)
                 .add(input_img.select(['v_component_of_wind_10m']).pow(2))
                 .sqrt().rename(['wind_10m']),

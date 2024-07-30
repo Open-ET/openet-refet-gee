@@ -27,7 +27,7 @@ class DailyData():
     csv_df = pd.read_csv(csv_path, engine='python', na_values='NO RECORD')
     csv_df.rename(
         columns={'MN': 'TMIN', 'MX': 'TMAX', 'YM': 'TDEW', 'UA': 'WIND', 'SR': 'RS'},
-        inplace=True
+        inplace=True,
     )
     csv_df['DATE'] = csv_df[['YEAR', 'MONTH', 'DAY']].apply(
         lambda x: dt.datetime(*x).strftime('%Y-%m-%d'), axis=1
@@ -65,11 +65,14 @@ class DailyData():
     # Read in the OUT file using pandas (skip header and units)
     out_df = pd.read_table(
         out_path, sep='\\s+', index_col=False,
-        skiprows=list(range(out_start)) + [out_start + 1])
+        skiprows=list(range(out_start)) + [out_start + 1],
+    )
     out_df.rename(
-        columns={'Yr': 'YEAR', 'Mo': 'MONTH', 'Day': 'DAY', 'Tmax': 'TMAX',
-                 'Tmin': 'TMIN', 'Wind': 'WIND', 'Rs': 'RS', 'DewP': 'TDEW'},
-        inplace=True
+        columns={
+            'Yr': 'YEAR', 'Mo': 'MONTH', 'Day': 'DAY', 'Tmax': 'TMAX', 'Tmin': 'TMIN',
+            'Wind': 'WIND', 'Rs': 'RS', 'DewP': 'TDEW',
+        },
+        inplace=True,
     )
     out_df['DATE'] = out_df[['YEAR', 'MONTH', 'DAY']].apply(
         lambda x: dt.datetime(*x).strftime('%Y-%m-%d'), axis=1

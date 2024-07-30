@@ -1,6 +1,6 @@
 [project]
 name = "openet-refet-gee"
-version = "0.6.3"
+version = "0.6.4"
 authors = [
   { name = "Charles Morton", email = "charles.morton@dri.edu" },
 ]
