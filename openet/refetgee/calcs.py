@@ -221,9 +221,9 @@ def _delta(doy, method='asce'):
     Notes
     -----
     Original equation in Duffie & Beckman (1980) (with conversions to radians):
-        23.45 * (pi / 180) * sin(2 * pi * (doy + 284) / 365)
+        delta = 23.45 * (pi / 180) * sin(2 * pi * (doy + 284) / 365)
     Equation 24 in ASCE-EWRI (2005):
-        0.409 * sin((2 * pi * doy / 365) - 1.39)
+        delta = 0.409 * sin((2 * pi * doy / 365) - 1.39)
 
     """
     if method == 'asce':
@@ -253,7 +253,7 @@ def _dr(doy):
     -----
     This function returns 1 / d^2, not d, for direct use in radiance to
       TOA reflectance calculation
-    pi * L * d^2 / (ESUN * cos(theta)) -> pi * L / (ESUN * cos(theta) * d)
+    dr = pi * L * d^2 / (ESUN * cos(theta)) -> pi * L / (ESUN * cos(theta) * d)
 
     """
     return _doy_fraction(doy).cos().multiply(0.033).add(1.0)
@@ -779,10 +779,11 @@ def _rn(rs, rnl):
 
     Notes
     -----
-    Switching calculation to work from rnl (which is computed from temperature)
     rnl = 0.77 * rs - rnl
 
     """
+    # Calculation is intentionally being made from Rnl (which is computed from temperature)
+    # to keep a reference to the source image
     return rnl.multiply(-1).add(rs.multiply(0.77))
     # return rs.multiply(0.77).subtract(rnl)
 
