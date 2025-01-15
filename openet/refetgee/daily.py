@@ -204,14 +204,13 @@ class Daily():
 
         """
         return (
-            self.tmean.add(273).pow(-1).multiply(self.u2)
-            .multiply(self.vpd).multiply(self.cn).multiply(self.psy)
+            self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy).divide(self.tmean.add(273))
             .add(self.es_slope.multiply(self.rn).multiply(0.408))
             .divide(self.u2.multiply(self.cd).add(1).multiply(self.psy).add(self.es_slope))
         )
-
+        # # CGM - Intentionally leaving expression form of calculation here for reference
         # return self.tmin.expression(
-        #     '(0.408 * es_slope * rn + (psy * cn * u2 * vpd / (tmean + 273))) / '
+        #     '((0.408 * es_slope * rn) + (psy * cn * u2 * vpd / (tmean + 273))) / '
         #     '(es_slope + psy * (cd * u2 + 1))',
         #     {
         #         'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
@@ -243,12 +242,6 @@ class Daily():
             .rename(['etw'])
             .set('system:time_start', self.time_start)
         )
-        # return (
-        #     self.es_slope.add(self.psy).multiply(2453).pow(-1).multiply(1.26 * 1000)
-        #     .multiply(self.es_slope).multiply(self.rn).multiply(1.26)
-        #     .rename(['etw'])
-        #     .set('system:time_start', self.time_start)
-        # )
 
     @lazy_property
     def eto_fs1(self):
@@ -273,12 +266,6 @@ class Daily():
             .rename(['eto_fs1'])
             .set('system:time_start', self.time_start)
         )
-        # return (
-        #     self.u2.multiply(0.34).add(1).multiply(self.psy).add(self.es_slope)
-        #     .pow(-1).multiply(self.es_slope).multiply(self.rn).multiply(0.408)
-        #     .rename(['eto_fs1'])
-        #     .set('system:time_start', self.time_start)
-        # )
 
     @lazy_property
     def eto_fs2(self):
@@ -331,12 +318,6 @@ class Daily():
             .rename(['pet_hargreaves'])
             .set('system:time_start', self.time_start)
         )
-        # return (
-        #     self.tmax.subtract(self.tmin).pow(0.5).multiply().multiply(0.0023 * 0.408)
-        #     .multiply(self.tmean.add(17.8))
-        #     .rename(['pet_hargreaves'])
-        #     .set('system:time_start', self.time_start)
-        # )
 
     @classmethod
     def gridmet(cls, input_img, zw=None, elev=None, lat=None, method='asce', rso_type=None):
@@ -430,7 +411,7 @@ class Daily():
         Solar radiation is converted from W m-2 to MJ m-2 day-1.
         Actual vapor pressure is computed from specific humidity (MACA huss)
             and air pressure (from elevation).
-        Windspeed from east and north vector components m s-1.
+        Wind speed from east and north vector components m s-1.
 
         """
         image_date = ee.Date(input_img.get('system:time_start'))
@@ -446,15 +427,8 @@ class Daily():
         if elev is None:
             # TODO: should we use gridmet elev? maca grid is shifted
             elev = ee.Image('projects/openet/assets/meteorology/gridmet/elevation')
-            # elev = ee.Image('CGIAR/SRTM90_V4').reproject('EPSG:4326', gridmet_transform)
         if lat is None:
             elev = ee.Image('projects/openet/assets/meteorology/gridmet/latitude')
-            # lat = ee.Image('projects/openet/assets/meteorology/gridmet/elevation') \
-            #     .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))
-            # lat = ee.Image.pixelLonLat().select('latitude') \
-            #     .reproject('EPSG:4326', gridmet_transform)
-            # lat = input_img.select([0]).multiply(0) \
-            #     .add(ee.Image.pixelLonLat().select('latitude'))
 
         def wind_magnitude(input_img):
             """Compute daily wind magnitude from vectors"""
@@ -602,8 +576,6 @@ class Daily():
             elev = ee.Image('CGIAR/SRTM90_V4').reproject(cfsv2_crs, cfsv2_transform)
         if lat is None:
             lat = ee.Image.pixelLonLat().select('latitude').reproject(cfsv2_crs, cfsv2_transform)
-            # lat = input_coll.first().select([0]).multiply(0)\
-            #     .add(ee.Image.pixelLonLat().select('latitude'))
 
         def wind_magnitude(input_img):
             """Compute hourly wind magnitude from vectors"""
@@ -647,11 +619,11 @@ class Daily():
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  The RTMA elevation image
-            (projects/climate-engine/rtma/elevation) will be used if not set.
+            Elevation image [m].  The RTMA elevation image asset will be used if not set
+            (projects/openet/assets/meteorology/rtma/ancillary/elevation).
         lat : ee.Image or ee.Number
-            Latitude image [degrees].  The latitude will be computed
-            dynamically using ee.Image.pixelLonLat() if not set.
+            Latitude image [degrees].  The RTMA latitude image asset will be used if not set
+            (projects/openet/assets/meteorology/rtma/ancillary/latitude).
         method : {'asce' (default), 'refet'}, optional
             Specifies which calculation method to use.
             * 'asce' -- Calculations will follow ASCE-EWRI 2005.
@@ -694,29 +666,22 @@ class Daily():
             rs = ee.Image(rs_coll.sum()).multiply(0.0036)
         else:
             raise ValueError('Unsupported Rs input')
-        # CGM - For now I don't think it makes sense to support image collections
-        # elif isinstance(rs, ee.ImageCollection):
-        #     rs = ee.Image(rs.sum())
-        #     # rs = ee.Image(rs.mean())
 
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/climate-engine/rtma/elevation')
+            elev = ee.Image('projects/openet/assets/meteorology/rtma/ancillary/elevation')
         if lat is None:
-            lat = (
-                ee.Image('projects/earthengine-legacy/assets/'
-                         'projects/climate-engine/rtma/elevation')
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))
-            )
+            lat = ee.Image('projects/openet/assets/meteorology/rtma/ancillary/latitude')
 
         # # Not computing wind speed from the components since wind speed is available
         # def wind_magnitude(input_img):
         #     """Compute hourly wind magnitude from vectors"""
-        #     return ee.Image(input_img.select(['UGRD'])).pow(2)\
-        #         .add(ee.Image(input_img.select(['VGRD'])).pow(2))\
+        #     return (
+        #         ee.Image(input_img.select(['UGRD'])).pow(2)
+        #         .add(ee.Image(input_img.select(['VGRD'])).pow(2))
         #         .sqrt().rename(['WIND'])
+        #     )
 
         return cls(
             tmax=input_coll.select(['TMP']).max(),
@@ -726,8 +691,8 @@ class Daily():
                 q=input_coll.select(['SPFH']).mean(),
             ),
             rs=rs,
+            # Using wind speed directly instead of computing from components
             uz=input_coll.select(['WIND']).mean(),
-            # Not computing wind speed from the components since wind speed is available
             # uz=ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
             zw=zw,
             elev=elev,
@@ -785,9 +750,11 @@ class Daily():
 
         def wind_magnitude(input_img):
             """Compute hourly wind magnitude from vectors"""
-            return ee.Image(input_img.select(['u_component_of_wind_10m'])).pow(2)\
-                .add(ee.Image(input_img.select(['v_component_of_wind_10m'])).pow(2))\
+            return (
+                ee.Image(input_img.select(['u_component_of_wind_10m'])).pow(2)
+                .add(ee.Image(input_img.select(['v_component_of_wind_10m'])).pow(2))
                 .sqrt().rename(['wind_10m'])
+            )
 
         return cls(
             tmax=input_coll.select(['temperature_2m']).max().subtract(273.15),

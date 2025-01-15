@@ -114,7 +114,6 @@ def _actual_vapor_pressure(q, pair):
 
     """
     return q.multiply(0.378).add(0.622).pow(-1).multiply(q).multiply(pair)
-    # return q.multiply(pair).divide(q.multiply(0.378).add(0.622))
 
 
 def _specific_humidity(ea, pair):
@@ -138,7 +137,6 @@ def _specific_humidity(ea, pair):
 
     """
     return ea.multiply(-0.378).add(pair).pow(-1).multiply(ea).multiply(0.622)
-    # return ea.multiply(0.622).divide(ea.multiply(-0.378).add(pair))
 
 
 def _vpd(es, ea):
@@ -157,7 +155,6 @@ def _vpd(es, ea):
         Vapor pressure deficit [kPa].
 
     """
-
     return es.subtract(ea).max(0)
 
 
@@ -229,10 +226,7 @@ def _delta(doy, method='asce'):
     if method == 'asce':
         delta = _doy_fraction(doy).subtract(1.39).sin().multiply(0.409)
     else:
-        delta = (
-            doy.add(284).multiply(2 * math.pi / 365).sin()
-            .multiply(23.45 * (math.pi / 180))
-        )
+        delta = doy.add(284).multiply(2 * math.pi / 365).sin().multiply(23.45 * (math.pi / 180))
 
     return delta
 
@@ -362,7 +356,6 @@ def _wrap(x, x_min, x_max):
     x_range = x_max - x_min
 
     return x.subtract(x_min).mod(x_range).add(x_range).mod(x_range).add(x_min)
-    # return np.mod((x - x_min), (x_max - x_min)) + x_min
 
 
 def _omega_sunset(lat, delta):
@@ -470,13 +463,13 @@ def _ra_hourly(lat, lon, doy, time_mid, method='asce'):
     omega1 = omega1.min(omega2)
 
     # Extraterrestrial radiation (Eq. 48)
-    theta = omega2.subtract(omega1).multiply(lat.sin()).multiply(delta.sin())\
+    theta = (
+        omega2.subtract(omega1).multiply(lat.sin()).multiply(delta.sin())
         .add(lat.cos().multiply(delta.cos()).multiply(omega2.sin().subtract(omega1.sin())))
+    )
     if method == 'asce':
-        # ra = (12. / math.pi) * 4.92 * _dr(doy) * theta
         ra = theta.multiply(_dr(doy)).multiply((12. / math.pi) * 4.92)
     else:
-        # ra = (12. / math.pi) * (1367 * 0.0036) * _dr(doy) * theta
         ra = theta.multiply(_dr(doy)).multiply((12. / math.pi) * (1367 * 0.0036))
 
     return ra
@@ -521,9 +514,6 @@ def _rso_daily(ea, pair, ra, doy, lat):
         w.divide(sin_beta_24).pow(0.4).multiply(-0.075)
         .add(pair.multiply(-0.00146).divide(sin_beta_24)).exp().multiply(0.98)
     )
-    # kb = ea.expression(
-    #     '0.98 * exp((-0.00146 * pair) / sin_beta_24 - 0.075 * (w / sin_beta_24) ** 0.4)',
-    #     {'pair': pair, 'sin_beta_24': sin_beta_24, 'w': w})
 
     # Transmissivity index for diffuse radiation (Eq. D.4)
     kd = kb.multiply(-0.36).add(0.35).min(kb.multiply(0.82).add(0.18))
@@ -584,10 +574,6 @@ def _rso_hourly(ea, ra, pair, doy, time_mid, lat, lon, method='asce'):
         .add(pair.multiply(-0.00146).divide(sin_beta.max(0.01).multiply(kt)))
         .exp().multiply(0.98)
     )
-    # kb = ea.expression(
-    #     '0.98 * exp((-0.00146 * pair) / (kt * sin_beta) - 0.075 * (w / sin_beta) ** 0.4))',
-    #     {'pair': pair, 'kt': kt, 'sin_beta': sin_beta.max(0.01), 'w': w}
-    # )
 
     # Transmissivity index for diffuse radiation (Eq. D.4)
     kd = kb.multiply(-0.36).add(0.35).min(kb.multiply(0.82).add(0.18))
@@ -783,9 +769,8 @@ def _rn(rs, rnl):
 
     """
     # Calculation is intentionally being made from Rnl (which is computed from temperature)
-    # to keep a reference to the source image
+    #   to keep a reference to the source image
     return rnl.multiply(-1).add(rs.multiply(0.77))
-    # return rs.multiply(0.77).subtract(rnl)
 
 
 def _wind_height_adjust(uz, zw):

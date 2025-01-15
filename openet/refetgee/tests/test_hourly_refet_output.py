@@ -13,15 +13,11 @@ import utils
 
 
 # Test hourly functions using actual RefET input/output files
-# DEADBEEF - This doesn't work if I move it to conftest.py
 class HourlyData():
     """Setup hourly validation data from Fallon AgriMet station"""
     val_ws = os.path.join(os.getcwd(), 'openet', 'refetgee', 'tests', 'data')
-    # val_ws = os.path.join(os.getcwd(), 'tests', 'data')
-    # val_ws = os.path.join(os.path.dirname(os.getcwd()), 'tests', 'data')
 
     csv_path = os.path.join(val_ws, 'FALN_Agrimet_hourly_raw_2015.csv')
-    # in2_path = os.path.join(val_ws, 'FALN_Agrimet_hourly_raw_2015.in2')
     out_path = os.path.join(val_ws, 'FALN_Agrimet_hourly_raw_2015.out')
 
     # Read in the inputs CSV file using pandas
@@ -141,9 +137,6 @@ class HourlyData():
                 'elev': elev,
                 'lat': lat,
                 'lon': lon,
-                # DEADBEEF
-                # 'lat': lat * math.pi / 180,
-                # 'lon': lon * math.pi / 180,
             })
             values.append(date_values)
             ids.append('{}-{}'.format(test_date, surface))
@@ -162,14 +155,13 @@ def test_refet_hourly_func_output(hourly_params):
     inputs = hourly_params.copy()
     surface = inputs.pop('surface')
     expected = inputs.pop('expected')
-    print('ETr: {}'.format(expected))
 
-    # Cast all numeric inputs to ee.Number type except tmean (for now)
+    # Set primary input variables as constant images
     adj_inputs = {}
     for k, v in inputs.items():
         if k == 'rso_type':
             adj_inputs[k] = v
-        elif k == 'tmean':
+        elif k in ['tmean', 'ea', 'rs', 'uz']:
             adj_inputs[k] = ee.Image.constant(v)
         else:
             adj_inputs[k] = ee.Number(v)

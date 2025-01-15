@@ -12,15 +12,11 @@ import utils
 
 
 # Test daily functions using actual RefET input/output files
-# DEADBEEF - This doesn't work if I move it to conftest.py
 class DailyData():
     """Setup daily validation data from Fallon AgriMet station"""
     val_ws = os.path.join(os.getcwd(), 'openet', 'refetgee', 'tests', 'data')
-    # val_ws = os.path.join(os.getcwd(), 'tests', 'data')
-    # val_ws = os.path.join(os.path.dirname(os.getcwd()), 'tests', 'data')
 
     csv_path = os.path.join(val_ws, 'FALN_Agrimet_daily_raw_2015.csv')
-    # in2_path = os.path.join(val_ws, 'FALN_Agrimet_daily_raw_2015.in2')
     out_path = os.path.join(val_ws, 'FALN_Agrimet_daily_raw_2015.out')
 
     # Read in the inputs CSV file using pandas
@@ -96,10 +92,6 @@ class DailyData():
         if not test_date.startswith('2015-07'):
             continue
 
-        # This day has missing data and is not being handled correctly
-        # if test_date.startswith('2015-04-22'):
-        #     continue
-
         test_dt = dt.datetime.strptime(test_date, '%Y-%m-%d')
         # Can the surface type be parameterized inside pytest_generate_tests?
         for surface in ['ETr', 'ETo']:
@@ -116,8 +108,6 @@ class DailyData():
                 'zw': zw,
                 'elev': elev,
                 'lat': lat,
-                # DEADBEEF
-                # 'lat': lat * math.pi / 180,
                 'rso_type': 'full',
             })
             values.append(date_values)
@@ -137,13 +127,12 @@ def test_refet_daily_output(daily_params):
     inputs = daily_params.copy()
     surface = inputs.pop('surface')
     expected = inputs.pop('expected')
-    # print('ETr: {}'.format(expected))
 
     # ETr/ETo values only have 4 significant figures
     # Small number of days don't match if difference is set < 0.008
     diff = 0.05 if expected >= 10.0 else 0.008
 
-    # Cast all numeric inputs to ee.Number type except tmin (for now)
+    # Set primary input variables as constant images
     adj_inputs = {}
     for k, v in inputs.items():
         if k == 'rso_type':

@@ -176,8 +176,6 @@ class Hourly():
         # Nighttime is defined as when Rn < 0 (pg 44)
         self.cd = self.rn.multiply(0).add(cd_day).where(self.rn.lt(0), cd_night)
         self.g_rn = self.rn.multiply(0).add(g_rn_day).where(self.rn.lt(0), g_rn_night)
-        # self.cd = ee.Image.constant(cd_day).where(self.rn.lt(0), cd_night)
-        # self.g_rn = ee.Image.constant(g_rn_day).where(self.rn.lt(0), g_rn_night)
 
         # Soil heat flux (Eqs. 65 and 66)
         self.g = self.rn.multiply(self.g_rn)
@@ -197,8 +195,6 @@ class Hourly():
         # Nighttime is defined as when Rn < 0 (pg 44)
         self.cd = self.rn.multiply(0).add(cd_day).where(self.rn.lt(0), cd_night)
         self.g_rn = self.rn.multiply(0).add(g_rn_day).where(self.rn.lt(0), g_rn_night)
-        # self.cd = ee.Image.constant(cd_day).where(self.rn.lt(0), cd_night)
-        # self.g_rn = ee.Image.constant(g_rn_day).where(self.rn.lt(0), g_rn_night)
 
         # Soil heat flux (Eqs. 65 and 66)
         self.g = self.rn.multiply(self.g_rn)
@@ -214,21 +210,20 @@ class Hourly():
             Standardized reference ET [mm].
 
         """
-
-        return self.tmean.expression(
-            '(0.408 * es_slope * (rn - g) + (psy * cn * u2 * vpd / (tmean + 273))) / '
-            '(es_slope + psy * (cd * u2 + 1))',
-            {
-                'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
-                'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
-                'u2': self.u2, 'vpd': self.vpd,
-            }
+        return (
+            self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy).divide(self.tmean.add(273))
+            .add(self.es_slope.multiply(self.rn.subtract(self.g)).multiply(0.408))
+            .divide(self.u2.multiply(self.cd).add(1).multiply(self.psy).add(self.es_slope))
         )
-        # return (
-        #     self.u2.multiply(self.vpd).multiply(self.cn).multiply(self.psy)
-        #     .divide(self.tmean.add(273))
-        #     .add(self.es_slope.multiply(self.rn.subtract(self.g)).multiply(0.408))
-        #     .divide(self.u2.multiply(self.cd).add(1).multiply(self.psy).add(self.es_slope))
+        # # CGM - Intentionally leaving expression form of calculation here for reference
+        # return self.tmean.expression(
+        #     '((0.408 * es_slope * (rn - g)) + (psy * cn * u2 * vpd / (tmean + 273))) / '
+        #     '(es_slope + psy * (cd * u2 + 1))',
+        #     {
+        #         'cd': self.cd, 'cn': self.cn, 'es_slope': self.es_slope,
+        #         'g': self.g, 'psy': self.psy, 'rn': self.rn, 'tmean': self.tmean,
+        #         'u2': self.u2, 'vpd': self.vpd,
+        #     }
         # )
 
     @classmethod
@@ -290,7 +285,6 @@ class Hourly():
             lat=lat,
             lon=lon,
             doy=ee.Number(image_date.getRelative('day', 'year')).add(1).double(),
-            # time=ee.Number(image_date.getRelative('hour', 'day')),
             time=ee.Number(image_date.get('hour')),
             method=method,
         )
@@ -309,14 +303,14 @@ class Hourly():
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  The RTMA elevation image
-            (projects/climate-engine/rtma/elevation) will be used if not set.
+            Elevation image [m].  The RTMA elevation image asset will be used if not set
+            (projects/openet/assets/meteorology/rtma/ancillary/elevation).
         lat : ee.Image or ee.Number
-            Latitude image [degrees].  The latitude will be computed
-            dynamically using ee.Image.pixelLonLat() if not set.
+            Latitude image [degrees].  The RTMA latitude image asset will be used if not set
+            (projects/openet/assets/meteorology/rtma/ancillary/latitude).
         lon : ee.Image or ee.Number
-            Longitude image [degrees].  The longitude will be computed
-            dynamically using ee.Image.pixelLonLat() if not set.
+            Longitude image [degrees].  The RTMA longitude image asset will be used if not set
+            (projects/openet/assets/meteorology/rtma/ancillary/longitude).
         method : {'asce' (default), 'refet'}, optional
             Specifies which calculation method to use.
             * 'asce' -- Calculations will follow ASCE-EWRI 2005.
@@ -349,16 +343,11 @@ class Hourly():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/earthengine-legacy/assets/'
-                            'projects/climate-engine/rtma/elevation')
+            elev = ee.Image('projects/openet/assets/meteorology/rtma/ancillary/elevation')
         if lat is None:
-            lat = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/climate-engine/rtma/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('latitude'))
+            lat = ee.Image('projects/openet/assets/meteorology/rtma/ancillary/latitude')
         if lon is None:
-            lon = ee.Image('projects/earthengine-legacy/assets/'
-                           'projects/climate-engine/rtma/elevation')\
-                .multiply(0).add(ee.Image.pixelLonLat().select('longitude'))
+            lon = ee.Image('projects/openet/assets/meteorology/rtma/ancillary/longitude')
 
         return cls(
             tmean=input_img.select(['TMP']),
@@ -366,7 +355,7 @@ class Hourly():
                 pair=calcs._air_pressure(elev, method), q=input_img.select(['SPFH']),
             ),
             rs=rs,
-            # Use wind speed band directly instead of computing from components
+            # Using wind speed band directly instead of computing from components
             uz=input_img.select(['WIND']),
             # uz=input_img.select(['UGRD']).pow(2).add(input_img.select(['VGRD']).pow(2)).sqrt(),
             zw=zw,
@@ -374,7 +363,6 @@ class Hourly():
             lat=lat,
             lon=lon,
             doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
-            # time=ee.Number(start_date.getRelative('hour', 'day')),
             time=ee.Number(start_date.get('hour')),
             method=method,
         )
@@ -438,7 +426,6 @@ class Hourly():
             lat=lat,
             lon=lon,
             doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
-            # time=ee.Number(start_date.getRelative('hour', 'day')),
             time=ee.Number(start_date.get('hour')),
             method=method,
         )
@@ -502,7 +489,6 @@ class Hourly():
             lat=lat,
             lon=lon,
             doy=ee.Number(start_date.getRelative('day', 'year')).add(1).double(),
-            # time=ee.Number(start_date.getRelative('hour', 'day')),
             time=ee.Number(start_date.get('hour')),
             method=method,
         )
