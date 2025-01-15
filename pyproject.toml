@@ -1,6 +1,6 @@
 [project]
 name = "openet-refet-gee"
-version = "0.6.4"
+version = "0.7.0"
 authors = [
   { name = "Charles Morton", email = "charles.morton@dri.edu" },
 ]
@@ -9,7 +9,7 @@ authors = [
 # ]
 description = "Google Earth Engine based ASCE Standardized Reference Evapotranspiration Functions"
 readme = "README.rst"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 keywords = ["RefET", "OpenET", "Earth Engine", "evapotranspiration"]
 license = {file = "LICENSE.txt"}
 # license = {text = "Apache-2.0"}
@@ -19,7 +19,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "earthengine-api>=0.1.364",
+    "earthengine-api>=0.1.392",
 ]
 
 [project.urls]
