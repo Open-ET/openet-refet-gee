@@ -66,7 +66,7 @@ class Daily():
 
         Notes
         -----
-        Latitude units are degress, not radians.
+        Latitude units are degrees, not radians.
 
         References
         ----------

@@ -62,7 +62,7 @@ class Hourly():
         Notes
         -----
         Divide solar radiation values by 0.0036 to convert MJ m-2 hr-1 to W m-2.
-        Latitude & longitude units are degress, not radians.
+        Latitude & longitude units are degrees, not radians.
 
         References
         ----------
@@ -297,9 +297,9 @@ class Hourly():
         ----------
         input_img : ee.Image
             RTMA hourly image from the collection NOAA/NWS/RTMA.
-        rs : ee.Image, ee.Number, optional
-            Incoming solar radiation [MJ m-2 hr-1].  The NLDAS image for the
-            concurrent hour will be used if not set.
+        rs : ee.Image, ee.Number, str, optional
+            Incoming solar radiation [MJ m-2 hr-1].
+            The NLDAS2 image for the concurrent hour will be used if not set.
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
@@ -330,7 +330,7 @@ class Hourly():
             pass
         elif isinstance(rs, ee.Number) or isinstance(rs, float) or isinstance(rs, int):
             rs = ee.Image.constant(rs)
-        elif (rs is None) or (rs.upper() == 'NLDAS'):
+        elif (rs is None) or ((rs is str) and (rs.upper() in ['NLDAS', 'NLDAS2'])):
             rs = (
                 ee.ImageCollection('NASA/NLDAS/FORA0125_H002')
                 .filterDate(start_date, start_date.advance(30, 'minute'))
@@ -351,9 +351,11 @@ class Hourly():
 
         return cls(
             tmean=input_img.select(['TMP']),
+            # Computing vapor pressure from specific humidity instead of dew point
             ea=calcs._actual_vapor_pressure(
                 pair=calcs._air_pressure(elev, method), q=input_img.select(['SPFH']),
             ),
+            # ea=calcs._sat_vapor_pressure(input_img.select(['DPT'])),
             rs=rs,
             # Using wind speed band directly instead of computing from components
             uz=input_img.select(['WIND']),
