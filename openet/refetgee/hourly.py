@@ -111,9 +111,7 @@ class Hourly():
 
         # Extraterrestrial radiation
         time_mid = self.time.add(0.5)
-        self.ra = calcs.ra_hourly(
-            lat=self.lat, lon=self.lon, doy=self.doy, time_mid=time_mid, method=method,
-        )
+        self.ra = calcs.ra_hourly(lat=self.lat, lon=self.lon, doy=self.doy, time_mid=time_mid, method=method)
 
         # Clear sky solar radiation
         if method == 'asce':
@@ -278,8 +276,7 @@ class Hourly():
                 q=input_img.select(['specific_humidity']),
             ),
             rs=input_img.select(['shortwave_radiation']).multiply(0.0036),
-            uz=input_img.select(['wind_u']).pow(2).add(input_img.select(['wind_v']).pow(2))
-                .sqrt().rename(['uz']),
+            uz=input_img.select(['wind_u']).pow(2).add(input_img.select(['wind_v']).pow(2)).sqrt().rename(['uz']),
             zw=zw,
             elev=elev,
             lat=lat,
@@ -352,9 +349,7 @@ class Hourly():
         return cls(
             tmean=input_img.select(['TMP']),
             # Computing vapor pressure from specific humidity instead of dew point
-            ea=calcs.actual_vapor_pressure(
-                pair=calcs.air_pressure(elev, method), q=input_img.select(['SPFH']),
-            ),
+            ea=calcs.actual_vapor_pressure(pair=calcs.air_pressure(elev, method), q=input_img.select(['SPFH'])),
             # ea=calcs.sat_vapor_pressure(input_img.select(['DPT'])),
             rs=rs,
             # Using wind speed band directly instead of computing from components
@@ -416,9 +411,7 @@ class Hourly():
 
         return cls(
             tmean=input_img.select(['temperature_2m']).subtract(273.15),
-            ea=calcs.sat_vapor_pressure(
-                input_img.select(['dewpoint_temperature_2m']).subtract(273.15)
-            ),
+            ea=calcs.sat_vapor_pressure(input_img.select(['dewpoint_temperature_2m']).subtract(273.15)),
             rs=input_img.select(['surface_solar_radiation_downwards']).divide(1000000),
             uz=input_img.select(['u_component_of_wind_10m']).pow(2)
                 .add(input_img.select(['v_component_of_wind_10m']).pow(2))
@@ -433,7 +426,16 @@ class Hourly():
         )
 
     @classmethod
-    def era5_land(cls, input_img, zw=None, elev=None, lat=None, lon=None, method='asce'):
+    def era5_land(
+            cls,
+            input_img,
+            zw=None,
+            elev=None,
+            lat=None,
+            lon=None,
+            method='asce',
+            fill_edge_cells=False,
+    ):
         """Initialize hourly RefET from an ERA5-Land image
 
         Parameters
@@ -458,6 +460,9 @@ class Hourly():
             Specifies which calculation method to use.
             * 'asce' -- Calculations will follow ASCE-EWRI 2005.
             * 'refet' -- Calculations will follow RefET software.
+        fill_edge_cells : bool, optional
+            If True, fill any masked pixels within a one cell buffer of the input image.
+            This will fill in small holes and cells along the coasts.
 
         Notes
         -----
@@ -477,15 +482,35 @@ class Hourly():
         if lon is None:
             lon = ee.Image('projects/openet/assets/meteorology/era5land/ancillary/longitude')
 
+        # Compute the input variables and convert to standard units
+        tmean = input_img.select(['temperature_2m']).subtract(273.15)
+        ea = calcs.sat_vapor_pressure(input_img.select(['dewpoint_temperature_2m']).subtract(273.15))
+        rs = input_img.select(['surface_solar_radiation_downwards_hourly']).divide(1000000)
+        uz = (
+            input_img.select(['u_component_of_wind_10m']).pow(2)
+            .add(input_img.select(['v_component_of_wind_10m']).pow(2))
+            .sqrt().rename(['wind_10m'])
+        )
+
+        # Fill any masked pixels along the edge of the land mask
+        # This will fill most coastal pixels and any small holes
+        if fill_edge_cells:
+            def fill(image):
+                img = ee.Image(image)
+                return img.unmask(
+                    img.reduceNeighborhood('mean', ee.Kernel.square(1), 'kernel', False)
+                    .reproject(img.projection())
+                )
+            tmean = fill(tmean)
+            ea = fill(ea)
+            rs = fill(rs)
+            uz = fill(uz)
+
         return cls(
-            tmean=input_img.select(['temperature_2m']).subtract(273.15),
-            ea=calcs.sat_vapor_pressure(
-                input_img.select(['dewpoint_temperature_2m']).subtract(273.15)
-            ),
-            rs=input_img.select(['surface_solar_radiation_downwards_hourly']).divide(1000000),
-            uz=input_img.select(['u_component_of_wind_10m']).pow(2)
-                .add(input_img.select(['v_component_of_wind_10m']).pow(2))
-                .sqrt().rename(['wind_10m']),
+            tmean=tmean,
+            ea=ea,
+            rs=rs,
+            uz=uz,
             zw=zw,
             elev=elev,
             lat=lat,

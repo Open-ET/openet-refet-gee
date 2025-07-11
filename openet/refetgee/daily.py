@@ -116,11 +116,7 @@ class Daily():
         self.es_slope = calcs.es_slope(self.tmean, method)
 
         # Saturated vapor pressure
-        self.es = (
-            calcs.sat_vapor_pressure(self.tmax)
-            .add(calcs.sat_vapor_pressure(self.tmin))
-            .multiply(0.5)
-        )
+        self.es = calcs.sat_vapor_pressure(self.tmax).add(calcs.sat_vapor_pressure(self.tmin)).multiply(0.5)
 
         # Vapor pressure deficit
         self.vpd = calcs.vpd(es=self.es, ea=self.ea)
@@ -135,15 +131,11 @@ class Daily():
             if method.lower() == 'asce':
                 self.rso = calcs.rso_simple(ra=self.ra, elev=self.elev)
             elif method.lower() == 'refet':
-                self.rso = calcs.rso_daily(
-                    ea=self.ea, pair=self.pair, ra=self.ra, doy=self.doy, lat=self.lat,
-                )
+                self.rso = calcs.rso_daily(ea=self.ea, pair=self.pair, ra=self.ra, doy=self.doy, lat=self.lat)
         elif rso_type.lower() == 'simple':
             self.rso = calcs.rso_simple(ra=self.ra, elev=self.elev)
         elif rso_type.lower() == 'full':
-            self.rso = calcs.rso_daily(
-                ea=self.ea, pair=self.pair, ra=self.ra, doy=self.doy, lat=self.lat,
-            )
+            self.rso = calcs.rso_daily(ea=self.ea, pair=self.pair, ra=self.ra, doy=self.doy, lat=self.lat)
         elif rso_type.lower() == 'array':
             # Use rso array passed to function
             self.rso = rso
@@ -525,8 +517,7 @@ class Daily():
         )
 
     @classmethod
-    def cfsv2(cls, input_coll, zw=None, elev=None, lat=None, method='asce',
-              rso_type=None):
+    def cfsv2(cls, input_coll, zw=None, elev=None, lat=None, method='asce', rso_type=None):
         """Initialize daily RefET from a 6-hourly CFSv2 image collection
 
         Parameters
@@ -590,7 +581,7 @@ class Daily():
                 .min().subtract(273.15),
             ea=calcs.actual_vapor_pressure(
                 pair=calcs.air_pressure(elev, method),
-                q=input_coll.select(['Specific_humidity_height_above_ground']).mean(),
+                q=input_coll.select(['Specific_humidity_height_above_ground']).mean()
             ),
             # TODO: Check the conversion on solar
             rs=input_coll.select(['Downward_Short-Wave_Radiation_Flux_surface_6_Hour_Average'])
@@ -688,7 +679,7 @@ class Daily():
             tmin=input_coll.select(['TMP']).min(),
             ea=calcs.actual_vapor_pressure(
                 pair=calcs.air_pressure(elev, method),
-                q=input_coll.select(['SPFH']).mean(),
+                q=input_coll.select(['SPFH']).mean()
             ),
             rs=rs,
             # Using wind speed directly instead of computing from components
@@ -759,9 +750,7 @@ class Daily():
         return cls(
             tmax=input_coll.select(['temperature_2m']).max().subtract(273.15),
             tmin=input_coll.select(['temperature_2m']).min().subtract(273.15),
-            ea=calcs.sat_vapor_pressure(
-                input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)
-            ),
+            ea=calcs.sat_vapor_pressure(input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)),
             rs=input_coll.select(['surface_solar_radiation_downwards']).sum().divide(1000000),
             uz=ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean()),
             zw=zw,
@@ -773,7 +762,16 @@ class Daily():
         )
 
     @classmethod
-    def era5_land(cls, input_coll, zw=None, elev=None, lat=None, method='asce', rso_type=None):
+    def era5_land(
+            cls,
+            input_coll,
+            zw=None,
+            elev=None,
+            lat=None,
+            method='asce',
+            rso_type=None,
+            fill_edge_cells=False,
+    ):
         """Initialize daily RefET from an hourly ERA5-Land image collection
 
         Parameters
@@ -800,6 +798,9 @@ class Daily():
             * None -- Rso type will be determined from "method" parameter
             * 'full' -- Full clear sky solar formulation
             * 'simple' -- Simplified clear sky solar formulation
+        fill_edge_cells : bool, optional
+            If True, fill any masked pixels within a one cell buffer of the input image.
+            This will fill in small holes and cells along the coasts.
 
         Notes
         -----
@@ -826,14 +827,34 @@ class Daily():
                 .sqrt().rename(['wind_10m'])
             )
 
+        # Compute the input variables and convert to standard units
+        tmax = input_coll.select(['temperature_2m']).max().subtract(273.15)
+        tmin = input_coll.select(['temperature_2m']).min().subtract(273.15)
+        ea = calcs.sat_vapor_pressure(input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15))
+        rs = input_coll.select(['surface_solar_radiation_downwards_hourly']).sum().divide(1000000)
+        uz = ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())
+
+        # Fill any masked pixels along the edge of the land mask
+        # This will fill most coastal pixels and any small holes
+        if fill_edge_cells:
+            def fill(image):
+                img = ee.Image(image)
+                return img.unmask(
+                    img.reduceNeighborhood('mean', ee.Kernel.square(1), 'kernel', False)
+                    .reproject(img.projection())
+                )
+            tmax = fill(tmax)
+            tmin = fill(tmin)
+            ea = fill(ea)
+            rs = fill(rs)
+            uz = fill(uz)
+
         return cls(
-            tmax=input_coll.select(['temperature_2m']).max().subtract(273.15),
-            tmin=input_coll.select(['temperature_2m']).min().subtract(273.15),
-            ea=calcs.sat_vapor_pressure(
-                input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)
-            ),
-            rs=input_coll.select(['surface_solar_radiation_downwards_hourly']).sum().divide(1000000),
-            uz=ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean()),
+            tmax=tmax,
+            tmin=tmin,
+            ea=ea,
+            rs=rs,
+            uz=uz,
             zw=zw,
             elev=elev,
             lat=lat,
