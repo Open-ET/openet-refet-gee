@@ -811,6 +811,17 @@ class Daily():
         input_coll = ee.ImageCollection(input_coll)
         start_date = ee.Date(ee.Image(input_coll.first()).get('system:time_start'))
 
+        # TODO: (BC) had to call the image collection again because it is filtered
+        #  for the date, but we need a longer time range. Maybe not filtering
+        #  it and adding the start_date parameter to era5_land function would resolve this.
+        start_date_temp = ee.Date(start_date).advance(-12, "hour")
+        end_date_temp = ee.Date(start_date).advance(36, "hour")
+
+        input_coll = ee.ImageCollection(
+            'ECMWF/ERA5_LAND/HOURLY'
+            ).filterDate(start_date_temp, end_date_temp)
+        proj = input_coll.first().select(0).projection()
+        
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
@@ -826,14 +837,61 @@ class Daily():
                 .sqrt().rename(['wind_10m'])
             )
 
+        def utc_to_local(input_coll, start_date):
+            """Convert UTC images to local solar time"""
+            lon = ee.Image.pixelLonLat().select('longitude')
+            timezone = ee.Image(lon.multiply(-1/15)).rename('timezone')
+
+            time_zones = ee.List.sequence(-12, 12, 1)
+            local_hour_list = ee.List.sequence(0, 23, 1)
+
+            def local_time_image_col(local_hour):
+                """UTC to local solar time for each hour in image collection"""
+                local_hour = ee.Number(local_hour)
+
+                def weight_list(hour):
+                    """Multilpy each hourly image by its spatial weight"""
+                    hour = ee.Number(hour)
+                    prev_hour = hour.subtract(1)
+                    next_hour = hour.add(1)
+                    weight = timezone.subtract(prev_hour).min(timezone.multiply(-1).add(next_hour))
+                    weight = weight.where(weight.gt(1).Or(weight.lte(0)), 0)
+                    img = input_coll.filterDate(
+                        start_date.advance(local_hour, 'hour').advance(hour, 'hour')
+                    ).first()
+
+                    return img.multiply(weight)
+
+                weight_col = ee.ImageCollection(time_zones.map(weight_list)).sum()
+
+                return ee.Image(weight_col).set(
+                    {'system:time_start': start_date.advance(local_hour, 'hour').millis()})
+
+            return ee.ImageCollection(local_hour_list.map(local_time_image_col))
+
+        input_coll = utc_to_local(input_coll, start_date)
+        
+        def buffer(img):
+            """buffers a single-band image based on neighbor mean values to ensure data over all land"""
+            iterations = ee.List.repeat(1, 3)
+
+            def buffer_mapper(none, img):
+                img = ee.Image(img)
+                fill = img.reduceNeighborhood('mean', ee.Kernel.square(1), None, False, None)
+                fill = fill.updateMask(img.mask().eq(0)).updateMask(1)
+
+                return img.addBands(fill).reduce('mean')
+
+            return ee.Image(iterations.iterate(buffer_mapper, img)).reproject(proj)
+
         return cls(
-            tmax=input_coll.select(['temperature_2m']).max().subtract(273.15),
-            tmin=input_coll.select(['temperature_2m']).min().subtract(273.15),
-            ea=calcs._sat_vapor_pressure(
+            tmax=buffer(input_coll.select(['temperature_2m']).max().subtract(273.15)),
+            tmin=buffer(input_coll.select(['temperature_2m']).min().subtract(273.15)),
+            ea=buffer(calcs._sat_vapor_pressure(
                 input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)
-            ),
-            rs=input_coll.select(['surface_solar_radiation_downwards_hourly']).sum().divide(1000000),
-            uz=ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean()),
+            )),
+            rs=buffer(input_coll.select(['surface_solar_radiation_downwards_hourly']).sum().divide(1000000)),
+            uz=buffer(ee.Image(ee.ImageCollection(input_coll.map(wind_magnitude)).mean())),
             zw=zw,
             elev=elev,
             lat=lat,
