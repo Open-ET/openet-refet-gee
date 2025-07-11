@@ -31,9 +31,9 @@ class DailyData():
     csv_df.set_index('DATE', inplace=True, drop=True)
 
     # Convert inputs units
-    csv_df['TMIN'] = units._f2c(csv_df['TMIN'])
-    csv_df['TMAX'] = units._f2c(csv_df['TMAX'])
-    csv_df['TDEW'] = units._f2c(csv_df['TDEW'])
+    csv_df['TMIN'] = units.f2c(csv_df['TMIN'])
+    csv_df['TMAX'] = units.f2c(csv_df['TMAX'])
+    csv_df['TDEW'] = units.f2c(csv_df['TDEW'])
     csv_df['WIND'] *= 0.44704
     csv_df['RS'] *= 0.041868  # Conversion from Langleys to MJ m-2 to match RefET
     # csv_df['RS'] *= 0.041840  # Alternate conversion from Langleys to MJ m-2

@@ -36,8 +36,8 @@ class HourlyData():
     csv_df.set_index('DATETIME', inplace=True, drop=True)
 
     # Convert inputs units
-    csv_df['TEMP'] = units._f2c(csv_df['TEMP'])
-    csv_df['TDEW'] = units._f2c(csv_df['TDEW'])
+    csv_df['TEMP'] = units.f2c(csv_df['TEMP'])
+    csv_df['TDEW'] = units.f2c(csv_df['TDEW'])
     csv_df['WIND'] *= 0.44704
     csv_df['RS'] *= 0.041868  # Conversion from Langleys to MJ m-2 to match RefET
     # csv_df['RS'] *= 0.041840  # Alternate conversion from Langleys to MJ m-2

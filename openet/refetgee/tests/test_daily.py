@@ -34,9 +34,9 @@ d_args = {
     'pet_hargreaves': 8.247962376780558,
     'rs': 674.07 * 0.041868,            # Conversion from Langleys to MJ m-2
     'rso': 31.565939444861765,
-    'tdew': units._f2c(49.84),
-    'tmin': units._f2c(66.65),
-    'tmax': units._f2c(102.80),
+    'tdew': units.f2c(49.84),
+    'tmin': units.f2c(66.65),
+    'tmax': units.f2c(102.80),
     # 'tmean': f2c(84.725),
     'uz': 4.80 * 0.44704,               # Conversion from mph to m s-1
     'u2': 1.976111757722194,

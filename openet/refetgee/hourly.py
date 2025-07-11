@@ -97,29 +97,29 @@ class Hourly():
         self.lon = self.lon.multiply(math.pi / 180)
 
         # To match standardized form, psy is calculated from elevation based pair
-        self.pair = calcs._air_pressure(self.elev, method=method)
+        self.pair = calcs.air_pressure(self.elev, method=method)
 
         # Psychrometric constant (Eq. 35)
         self.psy = self.pair.multiply(0.000665)
 
-        self.es = calcs._sat_vapor_pressure(self.tmean)
-        self.es_slope = calcs._es_slope(self.tmean, method)
+        self.es = calcs.sat_vapor_pressure(self.tmean)
+        self.es_slope = calcs.es_slope(self.tmean, method)
 
         # Vapor pressure deficit
         self.vpd = self.es.subtract(self.ea)
-        # self.vpd = calcs._vpd(es=self.es, ea=self.ea)
+        # self.vpd = calcs.vpd(es=self.es, ea=self.ea)
 
         # Extraterrestrial radiation
         time_mid = self.time.add(0.5)
-        self.ra = calcs._ra_hourly(
+        self.ra = calcs.ra_hourly(
             lat=self.lat, lon=self.lon, doy=self.doy, time_mid=time_mid, method=method,
         )
 
         # Clear sky solar radiation
         if method == 'asce':
-            self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
+            self.rso = calcs.rso_simple(ra=self.ra, elev=self.elev)
         elif method == 'refet':
-            self.rso = calcs._rso_hourly(
+            self.rso = calcs.rso_hourly(
                 ea=self.ea, ra=self.ra, pair=self.pair, doy=self.doy,
                 time_mid=time_mid, lat=self.lat, lon=self.lon, method=method,
             )
@@ -129,19 +129,19 @@ class Hourly():
         # In IN2, "Beta" is computed for the start of the time period,
         #   but "SinBeta" is computed for the midpoint.
         # Beta (not SinBeta) is used for clamping fcd.
-        self.fcd = calcs._fcd_hourly(
+        self.fcd = calcs.fcd_hourly(
             rs=self.rs, rso=self.rso, doy=self.doy, time_mid=self.time,
             lat=self.lat, lon=self.lon, method=method,
         )
 
         # Net long-wave radiation
-        self.rnl = calcs._rnl_hourly(tmean=self.tmean, ea=self.ea, fcd=self.fcd)
+        self.rnl = calcs.rnl_hourly(tmean=self.tmean, ea=self.ea, fcd=self.fcd)
 
         # Net radiation
-        self.rn = calcs._rn(self.rs, self.rnl)
+        self.rn = calcs.rn(self.rs, self.rnl)
 
         # Wind speed
-        self.u2 = calcs._wind_height_adjust(uz=self.uz, zw=self.zw)
+        self.u2 = calcs.wind_height_adjust(uz=self.uz, zw=self.zw)
 
     def etsz(self, surface):
         """Standardized reference ET
@@ -273,8 +273,8 @@ class Hourly():
 
         return cls(
             tmean=input_img.select(['temperature']),
-            ea=calcs._actual_vapor_pressure(
-                pair=calcs._air_pressure(elev, method),
+            ea=calcs.actual_vapor_pressure(
+                pair=calcs.air_pressure(elev, method),
                 q=input_img.select(['specific_humidity']),
             ),
             rs=input_img.select(['shortwave_radiation']).multiply(0.0036),
@@ -352,10 +352,10 @@ class Hourly():
         return cls(
             tmean=input_img.select(['TMP']),
             # Computing vapor pressure from specific humidity instead of dew point
-            ea=calcs._actual_vapor_pressure(
-                pair=calcs._air_pressure(elev, method), q=input_img.select(['SPFH']),
+            ea=calcs.actual_vapor_pressure(
+                pair=calcs.air_pressure(elev, method), q=input_img.select(['SPFH']),
             ),
-            # ea=calcs._sat_vapor_pressure(input_img.select(['DPT'])),
+            # ea=calcs.sat_vapor_pressure(input_img.select(['DPT'])),
             rs=rs,
             # Using wind speed band directly instead of computing from components
             uz=input_img.select(['WIND']),
@@ -416,7 +416,7 @@ class Hourly():
 
         return cls(
             tmean=input_img.select(['temperature_2m']).subtract(273.15),
-            ea=calcs._sat_vapor_pressure(
+            ea=calcs.sat_vapor_pressure(
                 input_img.select(['dewpoint_temperature_2m']).subtract(273.15)
             ),
             rs=input_img.select(['surface_solar_radiation_downwards']).divide(1000000),
@@ -479,7 +479,7 @@ class Hourly():
 
         return cls(
             tmean=input_img.select(['temperature_2m']).subtract(273.15),
-            ea=calcs._sat_vapor_pressure(
+            ea=calcs.sat_vapor_pressure(
                 input_img.select(['dewpoint_temperature_2m']).subtract(273.15)
             ),
             rs=input_img.select(['surface_solar_radiation_downwards_hourly']).divide(1000000),

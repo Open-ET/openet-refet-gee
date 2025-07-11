@@ -60,7 +60,8 @@ The raw input data is available `here <https://www.usbr.gov/pn-bin/instant.pl?st
 
     etr = openet.refetgee.Hourly(
         tmean=tmean_c, ea=ea, rs=rs, uz=uz, zw=3, elev=1208.5,
-        lat=lat, lon=lon, doy=182, time=18).etr.getInfo()
+        lat=lat, lon=lon, doy=182, time=18
+    ).etr.getInfo()
 
     print('ETr: {:.2f} mm'.format(float(etr)))
 
@@ -75,11 +76,13 @@ A helper function for computing daily ETo and ETr for `GRIDMET <http://www.clima
     import openet.refetgee
 
     source_img = ee.Image(ee.ImageCollection('IDAHO_EPSCOR/GRIDMET').first())
-    etr = openet.refetgee.Daily.gridmet(source_img).etr\
+    etr = (
+        openet.refetgee.Daily.gridmet(source_img).etr
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
-                      scale=1000)\
+                      scale=1000)
         .getInfo()
+    )
 
     print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
@@ -97,11 +100,13 @@ For the daily function, the NLDAS collection must be filtered to a single 24 hou
 
     source_coll = ee.ImageCollection('NASA/NLDAS/FORA0125_H002')\
         .filterDate('2015-07-01', '2015-07-02')
-    etr = openet.refetgee.Daily.nldas(source_coll).etr\
+    etr = (
+        openet.refetgee.Daily.nldas(source_coll).etr
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
-                      scale=1000)\
+                      scale=1000)
         .getInfo()
+    )
 
     print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
@@ -111,11 +116,13 @@ For the daily function, the NLDAS collection must be filtered to a single 24 hou
     import openet.refetgee
 
     source_img = ee.Image('NASA/NLDAS/FORA0125_H002/A20150701_2000')
-    etr = openet.refetgee.Hourly.nldas(source_img).etr\
+    etr = (
+        openet.refetgee.Hourly.nldas(source_img).etr
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
-                      scale=1000)\
+                      scale=1000)
         .getInfo()
+    )
 
     print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
@@ -131,13 +138,14 @@ For the daily function, the CFSv2 collection must be filtered to a single 24 hou
     import ee
     import openet.refetgee
 
-    source_coll = ee.ImageCollection('NOAA/CFSV2/FOR6H')\
-        .filterDate('2015-07-01', '2015-07-02')
-    etr = openet.refetgee.Daily.cfsv2(source_coll).etr\
+    source_coll = ee.ImageCollection('NOAA/CFSV2/FOR6H').filterDate('2015-07-01', '2015-07-02')
+    etr = (
+        openet.refetgee.Daily.cfsv2(source_coll).etr
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
-                      scale=1000)\
+                      scale=1000)
         .getInfo()
+    )
 
     print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
@@ -153,13 +161,14 @@ For the daily function, the RTMA collection must be filtered to a single 24 hour
     import ee
     import openet.refetgee
 
-    source_coll = ee.ImageCollection('NOAA/NWS/RTMA')\
-        .filterDate('2015-07-01', '2015-07-02')
-    etr = openet.refetgee.Daily.rtma(source_coll).etr\
+    source_coll = ee.ImageCollection('NOAA/NWS/RTMA').filterDate('2015-07-01', '2015-07-02')
+    etr = (
+        openet.refetgee.Daily.rtma(source_coll).etr
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
-                      scale=1000)\
+                      scale=1000)
         .getInfo()
+    )
 
     print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
@@ -169,11 +178,13 @@ For the daily function, the RTMA collection must be filtered to a single 24 hour
     import openet.refetgee
 
     source_img = ee.Image('NOAA/NWS/RTMA/2015070120')
-    etr = openet.refetgee.Hourly.nldas(source_img).etr\
+    etr = (
+        openet.refetgee.Hourly.nldas(source_img).etr
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
-                      scale=1000)\
+                      scale=1000)
         .getInfo()
+    )
 
     print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
@@ -191,11 +202,13 @@ For the daily function, the ERA5-Land collection must be filtered to a single 24
 
     source_coll = ee.ImageCollection('ECMWF/ERA5_LAND/HOURLY')\
         .filterDate('2015-07-01', '2015-07-02')
-    etr = openet.refetgee.Daily.era5_land(source_coll).etr\
+    etr = (
+        openet.refetgee.Daily.era5_land(source_coll).etr
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
-                      scale=1000)\
+                      scale=1000)
         .getInfo()
+    )
 
     print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 
@@ -205,11 +218,13 @@ For the daily function, the ERA5-Land collection must be filtered to a single 24
     import openet.refetgee
 
     source_img = ee.Image('ECMWF/ERA5_LAND/HOURLY/20150701T20')
-    etr = openet.refetgee.Hourly.era5_land(source_img).etr\
+    etr = (
+        openet.refetgee.Hourly.era5_land(source_img).etr
         .reduceRegion(reducer=ee.Reducer.first(),
                       geometry=ee.Geometry.Point(-118.77388, 39.4575),
-                      scale=1000)\
+                      scale=1000)
         .getInfo()
+    )
 
     print('ETr: {:.2f} mm'.format(float(etr['etr'])))
 

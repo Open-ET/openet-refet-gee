@@ -31,10 +31,10 @@ h_args = {
     'ra': 4.30824147948541,
     'rnl': 0.22897874401150786,
     'rs': 61.16 * 0.041868,             # Conversion from Langleys to MJ m-2
-    'tdew': units._f2c(49.36),
+    'tdew': units.f2c(49.36),
     'time': 18.0,
     'time_mid': 18.5,
-    'tmean': units._f2c(91.80),
+    'tmean': units.f2c(91.80),
     'uz': 3.33 * 0.44704,               # Conversion from mph to m s-1
     'u2': 1.3709275319197722,
 }

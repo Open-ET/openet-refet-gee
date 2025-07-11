@@ -107,41 +107,41 @@ class Daily():
         self.lat = self.lat.multiply(math.pi / 180)
 
         # To match standardized form, pair is calculated from elevation
-        self.pair = calcs._air_pressure(self.elev, method)
+        self.pair = calcs.air_pressure(self.elev, method)
 
         # Psychrometric constant (Eq. 4)
         self.psy = self.pair.multiply(0.000665)
 
         self.tmean = self.tmax.add(self.tmin).multiply(0.5)
-        self.es_slope = calcs._es_slope(self.tmean, method)
+        self.es_slope = calcs.es_slope(self.tmean, method)
 
         # Saturated vapor pressure
         self.es = (
-            calcs._sat_vapor_pressure(self.tmax)
-            .add(calcs._sat_vapor_pressure(self.tmin))
+            calcs.sat_vapor_pressure(self.tmax)
+            .add(calcs.sat_vapor_pressure(self.tmin))
             .multiply(0.5)
         )
 
         # Vapor pressure deficit
-        self.vpd = calcs._vpd(es=self.es, ea=self.ea)
+        self.vpd = calcs.vpd(es=self.es, ea=self.ea)
 
         # Extraterrestrial radiation
-        self.ra = calcs._ra_daily(lat=self.lat, doy=self.doy, method=method)
+        self.ra = calcs.ra_daily(lat=self.lat, doy=self.doy, method=method)
 
         # Clear sky solar radiation
         # If rso_type is not set, use the method
         # If rso_type is set, use rso_type directly
         if rso_type is None:
             if method.lower() == 'asce':
-                self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
+                self.rso = calcs.rso_simple(ra=self.ra, elev=self.elev)
             elif method.lower() == 'refet':
-                self.rso = calcs._rso_daily(
+                self.rso = calcs.rso_daily(
                     ea=self.ea, pair=self.pair, ra=self.ra, doy=self.doy, lat=self.lat,
                 )
         elif rso_type.lower() == 'simple':
-            self.rso = calcs._rso_simple(ra=self.ra, elev=self.elev)
+            self.rso = calcs.rso_simple(ra=self.ra, elev=self.elev)
         elif rso_type.lower() == 'full':
-            self.rso = calcs._rso_daily(
+            self.rso = calcs.rso_daily(
                 ea=self.ea, pair=self.pair, ra=self.ra, doy=self.doy, lat=self.lat,
             )
         elif rso_type.lower() == 'array':
@@ -149,16 +149,16 @@ class Daily():
             self.rso = rso
 
         # Cloudiness fraction
-        self.fcd = calcs._fcd_daily(rs=self.rs, rso=self.rso)
+        self.fcd = calcs.fcd_daily(rs=self.rs, rso=self.rso)
 
         # Net long-wave radiation
-        self.rnl = calcs._rnl_daily(tmax=self.tmax, tmin=self.tmin, ea=self.ea, fcd=self.fcd)
+        self.rnl = calcs.rnl_daily(tmax=self.tmax, tmin=self.tmin, ea=self.ea, fcd=self.fcd)
 
         # Net radiation
-        self.rn = calcs._rn(self.rs, self.rnl)
+        self.rn = calcs.rn(self.rs, self.rnl)
 
         # Wind speed
-        self.u2 = calcs._wind_height_adjust(uz=self.uz, zw=self.zw)
+        self.u2 = calcs.wind_height_adjust(uz=self.uz, zw=self.zw)
 
     def etsz(self, surface):
         """Standardized reference ET
@@ -365,8 +365,8 @@ class Daily():
         return cls(
             tmax=input_img.select(['tmmx']).subtract(273.15),
             tmin=input_img.select(['tmmn']).subtract(273.15),
-            ea=calcs._actual_vapor_pressure(
-                pair=calcs._air_pressure(elev, method),
+            ea=calcs.actual_vapor_pressure(
+                pair=calcs.air_pressure(elev, method),
                 q=input_img.select(['sph']),
             ),
             rs=input_img.select(['srad']).multiply(0.0864),
@@ -441,8 +441,8 @@ class Daily():
         return cls(
             tmax=input_img.select(['tasmax']).subtract(273.15),
             tmin=input_img.select(['tasmin']).subtract(273.15),
-            ea=calcs._actual_vapor_pressure(
-                pair=calcs._air_pressure(elev, method),
+            ea=calcs.actual_vapor_pressure(
+                pair=calcs.air_pressure(elev, method),
                 q=input_img.select(['huss']),
             ),
             rs=input_img.select(['rsds']).multiply(0.0864),
@@ -510,8 +510,8 @@ class Daily():
         return cls(
             tmax=input_coll.select(['temperature']).max(),
             tmin=input_coll.select(['temperature']).min(),
-            ea=calcs._actual_vapor_pressure(
-                pair=calcs._air_pressure(elev, method),
+            ea=calcs.actual_vapor_pressure(
+                pair=calcs.air_pressure(elev, method),
                 q=input_coll.select(['specific_humidity']).mean(),
             ),
             rs=input_coll.select(['shortwave_radiation']).sum().multiply(0.0036),
@@ -588,8 +588,8 @@ class Daily():
                 .max().subtract(273.15),
             tmin=input_coll.select(['Minimum_temperature_height_above_ground_6_Hour_Interval'])
                 .min().subtract(273.15),
-            ea=calcs._actual_vapor_pressure(
-                pair=calcs._air_pressure(elev, method),
+            ea=calcs.actual_vapor_pressure(
+                pair=calcs.air_pressure(elev, method),
                 q=input_coll.select(['Specific_humidity_height_above_ground']).mean(),
             ),
             # TODO: Check the conversion on solar
@@ -686,8 +686,8 @@ class Daily():
         return cls(
             tmax=input_coll.select(['TMP']).max(),
             tmin=input_coll.select(['TMP']).min(),
-            ea=calcs._actual_vapor_pressure(
-                pair=calcs._air_pressure(elev, method),
+            ea=calcs.actual_vapor_pressure(
+                pair=calcs.air_pressure(elev, method),
                 q=input_coll.select(['SPFH']).mean(),
             ),
             rs=rs,
@@ -759,7 +759,7 @@ class Daily():
         return cls(
             tmax=input_coll.select(['temperature_2m']).max().subtract(273.15),
             tmin=input_coll.select(['temperature_2m']).min().subtract(273.15),
-            ea=calcs._sat_vapor_pressure(
+            ea=calcs.sat_vapor_pressure(
                 input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)
             ),
             rs=input_coll.select(['surface_solar_radiation_downwards']).sum().divide(1000000),
@@ -829,7 +829,7 @@ class Daily():
         return cls(
             tmax=input_coll.select(['temperature_2m']).max().subtract(273.15),
             tmin=input_coll.select(['temperature_2m']).min().subtract(273.15),
-            ea=calcs._sat_vapor_pressure(
+            ea=calcs.sat_vapor_pressure(
                 input_coll.select(['dewpoint_temperature_2m']).mean().subtract(273.15)
             ),
             rs=input_coll.select(['surface_solar_radiation_downwards_hourly']).sum().divide(1000000),
