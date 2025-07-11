@@ -19,15 +19,11 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "earthengine-api>=0.1.392",
+    "earthengine-api>=1.5.2",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/Open-ET/openet-refet-gee"
-# "Repository" = "https://github.com/Open-ET/openet-refet-gee.git"
-# "Documentation" = "https://github.com/Open-ET/openet-refet-gee"
-# "Bug Tracker" = "https://github.com/Open-ET/openet-refet-gee"
-# "Changelog" = "https://github.com/Open-ET/openet-refet-gee"
 
 [build-system]
 requires = ["setuptools>=61.0"]
