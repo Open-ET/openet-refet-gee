@@ -47,11 +47,18 @@ def constant_image_value(image, crs='EPSG:32613', scale=1):
     return get_info(ee.Image(image).reduceRegion(**rr_params))
 
 
-def point_image_value(image, xy, scale=1):
+def point_image_value(image, xy, scale=1, proj=None):
     """Extract the output value from a calculation at a point"""
     rr_params = {
         'reducer': ee.Reducer.first(),
         'geometry': ee.Geometry.Point(xy),
         'scale': scale,
     }
+    if proj:
+        rr_params['crs'] = proj.crs()
+        rr_params['crsTransform'] = ee.List(
+            ee.Dictionary(ee.Algorithms.Describe(proj)).get('transform')
+        )
+    del rr_params['scale']
+
     return get_info(ee.Image(image).reduceRegion(**rr_params))

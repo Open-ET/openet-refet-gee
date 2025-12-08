@@ -272,9 +272,16 @@ def test_refet_hourly_era5_land_etr():
 def test_refet_hourly_era5_land_fill_edge_cells():
     """Check that the fill_edge_cells flag works for an edge cell along the coast of England"""
     input_img = ee.Image('ECMWF/ERA5_LAND/HOURLY/20150701T20')
-    output = utils.point_image_value(Hourly.era5_land(input_img, fill_edge_cells=False).etr, xy=[0.0, 50.7])
+    proj = input_img.select([0]).projection()
+    output = utils.point_image_value(Hourly.era5_land(input_img, fill_edge_cells=0).etr, xy=[0.0, 50.7], proj=proj)
     assert output['etr'] is None
-    output = utils.point_image_value(Hourly.era5_land(input_img, fill_edge_cells=True).etr, xy=[0.0, 50.7])
+    output = utils.point_image_value(Hourly.era5_land(input_img, fill_edge_cells=1).etr, xy=[0.0, 50.7], proj=proj)
+    assert output['etr'] is not None
+    output = utils.point_image_value(Hourly.era5_land(input_img, fill_edge_cells=0).etr, xy=[0.0, 50.6], proj=proj)
+    assert output['etr'] is None
+    output = utils.point_image_value(Hourly.era5_land(input_img, fill_edge_cells=1).etr, xy=[0.0, 50.6], proj=proj)
+    assert output['etr'] is None
+    output = utils.point_image_value(Hourly.era5_land(input_img, fill_edge_cells=2).etr, xy=[0.0, 50.7], proj=proj)
     assert output['etr'] is not None
 
 

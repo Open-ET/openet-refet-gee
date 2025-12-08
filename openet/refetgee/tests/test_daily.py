@@ -1,5 +1,6 @@
 import ee
 import pytest
+from rioxarray.crs import crs_from_user_input
 
 from openet.refetgee import Daily
 import openet.refetgee.units as units
@@ -455,11 +456,18 @@ def test_refet_daily_era5_land_etr():
 
 
 def test_refet_daily_era5_land_fill_edge_cells():
-    """Check that the fill_edge_cells flag works for an edge cell along the coast of England"""
+    """Check that the fill_edge_cells flag works for an edge cell along the southern coast of England"""
     input_coll = ee.ImageCollection('ECMWF/ERA5_LAND/HOURLY').filterDate('2015-07-01', '2015-07-02')
-    output = utils.point_image_value(Daily.era5_land(input_coll, fill_edge_cells=False).etr, xy=[0.0, 50.7])
+    proj = input_coll.first().select([0]).projection()
+    output = utils.point_image_value(Daily.era5_land(input_coll, fill_edge_cells=0).etr, xy=[0.0, 50.7], proj=proj)
     assert output['etr'] is None
-    output = utils.point_image_value(Daily.era5_land(input_coll, fill_edge_cells=True).etr, xy=[0.0, 50.7])
+    output = utils.point_image_value(Daily.era5_land(input_coll, fill_edge_cells=1).etr, xy=[0.0, 50.7], proj=proj)
+    assert output['etr'] is not None
+    output = utils.point_image_value(Daily.era5_land(input_coll, fill_edge_cells=0).etr, xy=[0.0, 50.6], proj=proj)
+    assert output['etr'] is None
+    # output = utils.point_image_value(Daily.era5_land(input_coll, fill_edge_cells=1).etr, xy=[0.0, 50.6], proj=proj)
+    # assert output['etr'] is None
+    output = utils.point_image_value(Daily.era5_land(input_coll, fill_edge_cells=2).etr, xy=[0.0, 50.6], proj=proj)
     assert output['etr'] is not None
 
 

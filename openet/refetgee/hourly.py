@@ -434,7 +434,7 @@ class Hourly():
             lat=None,
             lon=None,
             method='asce',
-            fill_edge_cells=False,
+            fill_edge_cells=0,
     ):
         """Initialize hourly RefET from an ERA5-Land image
 
@@ -460,8 +460,8 @@ class Hourly():
             Specifies which calculation method to use.
             * 'asce' -- Calculations will follow ASCE-EWRI 2005.
             * 'refet' -- Calculations will follow RefET software.
-        fill_edge_cells : bool, optional
-            If True, fill any masked pixels within a one cell buffer of the input image.
+        fill_edge_cells : int, optional
+            Fill any masked pixels within a buffer of the cells count.
             This will fill in small holes and cells along the coasts.
 
         Notes
@@ -498,7 +498,7 @@ class Hourly():
             def fill(image):
                 img = ee.Image(image)
                 return img.unmask(
-                    img.reduceNeighborhood('mean', ee.Kernel.square(1), 'kernel', False)
+                    img.reduceNeighborhood('mean', ee.Kernel.square(fill_edge_cells), 'kernel', False)
                     .reproject(img.projection())
                 )
             tmean = fill(tmean)

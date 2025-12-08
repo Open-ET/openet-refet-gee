@@ -452,8 +452,8 @@ def ra_hourly(lat, lon, doy, time_mid, method='asce'):
     Equation in Duffie & Beckman (?) uses a solar constant of 1367 W m-2
 
     """
-    omega = sha(solar_time_rad(lon, time_mid, seasonal_correction(doy)))
     delta = declination(doy, method)
+    omega = sha(solar_time_rad(lon, time_mid, seasonal_correction(doy)))
     omegas = sha_sunset(lat, delta)
 
     # Solar time as start and end of period (Eqs. 53 & 54)

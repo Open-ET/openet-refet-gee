@@ -770,7 +770,7 @@ class Daily():
             lat=None,
             method='asce',
             rso_type=None,
-            fill_edge_cells=False,
+            fill_edge_cells=0,
     ):
         """Initialize daily RefET from an hourly ERA5-Land image collection
 
@@ -798,8 +798,8 @@ class Daily():
             * None -- Rso type will be determined from "method" parameter
             * 'full' -- Full clear sky solar formulation
             * 'simple' -- Simplified clear sky solar formulation
-        fill_edge_cells : bool, optional
-            If True, fill any masked pixels within a one cell buffer of the input image.
+        fill_edge_cells : int, optional
+            Fill any masked pixels within a buffer of the cells count.
             This will fill in small holes and cells along the coasts.
 
         Notes
@@ -840,7 +840,7 @@ class Daily():
             def fill(image):
                 img = ee.Image(image)
                 return img.unmask(
-                    img.reduceNeighborhood('mean', ee.Kernel.square(1), 'kernel', False)
+                    img.reduceNeighborhood('mean', ee.Kernel.square(fill_edge_cells), 'kernel', False)
                     .reproject(img.projection())
                 )
             tmax = fill(tmax)
