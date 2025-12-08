@@ -1,6 +1,5 @@
 import ee
 import pytest
-from rioxarray.crs import crs_from_user_input
 
 from openet.refetgee import Daily
 import openet.refetgee.units as units
