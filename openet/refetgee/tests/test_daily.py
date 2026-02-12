@@ -271,8 +271,8 @@ def test_refet_daily_maca_etr():
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
 
-def test_refet_daily_nldas_etr():
-    """Generate a mock NLDAS image from the test values
+def test_refet_daily_nldas2_etr():
+    """Generate a mock NLDAS-2 image from the test values
 
     Convert the test Rs from MJ m-2 d-1 to W m-2, then allocate half to each image
 
@@ -301,7 +301,7 @@ def test_refet_daily_nldas_etr():
     assert float(output['etr']) == pytest.approx(d_args['etr_asce'])
 
 
-def test_refet_daily_nldas_eto():
+def test_refet_daily_nldas2_eto():
     """Compare values to previous calculations"""
     test_point = ee.Geometry.Point(-120.113, 36.336)
 

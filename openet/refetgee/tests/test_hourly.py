@@ -171,8 +171,8 @@ def test_refet_daily_etsz(surface, expected):
     assert float(output['etsz']) == pytest.approx(expected)
 
 
-def test_refet_hourly_nldas_etr():
-    """Generate a mock NLDAS image from the test values"""
+def test_refet_hourly_nldas2_etr():
+    """Generate a mock NLDAS-2 image from the test values"""
     time_start = ee.Date(f'2015-07-01T{int(h_args["time"])}:00:00', 'UTC').millis()
 
     input_img = (

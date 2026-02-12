@@ -226,25 +226,25 @@ class Hourly():
 
     @classmethod
     def nldas(cls, input_img, zw=None, elev=None, lat=None, lon=None, method='asce'):
-        """Initialize hourly RefET from an NLDAS image
+        """Initialize hourly RefET from an NLDAS-2 image
 
         Parameters
         ----------
         input_img : ee.Image
-            NLDAS hourly image from the collection NASA/NLDAS/FORA0125_H002.
+            NLDAS-2 hourly image from the collection NASA/NLDAS/FORA0125_H002.
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  A precomputed NLDAS elevation image
-            (projects/openet/assets/meteorology/nldas/ancillary/elevation)
+            Elevation image [m].  A precomputed NLDAS-2 elevation image
+            (projects/openet/assets/meteorology/nldas2/ancillary/elevation)
             will be used if not set.
         lat : ee.Image or ee.Number
-            Latitude image [degrees].  A precomputed NLDAS latitude image
-            (projects/openet/assets/meteorology/nldas/ancillary/latitude)
+            Latitude image [degrees].  A precomputed NLDAS-2 latitude image
+            (projects/openet/assets/meteorology/nldas2/ancillary/latitude)
             will be used if not set.
         lon : ee.Image or ee.Number
-            Longitude image [degrees].  A precomputed NLDAS longitude image
-            (projects/openet/assets/meteorology/nldas/ancillary/longitude)
+            Longitude image [degrees].  A precomputed NLDAS-2 longitude image
+            (projects/openet/assets/meteorology/nldas2/ancillary/longitude)
             will be used if not set.
         method : {'asce' (default), 'refet'}, optional
             Specifies which calculation method to use.
@@ -263,11 +263,11 @@ class Hourly():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/elevation')
+            elev = ee.Image('projects/openet/assets/meteorology/nldas2/ancillary/elevation')
         if lat is None:
-            lat = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/latitude')
+            lat = ee.Image('projects/openet/assets/meteorology/nldas2/ancillary/latitude')
         if lon is None:
-            lon = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/longitude')
+            lon = ee.Image('projects/openet/assets/meteorology/nldas2/ancillary/longitude')
 
         return cls(
             tmean=input_img.select(['temperature']),
@@ -296,7 +296,7 @@ class Hourly():
             RTMA hourly image from the collection NOAA/NWS/RTMA.
         rs : ee.Image, ee.Number, str, optional
             Incoming solar radiation [MJ m-2 hr-1].
-            The NLDAS2 image for the concurrent hour will be used if not set.
+            The NLDAS-2 image for the concurrent hour will be used if not set.
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
@@ -327,7 +327,7 @@ class Hourly():
             pass
         elif isinstance(rs, ee.Number) or isinstance(rs, float) or isinstance(rs, int):
             rs = ee.Image.constant(rs)
-        elif (rs is None) or ((rs is str) and (rs.upper() in ['NLDAS', 'NLDAS2'])):
+        elif (rs is None) or ((rs is str) and (rs.upper() in ['NLDAS', 'NLDAS2', 'NLDAS-2'])):
             rs = (
                 ee.ImageCollection('NASA/NLDAS/FORA0125_H002')
                 .filterDate(start_date, start_date.advance(30, 'minute'))

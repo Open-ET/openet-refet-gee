@@ -449,21 +449,23 @@ class Daily():
 
     @classmethod
     def nldas(cls, input_coll, zw=None, elev=None, lat=None, method='asce', rso_type=None):
-        """Initialize daily RefET from a hourly NLDAS image collection
+        """Initialize daily RefET from a hourly NLDAS-2 image collection
 
         Parameters
         ----------
         input_coll : ee.ImageCollection
-            Collection of NLDAS hourly images for a single day from the
+            Collection of NLDAS-2 hourly images for a single day from the
             collection NASA/NLDAS/FORA0125_H002.
         zw : ee.Number, optional
             Wind speed height [m] (the default is 10).
         elev : ee.Image or ee.Number, optional
-            Elevation image [m].  A custom NLDAS elevation image
-            (projects/eddi-noaa/nldas/elevation) will be used if not set.
+            Elevation image [m].  A precomputed NLDAS-2 elevation image
+            (projects/openet/assets/meteorology/nldas2/ancillary/elevation)
+            will be used if not set.
         lat : ee.Image or ee.Number
-            Latitude image [degrees].  The latitude will be computed
-            dynamically using ee.Image.pixelLonLat() if not set.
+            Latitude image [degrees].  A precomputed NLDAS-2 latitude image
+            (projects/openet/assets/meteorology/nldas2/ancillary/latitude)
+            will be used if not set.
         method : {'asce' (default), 'refet'}, optional
             Specifies which calculation method to use.
             * 'asce' -- Calculations will follow ASCE-EWRI 2005.
@@ -487,9 +489,9 @@ class Daily():
         if zw is None:
             zw = ee.Number(10)
         if elev is None:
-            elev = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/elevation')
+            elev = ee.Image('projects/openet/assets/meteorology/nldas2/ancillary/elevation')
         if lat is None:
-            lat = ee.Image('projects/openet/assets/meteorology/nldas/ancillary/latitude')
+            lat = ee.Image('projects/openet/assets/meteorology/nldas2/ancillary/latitude')
 
         def wind_magnitude(input_img):
             """Compute hourly wind magnitude from vectors"""
@@ -647,7 +649,7 @@ class Daily():
                 .select(['srad'])
             )
             rs = ee.Image(rs_coll.first()).multiply(0.0864)
-        elif rs.upper() == 'NLDAS':
+        elif rs.upper() in ['NLDAS', 'NLDAS2', 'NLDAS-2']:
             rs_coll = (
                 ee.ImageCollection('NASA/NLDAS/FORA0125_H002')
                 .filterDate(start_date, start_date.advance(1, 'day'))
