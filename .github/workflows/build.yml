@@ -2,19 +2,28 @@ name: build
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    env:
+      PROJECT_ID: openet
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: Set up Python 3.11
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v3
       with:
-        python-version: 3.11
+        python-version: "3.11"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -27,8 +36,18 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: 'Authenticate to Google Cloud'
+      id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        project_id: 'openet'
+        create_credentials_file: true
+        workload_identity_provider: 'projects/470570065811/locations/global/workloadIdentityPools/gitaction-pool/providers/gitaction-provider'
+        service_account: 'github-actions@openet.iam.gserviceaccount.com'
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+    - name: EE token
+      run: echo "ACTION_EE_TOKEN=$(gcloud auth print-access-token)" >> $GITHUB_ENV
     - name: Test with pytest
-      env:
-        EE_PRIVATE_KEY_B64: ${{ secrets.EE_PRIVATE_KEY_B64 }}
       run: |
         python -m pytest
