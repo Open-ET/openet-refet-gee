@@ -132,7 +132,7 @@ def test_refet_hourly_asce_method_eto():
     assert float(output['eto']) == pytest.approx(h_args['eto_asce'])
 
 
-def test_refet_hourly_asce_method_eto():
+def test_refet_hourly_refet_method_eto():
     refet = Hourly(
         tmean=ee.Image.constant(h_args['tmean']), ea=ee.Image.constant(h_args['ea']),
         rs=ee.Image.constant(h_args['rs']), uz=ee.Image.constant(h_args['uz']),

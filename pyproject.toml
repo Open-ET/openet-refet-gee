@@ -11,8 +11,7 @@ description = "Google Earth Engine based ASCE Standardized Reference Evapotransp
 readme = "README.rst"
 requires-python = ">=3.9"
 keywords = ["RefET", "OpenET", "Earth Engine", "evapotranspiration"]
-license = {file = "LICENSE.txt"}
-# license = {text = "Apache-2.0"}
+license = {text = "Apache-2.0"}
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
