@@ -8,7 +8,7 @@ import pytest
 
 
 @pytest.fixture(scope="session", autouse=True)
-def pytest_configure():
+def test_init():
     logging.basicConfig(level=logging.INFO, format='%(message)s')
     logging.getLogger('googleapiclient').setLevel(logging.ERROR)
     logging.debug('Test Setup')
